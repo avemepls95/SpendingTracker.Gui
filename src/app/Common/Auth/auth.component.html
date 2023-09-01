@@ -1,0 +1,19 @@
+<!--<ng2-slim-loading-bar color="blue"></ng2-slim-loading-bar>-->
+
+<div class="login-container">
+    <div class="login-form">
+        <span class="login100-form-title p-b-49">
+            Привет! Зарегистрируйтесь через телеграм
+        </span>
+        <div class="oauth-refs-div">
+            <div id="telegram-login-widget">
+                <app-telegram-login-widget (isAuthError)="setIsAuthError($event)" (loginStarted)="loginStarted()"
+                    (loginEnded)="loginEnded()" (loginSuccessful)="loginSuccessful({response : $event})">
+                </app-telegram-login-widget>
+            </div>
+        </div>
+        <div class="auth-failed-div flex-h-center" *ngIf="isAuthError">
+            <span>Server connection error. Try later</span>
+        </div>
+    </div>
+</div>
