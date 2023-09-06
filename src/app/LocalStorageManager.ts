@@ -35,8 +35,7 @@ export class LocalStorageManager {
     private static setUserDataFromTelegram(data: FromTelegramAuthDto) {
         localStorage.setItem(this.userFirstNameKey, data.first_name);
         localStorage.setItem(this.userLastNameKey, data.last_name);
-        localStorage.setItem(this.userAuthDateKey, data.auth_date.toString());
-        localStorage.setItem(this.userHashKey, data.hash);
+            localStorage.setItem(this.userHashKey, data.hash);
         // localStorage.setItem(this.userIdKey, data.id.toString());
         localStorage.setItem(this.userPhotoUrlKey, data.photo_url);
     }
@@ -45,8 +44,7 @@ export class LocalStorageManager {
         return data.hasOwnProperty('photo_url');
     }
 
-    static setUserLocalInformation(id: number, userName: string) {
+    static setUserLocalInformation(id: string) {
         localStorage.setItem(LocalStorageManager.userLocalIdKey, id.toString());
-        localStorage.setItem(LocalStorageManager.userLocalNameKey, userName);
     }
 }

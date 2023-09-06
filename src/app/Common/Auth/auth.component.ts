@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { LoaderService } from 'src/app/Common/Services/loader.service';
 import { LocalStorageManager } from 'src/app/LocalStorageManager';
 import {AuthService} from "./Services/auth.service";
+import {AuthByTelegramResponse} from "./Contracts/AuthByTelegramResponse";
 
 @Component({
   selector: 'app-auth',
@@ -40,9 +41,9 @@ export class AuthComponent implements OnInit {
     this.loaderService.hide();
   }
 
-  loginSuccessful({response}: { response: any }) {
-    this.authService.setToken(response.data.token);
-    LocalStorageManager.setUserLocalInformation(response.data.user.id, response.data.user.username);
+  loginSuccessful({response}: { response: AuthByTelegramResponse }) {
+    this.authService.setToken(response.tokenInformation.accessToken);
+    LocalStorageManager.setUserLocalInformation(response.id);
 
     this.ngZone.run(() => this.router.navigate(['/main']));
   }

@@ -5,9 +5,7 @@
 export const environment = {
   production: false,
   name: 'dev',
-  balanceApiUrl: 'http://localhost:8081/',
-  ticketsApiUrl: 'http://localhost:81/',
-  vkApiId: '7296124'
+  spendingApi: 'http://localhost:5000/api/'
 };
 
 /*

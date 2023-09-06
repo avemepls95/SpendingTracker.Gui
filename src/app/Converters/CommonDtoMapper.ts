@@ -5,7 +5,6 @@ import {TelegramToBalanceAuthDto} from "../Common/Auth/Contracts/TelegramToBalan
 export class CommonDtoMapper {
     static getTelegramAuthDto(loginData: FromTelegramAuthDto) {
         return new TelegramToBalanceAuthDto({
-            authDate: loginData.auth_date.toString(),
             firstName: loginData.first_name,
             hash: loginData.hash,
             userId: loginData.id,

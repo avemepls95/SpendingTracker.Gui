@@ -11,7 +11,12 @@ import {DemoMaterialModule} from "./material-module";
 import {LoaderService} from "./Common/Services/loader.service";
 import {MainComponent} from "./Common/Components/main/main.component";
 import { CategoriesComponent } from './Domain/Components/categories/categories.component';
-import {HttpClientModule} from "@angular/common/http";
+import {HTTP_INTERCEPTORS, HttpClientModule} from "@angular/common/http";
+import {JWT_OPTIONS, JwtHelperService} from "@auth0/angular-jwt";
+import {TokenInterceptor} from "./Common/Interceptors/token.interceptor";
+import {ConfirmDialogComponent} from "./Common/Components/confirm-dialog/confirm-dialog.component";
+import {CreateCategoryCardComponent} from "./Domain/Components/create-category-card/create-category-card.component";
+import {FormsModule} from "@angular/forms";
 
 @NgModule({
   declarations: [
@@ -20,17 +25,23 @@ import {HttpClientModule} from "@angular/common/http";
     AuthComponent,
     LoaderComponent,
     MainComponent,
-    CategoriesComponent
+    CategoriesComponent,
+    ConfirmDialogComponent,
+    CreateCategoryCardComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
     DemoMaterialModule,
-    HttpClientModule
+    HttpClientModule,
+    FormsModule
   ],
   providers: [
-      LoaderService
+      LoaderService,
+      JwtHelperService,
+      { provide: JWT_OPTIONS, useValue: JWT_OPTIONS },
+      { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
   ],
   bootstrap: [AppComponent]
 })

@@ -1,4 +1,161 @@
-/* You can add global styles to this file, and also import other style files */
 
+
+#body-content {
+  width: 100%;
+  overflow: hidden;
+}
+
+.form-control, button, label {
+  font-size: initial !important;
+}
+
+
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+th {
+  text-align: center !important;
+}
+
+td {
+  text-align: center !important;
+}
+
+*:focus {
+  outline: none !important;
+  border: 0 !important;
+}
+
+.mat-form-field .mat-error {
+  font-size: 12px;
+}
+
+.mat-form-field-appearance-legacy .mat-form-field-infix {
+  padding: 0.6375em 0;
+}
+
+.material-icons.red { color: red !important; }
+.material-icons.green { color: seagreen !important; }
+.material-icons.purple { color: #b712c1 !important; }
+.material-icons.yellow { color: yellow !important; }
+.material-icons.dark-gray { color: darkgray !important; }
+.material-icons.orange { color: orange !important; }
+.material-icons.white { color: white !important; }
+.material-icons.black { color: black !important; }
+.material-icons.transparent { color: transparent !important; }
+
+.mat-dialog-content {
+  font-size: 14px;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-h-center {
+  display: flex;
+  justify-content: center;
+}
+
+.flex-v-center {
+  display: flex;
+  align-items: center;
+}
+
+.flex-h-space-between {
+  display: flex;
+  justify-content: space-between;
+}
+
+.flex-h-flex-end {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.snackbar {
+  width: auto;
+  padding-left: 5rem !important;
+  padding-right: 5rem !important;
+  max-width: initial !important;
+  min-width: initial !important;
+}
+
+.snackbar .mat-button {
+  color: antiquewhite;
+}
+
+.snackbar-default {
+  background: #323232 !important;
+}
+.snackbar-error {
+  background: orangered !important;
+}
+.snackbar-success {
+  background: mediumseagreen !important;
+}
+.snackbar-information {
+  background: #ffff89 !important;
+  color: #000000b8 !important;
+}
+.snackbar-information .mat-button {
+  color: black !important;
+}
+
+.position-dialog {
+  overflow: hidden !important;
+}
+.position-dialog .mat-form-field-wrapper,
+.position-dialog .mat-form-field-type-mat-chip-list,
+.position-dialog .mat-form-field-type-mat-input {
+  width: 100%;
+}
+
+.account-actions-menu {
+  width: 150px;
+  background-color: #ececec;
+}
+
+.content-card {
+  margin-top: 2vh;
+}
+
+.mat-dialog-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.font-large {
+  font-size: xx-large;
+}
+
+.icon-font-large {
+  font-size: xx-large;
+  transform: translateX(-4px);
+}
+
+.mat-tooltip {
+  font-size: 14px;
+}
+
+.w-100 {
+  width: 100% !important;
+}
+
+.w-48 {
+  width: 48% !important;
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

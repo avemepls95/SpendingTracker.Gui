@@ -9,9 +9,6 @@
             <span class="menu-spacer"></span>
         </div>
         <div class="flex-v-center name-avatar">
-<!--            <button mat-icon-button (click)="openNotificationsInfo()" onclick="this.blur()">-->
-<!--                <mat-icon class="icon-font-large yellow">notification_important</mat-icon>-->
-<!--            </button>-->
             <button mat-icon-button (click)="refreshPage()" class="refresh-button"
                 matTooltip="Обновить страницу" onclick="this.blur()">
                 <mat-icon class="icon-font-large">refresh</mat-icon>
@@ -30,36 +27,14 @@
 <mat-sidenav-container>
     <mat-sidenav #sidenav class="menu-sidenav">
         <mat-nav-list>
-<!--          <div *ngIf="selectedSystem == 'balance'">-->
-<!--            <mat-list-item [routerLink]="'/debts'" (click)="sidenav.toggle()">-->
-<!--                <mat-icon mat-list-icon class="green">sync_alt</mat-icon>-->
-<!--                <h4 mat-line>Баланс</h4>-->
-<!--            </mat-list-item>-->
-<!--            <mat-list-item [routerLink]="'/tape'" (click)="sidenav.toggle()">-->
-<!--                <mat-icon mat-list-icon class="purple">view_headline</mat-icon>-->
-<!--                <h4 mat-line>Лента</h4>-->
-<!--            </mat-list-item>-->
-<!--            <mat-divider></mat-divider>-->
-<!--            <mat-list-item [routerLink]="'/createCheck'" (click)="sidenav.toggle()">-->
-<!--                <mat-icon mat-list-icon class="green">add</mat-icon>-->
-<!--                <h4 mat-line>Создать Чек</h4>-->
-<!--            </mat-list-item>-->
-<!--            <mat-list-item [routerLink]="'/checks'" (click)="sidenav.toggle()">-->
-<!--                <mat-icon mat-list-icon>list_alt</mat-icon>-->
-<!--                <h4 mat-line>Чеки</h4>-->
-<!--            </mat-list-item>-->
-<!--          </div>-->
-<!--          <div *ngIf="selectedSystem == 'tickets'">-->
-<!--            <mat-divider></mat-divider>-->
-<!--            <mat-list-item [routerLink]="'/createTicket'" (click)="sidenav.toggle()">-->
-<!--              <mat-icon mat-list-icon class="green">add_task</mat-icon>-->
-<!--              <h4 mat-line>Создать Задачу</h4>-->
-<!--            </mat-list-item>-->
-<!--            <mat-list-item [routerLink]="'/tickets'" (click)="sidenav.toggle()">-->
-<!--                <mat-icon mat-list-icon>domain_verification</mat-icon>-->
-<!--                <h4 mat-line>Задачи</h4>-->
-<!--              </mat-list-item>-->
-<!--          </div>-->
+          <div>
+            <mat-list-item [routerLink]="'/categories'" (click)="sidenav.toggle()">
+                <h4 mat-line>Мои категории</h4>
+            </mat-list-item>
+            <mat-list-item [routerLink]="'/spendings'" (click)="sidenav.toggle()">
+                <h4 mat-line>Траты</h4>
+            </mat-list-item>
+          </div>
             <mat-divider></mat-divider>
             <!-- <mat-list-item [routerLink]="'/settings'" (click)="sidenav.toggle()">
                 <mat-icon mat-list-icon>settings</mat-icon>
@@ -67,7 +42,6 @@
             </mat-list-item> -->
             <mat-divider></mat-divider>
             <mat-list-item (click)="sidenav.toggle()">
-                <mat-icon mat-list-icon class="red">close</mat-icon>
                 <h4 mat-line>Закрыть</h4>
             </mat-list-item>
 

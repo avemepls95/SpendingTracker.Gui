@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import {TelegramToBalanceAuthDto} from "../Contracts/TelegramToBalanceAuthDto";
 import {LocalStorageManager} from "../../../LocalStorageManager";
+import { JwtHelperService } from '@auth0/angular-jwt';
 
 @Injectable({
   providedIn: 'root'
@@ -13,14 +14,14 @@ export class AuthService {
 
   private apiBaseUrl: string;
 
-  constructor(private http: HttpClient
-              // , public jwtHelper: JwtHelper
+  constructor(private http: HttpClient,
+    private jwtHelper: JwtHelperService
   ) {
-    this.apiBaseUrl = environment.balanceApiUrl;
+    this.apiBaseUrl = environment.spendingApi;
   }
 
   loginViaTelegram(loginData: TelegramToBalanceAuthDto): Observable<any> {
-    return this.http.post(this.apiBaseUrl + 'auth/telegram ', loginData);
+    return this.http.post(this.apiBaseUrl + 'v1/auth/telegram/get-token', loginData);
   }
 
   setToken(token : any) {
@@ -40,7 +41,6 @@ export class AuthService {
     if (token == null)
       return false;
 
-    // return !this.jwtHelper.isTokenExpired(token);
-    return false;
+    return !this.jwtHelper.isTokenExpired(token);
   }
 }

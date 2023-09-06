@@ -1,0 +1,130 @@
+.zero-balance-wrap {
+  text-align: center;
+  margin-top: 2vh;
+}
+
+.categories-list-header {
+  display: flex;
+}
+
+.content-in-center {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.negative-amount-color {
+  background-color: orangered;
+}
+
+.positive-amount-color {
+  background-color: mediumseagreen;
+}
+
+h1 {
+  color: white;
+}
+
+.debt-card {
+  display: flex;
+  justify-content: space-evenly;
+  margin-top: 2vh;
+}
+
+.debt-card h1 {
+  margin-bottom: 0;
+}
+
+.concrete-debt {
+  margin-left: 5vw;
+  margin-right: 5vw;
+}
+
+.total-debt {
+  margin-left: 10vw;
+  margin-right: 10vw;
+}
+
+table {
+  width: 100%;
+}
+
+.mat-column-index {
+  width: 40px;
+  opacity: 0.5;
+}
+
+th.mat-header-cell {
+  text-align: center;
+  font-size: medium;
+  color: black;
+}
+
+.mat-header-row {
+  border-bottom: white 1rem solid;
+}
+
+.mat-cell {
+  text-align: center;
+}
+
+.mat-column-title {
+  word-wrap: break-word !important;
+  white-space: unset !important;
+  flex: 0 0 28% !important;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+
+  word-break: break-word;
+
+  -ms-hyphens: auto;
+  -moz-hyphens: auto;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+}
+
+.mat-column-actions {
+  width: 60px;
+}
+
+
+td:first-child, th:first-child {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+td:last-child, th:last-child {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+table {
+  border-collapse: separate !important;
+  border-spacing: 0 .5em !important;
+}
+
+.table-wrapper {
+  box-shadow: none;
+}
+
+.zero-balance-wrap h1 {
+  color: black;
+}
+
+.zero-balance-wrap img {
+  transform: translateY(-20px);
+}
+
+@media only screen and (max-width: 600px) {
+  .zero-balance-wrap img {
+    width: 100vw;
+  }
+}
+
+.balance-actions-menu {
+  width: 180px;
+  /* background-color: #ececec; */
+}
+
+thead {
+  display: none !important;
+}
