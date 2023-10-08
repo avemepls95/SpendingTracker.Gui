@@ -3,6 +3,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, EMPTY } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import {GetCategoriesResponseItem} from "./Contracts/GetCategoriesResponseItem";
+import {GetSpendingsResponseItem} from "./Contracts/GetSpendingsResponseItem";
+import {Spending} from "../Models/Spending";
+import {GetAllCurrenciesResponseItem} from "./Contracts/GetAllCurrenciesResponseItem";
 
 
 @Injectable({
@@ -16,18 +19,12 @@ export class SpendingApiService {
     this.apiBaseUrl = environment.spendingApi;
   }
 
-  getUsersSuggestion(query: string): Observable<any> {
-    if (!query)
-      return EMPTY;
-
-    const params = new HttpParams()
-      .set('query', query);
-
-    return this.http.get(this.apiBaseUrl + 'users/search', { params });
-  }
-
   getCategories(): Observable<GetCategoriesResponseItem[]> {
     return this.http.get(this.apiBaseUrl + 'v1/category/list') as Observable<GetCategoriesResponseItem[]>;
+  }
+
+  getSpendings(): Observable<GetSpendingsResponseItem[]> {
+    return this.http.get(this.apiBaseUrl + 'v1/spending/list') as Observable<GetSpendingsResponseItem[]>;
   }
 
   createCategory(title: string) {
@@ -47,10 +44,30 @@ export class SpendingApiService {
       throw Error("Внутренная ошибка. Пустой идентификатор категории.");
 
     return this.http.post(
-        this.apiBaseUrl + 'v1/category/delete',
+        this.apiBaseUrl + 'v1/spending/delete',
         {
           id: id
         }
     );
+  }
+
+  updateSpending(spending: Spending){
+    if (!spending || !spending.id)
+      throw Error("Внутренная ошибка. Пустая трата.");
+
+    return this.http.post(
+      this.apiBaseUrl + 'v1/spending/update',
+      {
+        id: spending.id,
+        amount: spending.amount,
+        currencyId: spending.currencyId,
+        date: spending.date,
+        description: spending.description
+      }
+    );
+  }
+
+  getAllCurrencies(): Observable<GetAllCurrenciesResponseItem[]> {
+    return this.http.get(this.apiBaseUrl + 'v1/currency/list') as Observable<GetAllCurrenciesResponseItem[]>;
   }
 }

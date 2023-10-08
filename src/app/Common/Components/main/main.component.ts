@@ -1,30 +1,26 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { LocalStorageManager } from 'src/app/LocalStorageManager';
-import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatBottomSheet } from '@angular/material/bottom-sheet';
-import { LoaderService } from '../../Services/loader.service';
 import {AuthService} from "../../Auth/Services/auth.service";
+import {MenuItem} from "./MenuItem";
 
 @Component({
   selector: 'app-main',
   templateUrl: './main.component.html',
-  styleUrls: ['./main.component.css']
+  styleUrls: ['./main.component.scss']
 })
 export class MainComponent implements OnInit {
   title: string = 'Balance';
   userFirstName: string;
   avatarUrl: string;
-  languagesIcons = [];
+  menuItems: MenuItem[] = [
+    { route: '/spending', text: 'Траты', icon: '' },
+    { route: '/categories', text: 'Мои категории', icon: '' },
+  ]
 
   constructor(
     private router: Router,
     private authService: AuthService,
-    private loaderService: LoaderService,
-    private dialog: MatDialog,
-    snackbar: MatSnackBar,
-    private _bottomSheet: MatBottomSheet
   ) {
 
     // @ts-ignore

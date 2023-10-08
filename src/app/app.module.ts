@@ -16,7 +16,13 @@ import {JWT_OPTIONS, JwtHelperService} from "@auth0/angular-jwt";
 import {TokenInterceptor} from "./Common/Interceptors/token.interceptor";
 import {ConfirmDialogComponent} from "./Common/Components/confirm-dialog/confirm-dialog.component";
 import {CreateCategoryCardComponent} from "./Domain/Components/create-category-card/create-category-card.component";
-import {FormsModule} from "@angular/forms";
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
+import { SpendingsComponent } from './Domain/Components/spendings/spendings.component';
+import { SpendingCardComponent } from './Domain/Components/spending-card/spending-card.component';
+import {MaskDirective} from "./Common/Directives/mask.directive";
+import {NgxMatSelectSearchModule} from "ngx-mat-select-search";
+import {MatSelectModule} from "@angular/material/select";
+import {MAT_DATE_LOCALE} from "@angular/material/core";
 
 @NgModule({
   declarations: [
@@ -26,8 +32,12 @@ import {FormsModule} from "@angular/forms";
     LoaderComponent,
     MainComponent,
     CategoriesComponent,
+    SpendingsComponent,
     ConfirmDialogComponent,
-    CreateCategoryCardComponent
+    CreateCategoryCardComponent,
+    SpendingsComponent,
+    SpendingCardComponent,
+    MaskDirective,
   ],
   imports: [
     BrowserModule,
@@ -35,13 +45,17 @@ import {FormsModule} from "@angular/forms";
     BrowserAnimationsModule,
     DemoMaterialModule,
     HttpClientModule,
-    FormsModule
+    FormsModule,
+    MatSelectModule,
+    NgxMatSelectSearchModule,
+    ReactiveFormsModule
   ],
   providers: [
       LoaderService,
       JwtHelperService,
       { provide: JWT_OPTIONS, useValue: JWT_OPTIONS },
       { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
+      { provide: MAT_DATE_LOCALE, useValue: 'en-GB' }
   ],
   bootstrap: [AppComponent]
 })
