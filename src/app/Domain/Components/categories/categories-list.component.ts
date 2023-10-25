@@ -14,12 +14,12 @@ import {
 
 @Component({
   selector: 'app-categories',
-  templateUrl: './categories.component.html',
-  styleUrls: ['./categories.component.scss']
+  templateUrl: './categories-list.component.html',
+  styleUrls: ['./categories-list.component.scss']
 })
-export class CategoriesComponent {
+export class CategoriesListComponent {
     dataSource: MatTableDataSource<Category>;
-    categories: Category[] = [];
+    categories: Category[];
 
     displayedColumns: string[] = ['title', 'actions'];
 

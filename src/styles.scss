@@ -129,9 +129,10 @@ td {
   font-size: xx-large;
 }
 
-.icon-font-large {
+.mat-icon.icon-font-large {
   font-size: xx-large;
-  transform: translateX(-4px);
+  height: 30px;
+  width: 30px;
 }
 
 .mat-tooltip {
@@ -144,6 +145,10 @@ td {
 
 .w-48 {
   width: 48% !important;
+}
+
+.white-icon {
+  color: white;
 }
 
 /* Chrome, Safari, Edge, Opera */
@@ -159,3 +164,9 @@ input[type=number] {
 }
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+.content-in-center {
+  display: flex;
+  justify-content: center; /* align horizontal */
+  align-items: center; /* align vertical */
+}

@@ -1,4 +1,4 @@
-import {Currency} from "./Currency";
+import {Category} from "./Category";
 
 export class Spending {
   id: string;
@@ -7,6 +7,7 @@ export class Spending {
   createDate: Date;
   date: Date;
   description: string;
+  categories: Category[];
 
   public constructor(
     fields?: {
@@ -16,6 +17,7 @@ export class Spending {
       createDate?: Date,
       date?: Date,
       description?: string,
+      categories: Category[]
     }) {
     if (fields) Object.assign(this, fields);
   }

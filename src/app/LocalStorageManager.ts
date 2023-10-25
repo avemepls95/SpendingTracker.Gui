@@ -9,6 +9,8 @@ export class LocalStorageManager {
     static userLocalNameKey = 'userLocalName';
     static userPhotoUrlKey = 'userPhotoUrl';
     static tokenKey = 'token';
+    static tokenExpireDateKey = 'tokenExpireDate';
+    static refreshTokenKey = 'refreshToken';
 
     private static authFieldsKeys = [
         LocalStorageManager.userFirstNameKey,

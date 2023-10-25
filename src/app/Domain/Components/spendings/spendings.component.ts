@@ -1,4 +1,4 @@
-import {Component, ElementRef, ViewChild} from '@angular/core';
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {MatDialog, MatDialogRef} from "@angular/material/dialog";
 import {MatTableDataSource} from "@angular/material/table";
 import {SpendingApiService} from "../../Services/spending-api.service";
@@ -17,21 +17,31 @@ import {forkJoin} from "rxjs";
 import {Currency} from "../../Models/Currency";
 import {CurrencyMapper} from "../../../Converters/CurrencyMapper";
 import {GetAllCurrenciesResponseItem} from "../../Services/Contracts/GetAllCurrenciesResponseItem";
+import {animate, state, style, transition, trigger} from "@angular/animations";
 
 @Component({
   selector: 'app-spendings',
   templateUrl: './spendings.component.html',
-  styleUrls: ['./spendings.component.scss']
+  styleUrls: ['./spendings.component.scss'],
+  animations: [
+    trigger('detailExpand', [
+      state('collapsed', style({height: '0px', minHeight: '0'})),
+      state('expanded', style({height: '*'})),
+      transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
+    ]),
+  ],
 })
-export class SpendingsComponent {
+export class SpendingsComponent implements OnInit{
 
   dataSource: MatTableDataSource<Spending>;
-  spendings: Spending[] = [];
+  spendings: Spending[];
   currencies: Currency[] = [];
 
   currencyMap = new Map<string, Currency>();
 
-  displayedColumns: string[] = ['date', 'amount', 'description', 'currencyCode', 'actions'];
+  displayedColumns: string[] = ['show-category', 'date', 'amount', 'description', 'currencyCode', 'actions'];
+
+  expandedElement: Spending | null;
 
   protected readonly FlagEmojiiConverter = FlagEmojiiConverter;
 
@@ -41,7 +51,6 @@ export class SpendingsComponent {
     private dialog: MatDialog,
     private copyUtils: CopyUtils
   ) {
-    this.loadData();
   }
 
   loadData(){
@@ -147,5 +156,9 @@ export class SpendingsComponent {
           this.dataSource.data = this.spendings;
         }
       );
+  }
+
+  ngOnInit(): void {
+    this.loadData();
   }
 }

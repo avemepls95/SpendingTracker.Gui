@@ -1,3 +1,5 @@
+import {CategoryDto} from "./CategoryDto";
+
 export class GetSpendingsResponseItem {
     id: string;
     amount: number;
@@ -5,4 +7,5 @@ export class GetSpendingsResponseItem {
     createDate: Date;
     date: Date;
     description: string;
+    categories: CategoryDto[];
 }

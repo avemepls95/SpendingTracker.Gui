@@ -42,7 +42,7 @@ export class AuthComponent implements OnInit {
   }
 
   loginSuccessful({response}: { response: AuthByTelegramResponse }) {
-    this.authService.setToken(response.tokenInformation.accessToken);
+    this.authService.saveTokenInformation(response.tokenInformation);
     LocalStorageManager.setUserLocalInformation(response.id);
 
     this.ngZone.run(() => this.router.navigate(['/main']));

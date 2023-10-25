@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, EMPTY } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import {GetCategoriesResponseItem} from "./Contracts/GetCategoriesResponseItem";
 import {GetSpendingsResponseItem} from "./Contracts/GetSpendingsResponseItem";
 import {Spending} from "../Models/Spending";
 import {GetAllCurrenciesResponseItem} from "./Contracts/GetAllCurrenciesResponseItem";
+import {CategoryDto} from "./Contracts/CategoryDto";
 
 
 @Injectable({
@@ -19,8 +19,8 @@ export class SpendingApiService {
     this.apiBaseUrl = environment.spendingApi;
   }
 
-  getCategories(): Observable<GetCategoriesResponseItem[]> {
-    return this.http.get(this.apiBaseUrl + 'v1/category/list') as Observable<GetCategoriesResponseItem[]>;
+  getCategories(): Observable<CategoryDto[]> {
+    return this.http.get(this.apiBaseUrl + 'v1/category/list') as Observable<CategoryDto[]>;
   }
 
   getSpendings(): Observable<GetSpendingsResponseItem[]> {
@@ -44,7 +44,7 @@ export class SpendingApiService {
       throw Error("Внутренная ошибка. Пустой идентификатор категории.");
 
     return this.http.post(
-        this.apiBaseUrl + 'v1/spending/delete',
+        this.apiBaseUrl + 'v1/category/delete',
         {
           id: id
         }

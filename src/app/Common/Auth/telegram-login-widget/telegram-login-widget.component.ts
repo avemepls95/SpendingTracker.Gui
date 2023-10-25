@@ -55,7 +55,7 @@ export class TelegramLoginWidget implements AfterViewInit {
   private loginViaTelegram(loginData: FromTelegramAuthDto) {
     this.loginStarted.emit();
 
-    this.authService.loginViaTelegram(CommonDtoMapper.getTelegramAuthDto(loginData))
+    this.authService.generateTokenByTelegramAuth(CommonDtoMapper.getTelegramAuthDto(loginData))
       .pipe(
         finalize(() => {
           this.loginEnded.emit()

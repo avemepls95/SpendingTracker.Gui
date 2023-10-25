@@ -141,6 +141,7 @@ mat-sidenav-content {
 
 .refresh-button {
   margin-right: 10px;
+  color: white;
 }
 
 @media only screen and (max-width: 600px) {
@@ -167,4 +168,8 @@ mat-sidenav-content {
 .list-item-active {
   font-weight: bold;
   color: orange !important;
+}
+
+.nav-list-icon {
+  margin-right: 10px;
 }

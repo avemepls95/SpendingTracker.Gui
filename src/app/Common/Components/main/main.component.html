@@ -1,9 +1,9 @@
 <!--<ng2-slim-loading-bar color="blue"></ng2-slim-loading-bar>-->
 
-<mat-toolbar color="primary">
+<mat-toolbar style="background-color: #3d3e49">
   <mat-toolbar-row>
     <div class="flex-v-center">
-      <button mat-icon-button (click)="sidenav.toggle()" onclick="this.blur()">
+      <button mat-icon-button style="color: white;" (click)="sidenav.toggle()" onclick="this.blur()">
         <mat-icon>menu</mat-icon>
       </button>
       <span class="menu-spacer"></span>
@@ -14,7 +14,7 @@
         <mat-icon class="icon-font-large">refresh</mat-icon>
       </button>
       <div class="flex-h-space-between avatar-firstname-block" [matMenuTriggerFor]="dropdownMenu">
-        <label>{{userFirstName}}</label>
+        <label style="color: white; margin-right: 7px">{{userFirstName}}</label>
         <mat-card class="avatar-card">
           <div mat-card-avatar class="avatar-header-image"
                [ngStyle]="{'background-image':'url('+avatarUrl+')'}"></div>
@@ -35,8 +35,10 @@
           [attr.tabindex]="routerLinkActiveInstance.isActive ? 0 : -1"
           [class.list-item-active]="routerLinkActiveInstance.isActive"
           [routerLink]="[item.route]">
-          <mat-icon matListIcon class="nav-list-icon">{{item.icon}}</mat-icon>
-          {{item.text}}
+          <div style="display: flex">
+            <mat-icon class="nav-list-icon">{{item.icon}}</mat-icon>
+            {{item.text}}
+          </div>
         </mat-list-item>
       </div>
 
