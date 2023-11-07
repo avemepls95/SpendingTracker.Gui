@@ -10,12 +10,12 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {DemoMaterialModule} from "./material-module";
 import {LoaderService} from "./Common/Services/loader.service";
 import {MainComponent} from "./Common/Components/main/main.component";
-import { CategoriesListComponent } from './Domain/Components/categories/categories-list.component';
+import { CategoriesListComponent } from './Domain/Components/Category/categories-list/categories-list.component';
 import {HTTP_INTERCEPTORS, HttpClientModule} from "@angular/common/http";
 import {JWT_OPTIONS, JwtHelperService} from "@auth0/angular-jwt";
 import {TokenInterceptor} from "./Common/Interceptors/token.interceptor";
 import {ConfirmDialogComponent} from "./Common/Components/confirm-dialog/confirm-dialog.component";
-import {CreateCategoryCardComponent} from "./Domain/Components/create-category-card/create-category-card.component";
+import {CreateCategoryCardComponent} from "./Domain/Components/Category/create-category-card/create-category-card.component";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import { SpendingsComponent } from './Domain/Components/spendings/spendings.component';
 import { SpendingCardComponent } from './Domain/Components/spending-card/spending-card.component';
@@ -24,7 +24,7 @@ import {NgxMatSelectSearchModule} from "ngx-mat-select-search";
 import {MatSelectModule} from "@angular/material/select";
 import {MAT_DATE_LOCALE} from "@angular/material/core";
 import {ResponseInterceptor} from "./Common/Interceptors/Response/response.interceptor";
-import { CategoriesTreeComponent } from './Domain/Components/categories-tree/categories-tree.component';
+import { CategoriesTreeComponent } from './Domain/Components/Category/categories-tree/categories-tree.component';
 
 @NgModule({
   declarations: [

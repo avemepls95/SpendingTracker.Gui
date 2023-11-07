@@ -15,7 +15,7 @@ export class MainComponent implements OnInit {
   avatarUrl: string;
   menuItems: MenuItem[] = [
     { route: '/spending', text: 'Траты', icon: 'money_off' },
-    { route: '/categories', text: 'Мои категории', icon: 'folder_shared' },
+    { route: '/categories-list', text: 'Мои категории', icon: 'folder_shared' },
   ]
 
   constructor(

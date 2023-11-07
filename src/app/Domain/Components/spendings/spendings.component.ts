@@ -1,4 +1,4 @@
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild} from '@angular/core';
 import {MatDialog, MatDialogRef} from "@angular/material/dialog";
 import {MatTableDataSource} from "@angular/material/table";
 import {SpendingApiService} from "../../Services/spending-api.service";
@@ -16,8 +16,10 @@ import {FlagEmojiiConverter} from "../../Models/FlagEmojiiConverter";
 import {forkJoin} from "rxjs";
 import {Currency} from "../../Models/Currency";
 import {CurrencyMapper} from "../../../Converters/CurrencyMapper";
-import {GetAllCurrenciesResponseItem} from "../../Services/Contracts/GetAllCurrenciesResponseItem";
 import {animate, state, style, transition, trigger} from "@angular/animations";
+import {Category} from "../../Models/Category";
+import {CategoryMapper} from "../../../Converters/CategoryMapper";
+import {AuthByTelegramResponse} from "../../../Common/Auth/Contracts/AuthByTelegramResponse";
 
 @Component({
   selector: 'app-spendings',
@@ -31,17 +33,20 @@ import {animate, state, style, transition, trigger} from "@angular/animations";
     ]),
   ],
 })
-export class SpendingsComponent implements OnInit{
+export class SpendingsComponent implements OnInit, AfterViewInit {
 
   dataSource: MatTableDataSource<Spending>;
   spendings: Spending[];
   currencies: Currency[] = [];
+  categoriesForSelect: Category[] = [];
 
   currencyMap = new Map<string, Currency>();
 
   displayedColumns: string[] = ['show-category', 'date', 'amount', 'description', 'currencyCode', 'actions'];
 
-  expandedElement: Spending | null;
+  expandedElements: string[] = [];
+
+  spendingsCategoriesExpandingStates: { [id: string]: { [id: string]: boolean } } = {};
 
   protected readonly FlagEmojiiConverter = FlagEmojiiConverter;
 
@@ -160,5 +165,38 @@ export class SpendingsComponent implements OnInit{
 
   ngOnInit(): void {
     this.loadData();
+  }
+
+  ngAfterViewInit(): void {
+    this.spendingApiService.getCategories().pipe(
+    ).subscribe(
+      (response) => {
+        this.categoriesForSelect = response.map(c => CategoryMapper.convertFromDto(c));
+      },
+      (error) => console.error(error)
+    );
+  }
+
+  toggleExpand(spending: Spending) {
+    let expandedSpendingId = this.expandedElements.find(id => id == spending.id);
+    if (!!expandedSpendingId){
+      let index = this.expandedElements.indexOf(expandedSpendingId);
+      this.expandedElements.splice(index, 1);
+    } else {
+      this.expandedElements.push(spending.id);
+    }
+  }
+
+  onCategoriesUpdated({response}: { response: any }) {
+    this.spendingsCategoriesExpandingStates[response.spendingId] = response.categoriesExpandingStates;
+    this.loaderService.show();
+    this.spendingApiService.getSpendings().pipe(
+    ).subscribe(
+      (response) => {
+        this.spendings = response.map(s => SpendingMapper.convertFromDto(s));
+        this.dataSource = new MatTableDataSource(this.spendings);
+      },
+      (error) => console.error(error)
+    );
   }
 }

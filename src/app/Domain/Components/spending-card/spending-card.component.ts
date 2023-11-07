@@ -1,6 +1,6 @@
 import {Component, Inject, OnDestroy, OnInit, Optional, ViewChild} from '@angular/core';
 import {Spending} from "../../Models/Spending";
-import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material/dialog";
+import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
 import {Currency} from "../../Models/Currency";
 import {FormControl} from "@angular/forms";
 import {ReplaySubject, Subject, takeUntil} from "rxjs";
@@ -17,16 +17,15 @@ export class SpendingCardComponent implements OnInit, OnDestroy {
   selectedCurrencyId: string;
   currencies: Currency[] = [];
 
-  public bankCtrl: FormControl = new FormControl();
-  public bankFilterCtrl: FormControl = new FormControl();
+  public cuurencyCtrl: FormControl = new FormControl();
+  public currencyFilterCtrl: FormControl = new FormControl();
   protected _onDestroy = new Subject<void>();
-  public filteredBanks: ReplaySubject<Currency[]> = new ReplaySubject<Currency[]>(1);
+  public filteredCurrencies: ReplaySubject<Currency[]> = new ReplaySubject<Currency[]>(1);
   @ViewChild('singleSelect') singleSelect: MatSelect;
 
   constructor(
     public dialogRef: MatDialogRef<SpendingCardComponent>,
     @Optional() @Inject(MAT_DIALOG_DATA) public data: any,
-    public dialog: MatDialog
     // private spendingApiService: SpendingApiService
   ) {
     this.spending = new Spending(data.spending);
@@ -36,10 +35,10 @@ export class SpendingCardComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     // load the initial bank list
-    this.filteredBanks.next(this.currencies.slice());
+    this.filteredCurrencies.next(this.currencies.slice());
 
     // listen for search field value changes
-    this.bankFilterCtrl.valueChanges
+    this.currencyFilterCtrl.valueChanges
       .pipe(takeUntil(this._onDestroy))
       .subscribe(() => {
         this.filterBanks();
@@ -77,15 +76,15 @@ export class SpendingCardComponent implements OnInit, OnDestroy {
       return;
     }
     // get the search keyword
-    let search = this.bankFilterCtrl.value;
+    let search = this.currencyFilterCtrl.value;
     if (!search) {
-      this.filteredBanks.next(this.currencies.slice());
+      this.filteredCurrencies.next(this.currencies.slice());
       return;
     } else {
       search = search.toLowerCase();
     }
     // filter the banks
-    this.filteredBanks.next(
+    this.filteredCurrencies.next(
       this.currencies.filter(bank => bank.code.toLowerCase().indexOf(search) > -1)
     );
   }

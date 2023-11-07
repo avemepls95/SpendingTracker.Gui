@@ -1,19 +1,19 @@
 import { Component } from '@angular/core';
-import {LoaderService} from "../../../Common/Services/loader.service";
+import {LoaderService} from "../../../../Common/Services/loader.service";
 import {MatDialog} from "@angular/material/dialog";
 import {finalize} from "rxjs/operators";
-import {SpendingApiService} from "../../Services/spending-api.service";
+import {SpendingApiService} from "../../../Services/spending-api.service";
 import {MatTableDataSource} from "@angular/material/table";
-import {Category} from "../../Models/Category";
-import {CategoryMapper} from "../../../Converters/CategoryMapper";
+import {Category} from "../../../Models/Category";
+import {CategoryMapper} from "../../../../Converters/CategoryMapper";
 import {CreateCategoryCardComponent} from "../create-category-card/create-category-card.component";
 import {
     ConfirmDialogComponent,
     ConfirmDialogModel
-} from "../../../Common/Components/confirm-dialog/confirm-dialog.component";
+} from "../../../../Common/Components/confirm-dialog/confirm-dialog.component";
 
 @Component({
-  selector: 'app-categories',
+  selector: 'app-categories-list',
   templateUrl: './categories-list.component.html',
   styleUrls: ['./categories-list.component.scss']
 })

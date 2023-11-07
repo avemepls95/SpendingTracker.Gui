@@ -13,9 +13,9 @@
         <td mat-cell *matCellDef="let spending" class="row-actions-td">
           <div (click)="$event.stopPropagation()">
             <button mat-icon-button
-                    (click)="expandedElement = expandedElement === spending ? null : spending"
+                    (click)="toggleExpand(spending)"
                     matTooltip="Раскрыть категории">
-              <mat-icon>{{expandedElement === spending ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}}</mat-icon>
+              <mat-icon>{{expandedElements.includes(spending.id) ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}}</mat-icon>
             </button>
           </div>
         </td>
@@ -58,16 +58,22 @@
       <ng-container matColumnDef="expandedDetail">
         <td mat-cell *matCellDef="let spending" [attr.colspan]="displayedColumns.length">
           <div class="example-element-detail"
-               [@detailExpand]="spending == expandedElement ? 'expanded' : 'collapsed'">
-            <app-categories-tree [categories]=spending.categories></app-categories-tree>
+               [@detailExpand]="expandedElements.includes(spending.id) ? 'expanded' : 'collapsed'">
+            <app-categories-tree
+              [treeCategories]=spending.categories
+              [categoriesForSelect]=categoriesForSelect
+              [spendingId]="spending.id"
+              [expandingStates]="spendingsCategoriesExpandingStates[spending.id]"
+              (categoriesUpdated)="onCategoriesUpdated({ response : $event })"></app-categories-tree>
           </div>
         </td>
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let spending; columns: displayedColumns;"
-          [class.example-expanded-row]="expandedElement === spending"
-      (click)="openSpendingCard(spending)">
+          [class.example-expanded-row]="expandedElements.includes(spending.id)"
+          (click)="openSpendingCard(spending)"
+          class="spending-row">
       </tr>
       <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="example-detail-row"></tr>
     </table>

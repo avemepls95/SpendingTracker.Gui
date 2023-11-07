@@ -1,4 +1,4 @@
-<mat-card class="content-card" *ngIf="categories.length != 0">
+<mat-card class="content-card" *ngIf="!!categories && categories.length != 0">
   <mat-card-header class="content-in-center">
     <mat-card-title class="categories-list-header">Мои категории трат</mat-card-title>
   </mat-card-header>
@@ -49,7 +49,7 @@
 
 </mat-card>
 
-<div class="zero-balance-wrap" *ngIf="categories.length == 0">
+<div class="zero-balance-wrap" *ngIf="!!categories && categories.length == 0">
   <h1>Список категорий пуст. Самое время добавить первую!</h1>
   <button class="process-check-button" mat-button (click)="createCategory()" mat-flat-button>
     <mat-icon mat-list-icon color="primary" class='process-check-icon'>refresh</mat-icon>

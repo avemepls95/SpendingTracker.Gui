@@ -1,0 +1,108 @@
+<div [ngClass]="treeCategories.length != 0 ? 'add-first-root-category-button-wrap' : ''">
+  <button
+    class="add-root-category-button"
+    mat-button
+    (click)="addRootCategories()"
+    mat-flat-button
+    [disabled]="isAddingToCategoryInProcess()">
+    <mat-icon color="primary" class='process-check-icon'>add</mat-icon>
+    <span class="process">Добавить в категорию</span>
+  </button>
+</div>
+
+<mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
+  <!-- This is the tree node template for leaf nodes -->
+  <mat-tree-node *matTreeNodeDef="let categoryNode" matTreeNodePadding>
+    <!-- use a disabled button to provide padding for tree leaf -->
+    <div *ngIf="!!categoryNode.id" style="display: contents;">
+      <button mat-icon-button disabled></button>
+      {{categoryNode.name}}
+      <button mat-icon-button
+              (click)="addParent(categoryNode)"
+              matTooltip="Добавить в родительскую категорию"
+              class="icon-button"
+              [disabled]="isAddingToCategoryInProcess()">
+        <mat-icon>add</mat-icon>
+      </button>
+      <button mat-icon-button
+              (click)="categoryNode.level == 0 ? removeSpendingFromCategory(categoryNode) : removeCategoryFromParent(categoryNode)"
+              [matTooltip]="categoryNode.level == 0 ? 'Удалить трату из категории' : 'Удалить категорию из родительской'"
+              class="icon-button"
+              [disabled]="isAddingToCategoryInProcess()">
+        <mat-icon class="red">remove_circle</mat-icon>
+      </button>
+    </div>
+    <div *ngIf="!categoryNode.id" class="inputCategory">
+<!--      <mat-form-field appearance="fill">-->
+<!--        <mat-label>Валюта</mat-label>-->
+<!--        <mat-select #singleSelect>-->
+<!--          <mat-option>-->
+<!--            <ngx-mat-select-search ></ngx-mat-select-search>-->
+<!--          </mat-option>-->
+<!--&lt;!&ndash;          <mat-option *ngFor="let currency of filteredCurrencies | async" [value]="currency.id">&ndash;&gt;-->
+<!--&lt;!&ndash;            {{currency.code}}&ndash;&gt;-->
+<!--&lt;!&ndash;          </mat-option>&ndash;&gt;-->
+<!--        </mat-select>-->
+<!--      </mat-form-field>-->
+      <mat-form-field class="example-full-width" appearance="outline">
+        <div>
+          <input type="text"
+                 placeholder="Название"
+                 matInput
+                 [formControl]="newOrExistCategoryInput"
+                 [matAutocomplete]="auto">
+          <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" [displayWith]="displayFn.bind(categoryNode)">
+            <mat-option *ngFor="let filteredCategory of filteredCategories | async"
+                        [value]="filteredCategory"
+                        [ngClass]="_allowSelection(filteredCategory.title)">
+              {{filteredCategory.title}}
+            </mat-option>
+          </mat-autocomplete>
+        </div>
+      </mat-form-field>
+      <div class="adding-to-parent-category-buttons">
+        <button mat-icon-button
+                class="icon-button adding-to-parent-category-button"
+                [disabled]="!newOrExistCategoryInput.value"
+                (click)="categoryNode.level == 0
+                  ? addSpendingToExistCategory(newOrExistCategoryInput.value!)
+                  : addCategoryToExistParent(categoryNode.childId, newOrExistCategoryInput.value!)"
+                matTooltip="Сохранить">
+          <mat-icon class="green">check_circle</mat-icon>
+        </button>
+        <button mat-icon-button
+                (click)="cancelAddingToParent(categoryNode.childId)"
+                matTooltip="Отмена"
+                class="icon-button">
+          <mat-icon class="red">cancel</mat-icon>
+        </button>
+      </div>
+
+    </div>
+  </mat-tree-node>
+  <!-- This is the tree node template for expandable nodes -->
+  <mat-tree-node *matTreeNodeDef="let categoryNode; when: hasChild" matTreeNodePadding>
+    <button mat-icon-button class="icon-button" matTreeNodeToggle
+            [attr.aria-label]="'Toggle ' + categoryNode.name"
+            (click)="expandingStates[categoryNode.id] = treeControl.isExpanded(categoryNode)">
+      <mat-icon class="mat-icon-rtl-mirror">
+        {{treeControl.isExpanded(categoryNode) ? 'expand_more' : 'chevron_right'}}
+      </mat-icon>
+    </button>
+    {{categoryNode.name}}
+    <button mat-icon-button
+            (click)="addParent(categoryNode)"
+            matTooltip="Добавить в родительскую категорию"
+            class="icon-button"
+            [disabled]="isAddingToCategoryInProcess()">
+      <mat-icon>add</mat-icon>
+    </button>
+    <button mat-icon-button
+            (click)="categoryNode.level == 0 ? removeSpendingFromCategory(categoryNode) : removeCategoryFromParent(categoryNode)"
+            [matTooltip]="categoryNode.level == 0 ? 'Удалить трату из категории' : 'Удалить категорию из родительской'"
+            class="icon-button"
+            [disabled]="isAddingToCategoryInProcess()">
+      <mat-icon class="red">remove_circle</mat-icon>
+    </button>
+  </mat-tree-node>
+</mat-tree>

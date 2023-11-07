@@ -1,6 +1,6 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
-import { Category } from "../../Models/Category";
+import { Category } from "../../../Models/Category";
 
 @Component({
   selector: 'app-create-category-card',

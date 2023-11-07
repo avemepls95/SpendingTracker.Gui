@@ -4,7 +4,9 @@ import {CategoryDto} from "../Domain/Services/Contracts/CategoryDto";
 
 export class CategoryMapper {
     static convertFromDto(dto: CategoryDto): Category {
-      let parents = dto.parents.map(p => this.ProcessCategory(p));
+      let parents = !dto.parents
+        ? []
+        : dto.parents.map(p => this.ProcessCategory(p));
 
       return new Category({
         id: dto.id,
