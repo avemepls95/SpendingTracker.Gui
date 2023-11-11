@@ -1,15 +1,3 @@
-<div [ngClass]="treeCategories.length != 0 ? 'add-first-root-category-button-wrap' : ''">
-  <button
-    class="add-root-category-button"
-    mat-button
-    (click)="addRootNodeCategory()"
-    mat-flat-button
-    [disabled]="isAddingToCategoryInProcess()">
-    <mat-icon color="primary" class='process-check-icon'>add</mat-icon>
-    <span class="process">Добавить в категорию</span>
-  </button>
-</div>
-
 <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
   <!-- This is the tree node template for leaf nodes -->
   <mat-tree-node *matTreeNodeDef="let categoryNode" matTreeNodePadding>
@@ -104,3 +92,15 @@
     </button>
   </mat-tree-node>
 </mat-tree>
+
+<div [ngClass]="treeCategories.length != 0 ? 'add-first-root-category-button-wrap' : ''">
+  <button
+    class="add-root-category-button"
+    mat-button
+    (click)="addRootNodeCategory()"
+    mat-flat-button
+    [disabled]="isAddingToCategoryInProcess()">
+    <mat-icon color="primary" class='process-check-icon'>add</mat-icon>
+    <span class="process">Добавить в категорию</span>
+  </button>
+</div>

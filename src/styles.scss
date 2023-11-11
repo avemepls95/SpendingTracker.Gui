@@ -73,33 +73,30 @@ td {
   justify-content: flex-end;
 }
 
-.snackbar {
-  width: auto;
-  padding-left: 5rem !important;
-  padding-right: 5rem !important;
-  max-width: initial !important;
-  min-width: initial !important;
-}
-
-.snackbar .mat-button {
-  color: antiquewhite;
+.mat-mdc-snack-bar-container .mdc-snackbar__surface {
+  min-width: fit-content !important;
+  max-width: none !important;
 }
 
 .snackbar-default {
-  background: #323232 !important;
+  --mdc-snackbar-container-color: #323232 !important;
 }
 .snackbar-error {
-  background: orangered !important;
+  --mdc-snackbar-container-color: orangered !important;
+
+  .mat-mdc-button {
+    color: black !important;
+  }
 }
 .snackbar-success {
-  background: mediumseagreen !important;
+  --mdc-snackbar-container-color: mediumseagreen !important;
 }
 .snackbar-information {
-  background: #ffff89 !important;
+  --mdc-snackbar-container-color: #ffff89 !important;
   color: #000000b8 !important;
 }
 .snackbar-information .mat-button {
-  color: black !important;
+  --mdc-snackbar-container-color: black !important;
 }
 
 .position-dialog {

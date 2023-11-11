@@ -10,7 +10,7 @@
 }
 
 .mat-tree-node:first-of-type {
-  padding: 0;
+  padding: 5px 0 0 0;
 }
 
 .mat-tree {
@@ -82,6 +82,7 @@ button:disabled {
 .add-first-root-category-button-wrap {
   display: flex;
   padding-left: 45px;
+  margin-bottom: 5px;
 
   span {
     font-size: 15px;
