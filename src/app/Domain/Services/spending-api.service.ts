@@ -23,8 +23,12 @@ export class SpendingApiService {
     return this.http.get(this.apiBaseUrl + 'v1/category/list') as Observable<CategoryDto[]>;
   }
 
-  getSpendings(): Observable<GetSpendingsResponseItem[]> {
-    return this.http.get(this.apiBaseUrl + 'v1/spending/list') as Observable<GetSpendingsResponseItem[]>;
+  getSpendings(offset: number, count: number): Observable<GetSpendingsResponseItem[]> {
+    const params = new HttpParams()
+      .set('offset', offset.toString())
+      .set('limit', count.toString());
+
+    return this.http.get(this.apiBaseUrl + 'v1/spending/list', { params }) as Observable<GetSpendingsResponseItem[]>;
   }
 
   createCategory(title: string) {

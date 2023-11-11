@@ -25,6 +25,8 @@ import {MatSelectModule} from "@angular/material/select";
 import {MAT_DATE_LOCALE} from "@angular/material/core";
 import {ResponseInterceptor} from "./Common/Interceptors/Response/response.interceptor";
 import { CategoriesTreeComponent } from './Domain/Components/Category/categories-tree/categories-tree.component';
+import {NgxSpinnerModule} from "ngx-spinner";
+import {InfiniteScrollModule} from "ngx-infinite-scroll";
 
 @NgModule({
   declarations: [
@@ -50,7 +52,12 @@ import { CategoriesTreeComponent } from './Domain/Components/Category/categories
     FormsModule,
     MatSelectModule,
     NgxMatSelectSearchModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    InfiniteScrollModule,
+    NgxSpinnerModule.forRoot({ type: 'square-jelly-box' }),
+  ],
+  exports: [
+    NgxSpinnerModule
   ],
   providers: [
       LoaderService,

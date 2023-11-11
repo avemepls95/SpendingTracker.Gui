@@ -6,10 +6,20 @@ tr.example-detail-row {
   height: 0;
 }
 
+mat-card {
+  border: none !important;
+}
+
 .spending-row {
   cursor: pointer;
 }
 
 .categories-list-header {
   margin-bottom: 10px;
+}
+
+.search-results {
+  overflow-y: scroll;
+  overflow-x: hidden;
+  height: 100%;
 }

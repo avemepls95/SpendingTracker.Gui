@@ -96,7 +96,6 @@
 <div [ngClass]="treeCategories.length != 0 ? 'add-first-root-category-button-wrap' : ''">
   <button
     class="add-root-category-button"
-    mat-button
     (click)="addRootNodeCategory()"
     mat-flat-button
     [disabled]="isAddingToCategoryInProcess()">

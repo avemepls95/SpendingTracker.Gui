@@ -1,12 +1,12 @@
-<h1 mat-dialog-title>
-    {{title}}
-  </h1>
+<h1 mat-dialog-title style="text-align: center">
+  {{title}}
+</h1>
 
-  <div mat-dialog-content>
-    <p>{{message}}</p>
-  </div>
+<div mat-dialog-content>
+  <p>{{message}}</p>
+</div>
 
-  <div class="mat-dialog-actions">
-    <button mat-raised-button color="primary" (click)="onDismiss()">Нет</button>
-    <button mat-button (click)="onConfirm()">Да</button>
-  </div>
+<div class="mat-dialog-actions">
+  <button mat-raised-button color="primary" (click)="onDismiss()">Нет</button>
+  <button mat-button (click)="onConfirm()">Да</button>
+</div>

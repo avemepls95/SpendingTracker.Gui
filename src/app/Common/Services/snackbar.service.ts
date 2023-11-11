@@ -59,7 +59,7 @@ export class SnackbarService {
       backgroundColor: SnackBarColor.Information,
       message: message,
       action: closeText,
-      duration: 2000
+      duration: undefined
     }));
   }
 

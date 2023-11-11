@@ -93,10 +93,14 @@ td {
 }
 .snackbar-information {
   --mdc-snackbar-container-color: #ffff89 !important;
-  color: #000000b8 !important;
-}
-.snackbar-information .mat-button {
-  --mdc-snackbar-container-color: black !important;
+
+  .mat-mdc-snack-bar-label {
+    color: black !important;
+  }
+
+  .mat-mdc-button {
+    color: black !important;
+  }
 }
 
 .position-dialog {
@@ -114,7 +118,7 @@ td {
 }
 
 .content-card {
-  margin-top: 2vh;
+  margin-top: 1vh;
 }
 
 .mat-dialog-actions {

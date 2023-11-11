@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, HostListener, Input, OnInit, ViewChild} from '@angular/core';
 import {MatDialog, MatDialogRef} from "@angular/material/dialog";
 import {MatTableDataSource} from "@angular/material/table";
 import {SpendingApiService} from "../../Services/spending-api.service";
@@ -19,7 +19,7 @@ import {CurrencyMapper} from "../../../Converters/CurrencyMapper";
 import {animate, state, style, transition, trigger} from "@angular/animations";
 import {Category} from "../../Models/Category";
 import {CategoryMapper} from "../../../Converters/CategoryMapper";
-import {AuthByTelegramResponse} from "../../../Common/Auth/Contracts/AuthByTelegramResponse";
+import {NgxSpinnerService} from "ngx-spinner";
 
 @Component({
   selector: 'app-spendings',
@@ -48,19 +48,25 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
 
   spendingsCategoriesExpandingStates: { [id: string]: { [id: string]: boolean } } = {};
 
+  isLoading: boolean = false;
+  private recordsCountToShowInitially: number = 10;
+  private recordsCountToLoad: number = 10;
+  private loadedRecordsCount: number = 0;
+
   protected readonly FlagEmojiiConverter = FlagEmojiiConverter;
 
   constructor(
     private spendingApiService: SpendingApiService,
     private loaderService: LoaderService,
     private dialog: MatDialog,
-    private copyUtils: CopyUtils
+    private copyUtils: CopyUtils,
+    private spinner: NgxSpinnerService
   ) {
   }
 
-  loadData(){
+  loadData() {
     this.loaderService.show();
-    let spendingsObservable = this.spendingApiService.getSpendings();
+    let spendingsObservable = this.spendingApiService.getSpendings(0, this.recordsCountToShowInitially);
     let currenciesObservable = this.spendingApiService.getAllCurrencies();
 
     forkJoin([spendingsObservable, currenciesObservable])
@@ -71,16 +77,12 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
         responses => {
           this.spendings = responses[0].map(s => SpendingMapper.convertFromDto(s));
           this.dataSource = new MatTableDataSource(this.spendings);
+          this.loadedRecordsCount += responses[0].length;
 
           this.currencies = responses[1].map(s => CurrencyMapper.convertFromDto(s));
-
-          this.spendings.forEach(spending=> {
-            if (!this.currencyMap.has(spending.currencyId)){
-              let currency = this.currencies.find(c => c.id == spending.currencyId) as Currency;
-              this.currencyMap.set(spending.currencyId, currency);
-            }
+          this.currencies.forEach(currency => {
+            this.currencyMap.set(currency.id, currency);
           });
-
         },
         (error) => console.error(error)
       );
@@ -179,7 +181,7 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
 
   toggleExpand(spending: Spending) {
     let expandedSpendingId = this.expandedElements.find(id => id == spending.id);
-    if (!!expandedSpendingId){
+    if (!!expandedSpendingId) {
       let index = this.expandedElements.indexOf(expandedSpendingId);
       this.expandedElements.splice(index, 1);
     } else {
@@ -190,13 +192,45 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
   onCategoriesUpdated({response}: { response: any }) {
     this.spendingsCategoriesExpandingStates[response.spendingId] = response.categoriesExpandingStates;
     this.loaderService.show();
-    this.spendingApiService.getSpendings().pipe(
+    this.spendingApiService.getSpendings(0, this.loadedRecordsCount)
+      .pipe(finalize(() => this.loaderService.hide()))
+      .subscribe(
+        (response) => {
+          this.spendings = response.map(s => SpendingMapper.convertFromDto(s));
+          this.dataSource = new MatTableDataSource(this.spendings);
+        },
+        (error) => console.error(error)
+      );
+  }
+
+  onScroll(): void {
+    if (this.isLoading)
+      return;
+
+    this.isLoading = true;
+    this.spinner.show();
+
+    this.spendingApiService.getSpendings(this.loadedRecordsCount, this.recordsCountToLoad).pipe(
+      finalize(() => {
+        this.spinner.hide();
+        this.isLoading = false;
+      })
     ).subscribe(
       (response) => {
-        this.spendings = response.map(s => SpendingMapper.convertFromDto(s));
+        let responseSpendings = response.map(s => SpendingMapper.convertFromDto(s));
+        this.spendings = this.spendings.concat(responseSpendings);
         this.dataSource = new MatTableDataSource(this.spendings);
+        this.loadedRecordsCount += response.length;
+
+        this.showLoadMoreButton = false;
       },
       (error) => console.error(error)
     );
+  }
+
+  showLoadMoreButton: boolean = true;
+
+  loadMoreSpendings() {
+    this.onScroll();
   }
 }

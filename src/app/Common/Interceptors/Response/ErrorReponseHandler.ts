@@ -5,6 +5,7 @@ import {BehaviorSubject, EMPTY, filter, Observable, of, switchMap, take, throwEr
 import {SnackbarService} from "../../Services/snackbar.service";
 import {ErrorResponseObject} from "./ErrorResponseObject";
 import {ErrorCodeMessages} from "./ErrorCodeMessages";
+import {LoaderService} from "../../Services/loader.service";
 
 @Injectable({
     providedIn: 'root'
@@ -13,7 +14,8 @@ export class ErrorReponseHandler {
 
     constructor(
         public snackbarService: SnackbarService,
-        private router: Router
+        private router: Router,
+        private loaderService: LoaderService
     ) { }
 
     handle(request: HttpRequest<any>, errorResponse: HttpErrorResponse): Observable<any> {
@@ -43,12 +45,22 @@ export class ErrorReponseHandler {
       }
 
       if (errorResponse.status === 400) {
+        this.loaderService.hide();
+
         let errors = errorResponse.error as ErrorResponseObject[];
         for (let i = 0; i < errors.length; ++i) {
           let error = errors[i];
-          let message = error.messageIsCustom
-            ? error.message
-            : ErrorCodeMessages.Instance.get(error.code)
+          let message: string;
+          if (error.messageIsCustom) {
+            message = error.message;
+          } else {
+            message = ErrorCodeMessages.Instance.get(error.code);
+            if (!message) {
+              this.snackbarService.showErrorMessage("Произошла непредвиденная ошибка");
+              return EMPTY;
+            }
+          }
+
           this.snackbarService.showErrorMessage(message);
         }
 
