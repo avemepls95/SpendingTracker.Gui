@@ -2,7 +2,7 @@
   <button
     class="add-root-category-button"
     mat-button
-    (click)="addRootCategories()"
+    (click)="addRootNodeCategory()"
     mat-flat-button
     [disabled]="isAddingToCategoryInProcess()">
     <mat-icon color="primary" class='process-check-icon'>add</mat-icon>
@@ -18,7 +18,7 @@
       <button mat-icon-button disabled></button>
       {{categoryNode.name}}
       <button mat-icon-button
-              (click)="addParent(categoryNode)"
+              (click)="addParentNode(categoryNode)"
               matTooltip="Добавить в родительскую категорию"
               class="icon-button"
               [disabled]="isAddingToCategoryInProcess()">
@@ -62,16 +62,14 @@
       </mat-form-field>
       <div class="adding-to-parent-category-buttons">
         <button mat-icon-button
-                class="icon-button adding-to-parent-category-button"
+                class="icon-button add-to-parent-category-button"
                 [disabled]="!newOrExistCategoryInput.value"
-                (click)="categoryNode.level == 0
-                  ? addSpendingToExistCategory(newOrExistCategoryInput.value!)
-                  : addCategoryToExistParent(categoryNode.childId, newOrExistCategoryInput.value!)"
+                (click)="addToParentCategory(categoryNode)"
                 matTooltip="Сохранить">
           <mat-icon class="green">check_circle</mat-icon>
         </button>
         <button mat-icon-button
-                (click)="cancelAddingToParent(categoryNode.childId)"
+                (click)="cancelAddingToParentNode(categoryNode.childId)"
                 matTooltip="Отмена"
                 class="icon-button">
           <mat-icon class="red">cancel</mat-icon>
@@ -91,7 +89,7 @@
     </button>
     {{categoryNode.name}}
     <button mat-icon-button
-            (click)="addParent(categoryNode)"
+            (click)="addParentNode(categoryNode)"
             matTooltip="Добавить в родительскую категорию"
             class="icon-button"
             [disabled]="isAddingToCategoryInProcess()">
