@@ -1,0 +1,16 @@
+<div mat-dialog-content class="content-in-center">
+
+  <h1 mat-dialog-title>Редактирование траты</h1>
+
+  <mat-form-field>
+    <mat-label>Описание</mat-label>
+    <input required matInput [(ngModel)]="category.title">
+  </mat-form-field>
+
+  <div mat-dialog-actions>
+    <button mat-button (click)="closeDialog()" mat-flat-button color="warn">
+      <span>Отмена</span>
+    </button>
+    <button mat-button [disabled]="!canBeCreated()" (click)="save()">Сохранить</button>
+  </div>
+</div>

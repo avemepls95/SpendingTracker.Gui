@@ -27,6 +27,7 @@ import {ResponseInterceptor} from "./Common/Interceptors/Response/response.inter
 import { CategoriesTreeComponent } from './Domain/Components/Category/categories-tree/categories-tree.component';
 import {NgxSpinnerModule} from "ngx-spinner";
 import {InfiniteScrollModule} from "ngx-infinite-scroll";
+import {CategoryCardComponent} from "./Domain/Components/Category/category-card/category-card.component";
 
 @NgModule({
   declarations: [
@@ -40,6 +41,7 @@ import {InfiniteScrollModule} from "ngx-infinite-scroll";
     ConfirmDialogComponent,
     CreateCategoryCardComponent,
     SpendingCardComponent,
+    CategoryCardComponent,
     MaskDirective,
     CategoriesTreeComponent,
   ],

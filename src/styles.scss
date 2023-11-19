@@ -103,15 +103,6 @@ td {
   }
 }
 
-.position-dialog {
-  overflow: hidden !important;
-}
-.position-dialog .mat-form-field-wrapper,
-.position-dialog .mat-form-field-type-mat-chip-list,
-.position-dialog .mat-form-field-type-mat-input {
-  width: 100%;
-}
-
 .account-actions-menu {
   width: 150px;
   background-color: #ececec;
@@ -167,7 +158,22 @@ html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
 .content-in-center {
-  display: flex;
+  display: flex !important;
   justify-content: center; /* align horizontal */
   align-items: center; /* align vertical */
+  flex-flow: column;
+}
+
+.mat-mdc-dialog-content .mdc-dialog__title::before {
+  height: 0 !important;
+}
+
+@media only screen and (max-width: 600px) {
+  .mdc-data-table__cell, .mdc-data-table__header-cell {
+    padding: 0 8px 0 6px !important;
+  }
+}
+
+.display-none {
+  display: none;
 }

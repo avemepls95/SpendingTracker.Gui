@@ -11,6 +11,10 @@ import {
     ConfirmDialogComponent,
     ConfirmDialogModel
 } from "../../../../Common/Components/confirm-dialog/confirm-dialog.component";
+import {SpendingCardComponent} from "../../spending-card/spending-card.component";
+import {CopyUtils} from "../../../../Common/Utils/CopyUtils";
+import {Spending} from "../../../Models/Spending";
+import {CategoryCardComponent} from "../category-card/category-card.component";
 
 @Component({
   selector: 'app-categories-list',
@@ -27,6 +31,7 @@ export class CategoriesListComponent {
         private spendingApiService: SpendingApiService,
         private loaderService: LoaderService,
         private dialog: MatDialog,
+        private copyUtils: CopyUtils,
     ) {
       this.loadCategories();
     }
@@ -57,7 +62,9 @@ export class CategoriesListComponent {
             finalize(() => this.loaderService.hide())
         ).subscribe(
             (response) => {
-                this.categories = response.map(c => CategoryMapper.convertFromDto(c));
+                this.categories = response
+                  .map(c => CategoryMapper.convertFromDto(c))
+                  .sort((a,b) => a.title.localeCompare(b.title));
                 this.dataSource = new MatTableDataSource(this.categories);
             },
             (error) => console.error(error)
@@ -70,10 +77,12 @@ export class CategoriesListComponent {
             console.log("Invalid check id:" + id);
         }
 
-        const dialogData = new ConfirmDialogModel('Подтверждение', 'Вы уверены, что хотите удалить категорию?');
+        const dialogData = new ConfirmDialogModel(
+          'Подтверждение',
+          'Вы уверены, что хотите удалить категорию? В этом случае все траты отвяжутся от нее');
         const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-            maxWidth: "420px",
-            height: "160px",
+            maxWidth: "405px",
+            height: "180px",
             data: dialogData
         });
 
@@ -94,4 +103,39 @@ export class CategoriesListComponent {
                 );
         });
     }
+
+  openCategoryCard(category: Category) {
+    let data = {
+      spending: this.copyUtils.deepCopy(category)
+    }
+
+    const dialogRef = this.dialog.open(CategoryCardComponent, {
+      width: '370px',
+      data: data
+    });
+
+    dialogRef.afterClosed().subscribe((result = 'Cancel') => {
+      if (result != 'Cancel') {
+        this.updateCategory(result.data);
+      }
+    });
+  }
+
+  updateCategory(category: Category) {
+    this.loaderService.show();
+    this.spendingApiService.updateCategory(category)
+      .pipe(finalize(() => {
+        this.loaderService.hide();
+      }))
+      .subscribe(
+        (response) => {
+          const index = this.categories.findIndex(p => p.id === category.id);
+          if (index == -1) {
+            console.log('Invalid spending id:' + category.id);
+          }
+          this.categories[index] = category;
+          this.dataSource.data = this.categories;
+        }
+      );
+  }
 }

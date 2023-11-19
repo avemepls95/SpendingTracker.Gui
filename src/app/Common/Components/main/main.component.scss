@@ -103,10 +103,6 @@ mat-sidenav-content {
   justify-content: space-between;
 }
 
-.mat-toolbar-multiple-rows {
-  /* height: 6.5vh; */
-}
-
 .app-title {
   margin-left: 2vw;
 }
@@ -131,7 +127,6 @@ mat-sidenav-content {
 .avatar-firstname-block label {
   align-self: center;
   font-size: smaller;
-  margin-top: 8px;
 }
 
 .avatar-firstname-block .avatar-card {
@@ -146,6 +141,7 @@ mat-sidenav-content {
 @media only screen and (max-width: 600px) {
   .name-avatar {
     transform: translateX(18px);
+    margin-right: 10px;
   }
 }
 

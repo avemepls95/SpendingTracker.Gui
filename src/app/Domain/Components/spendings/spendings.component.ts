@@ -86,16 +86,6 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
         },
         (error) => console.error(error)
       );
-
-    // this.spendingApiService.getSpendings().pipe(
-    //   finalize(() => this.loaderService.hide())
-    // ).subscribe(
-    //   (response) => {
-    //     this.spendings = response.map(s => SpendingMapper.convertFromDto(s));
-    //     this.dataSource = new MatTableDataSource(this.spendings);
-    //   },
-    //   (error) => console.error(error)
-    // );
   }
 
   deleteSpending(id: string) {
@@ -157,7 +147,7 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
         (response) => {
           const index = this.spendings.findIndex(p => p.id === spending.id);
           if (index == -1) {
-            console.log('Invalid spending id:' + spending);
+            console.log('Invalid spending id:' + spending.id);
           }
           this.spendings[index] = spending;
           this.dataSource.data = this.spendings;
@@ -192,12 +182,28 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
   onCategoriesUpdated({response}: { response: any }) {
     this.spendingsCategoriesExpandingStates[response.spendingId] = response.categoriesExpandingStates;
     this.loaderService.show();
-    this.spendingApiService.getSpendings(0, this.loadedRecordsCount)
-      .pipe(finalize(() => this.loaderService.hide()))
+    // this.spendingApiService.getSpendings(0, this.loadedRecordsCount)
+    //   .pipe(finalize(() => this.loaderService.hide()))
+    //   .subscribe(
+    //     (response) => {
+    //       this.spendings = response.map(s => SpendingMapper.convertFromDto(s));
+    //       this.dataSource = new MatTableDataSource(this.spendings);
+    //     },
+    //     (error) => console.error(error)
+    //   );
+
+    let spendingsObservable = this.spendingApiService.getSpendings(0, this.loadedRecordsCount);
+    let categoriesObservable = this.spendingApiService.getCategories();
+
+    forkJoin([spendingsObservable, categoriesObservable])
+      .pipe(
+        finalize(() => this.loaderService.hide())
+      )
       .subscribe(
-        (response) => {
-          this.spendings = response.map(s => SpendingMapper.convertFromDto(s));
+        responses => {
+          this.spendings = responses[0].map(s => SpendingMapper.convertFromDto(s));
           this.dataSource = new MatTableDataSource(this.spendings);
+          this.categoriesForSelect = responses[1].map(c => CategoryMapper.convertFromDto(c));
         },
         (error) => console.error(error)
       );
@@ -222,13 +228,17 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
         this.dataSource = new MatTableDataSource(this.spendings);
         this.loadedRecordsCount += response.length;
 
-        this.showLoadMoreButton = false;
+        this.loadMoreButtonClickedOnce = false;
       },
       (error) => console.error(error)
     );
   }
 
-  showLoadMoreButton: boolean = true;
+  loadMoreButtonClickedOnce: boolean = true;
+
+  showLoadMoreButton(){
+    return this.loadMoreButtonClickedOnce && !!this.spendings && this.spendings.length !=0;
+  }
 
   loadMoreSpendings() {
     this.onScroll();

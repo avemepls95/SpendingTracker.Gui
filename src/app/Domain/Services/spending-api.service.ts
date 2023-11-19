@@ -6,6 +6,7 @@ import {GetSpendingsResponseItem} from "./Contracts/GetSpendingsResponseItem";
 import {Spending} from "../Models/Spending";
 import {GetAllCurrenciesResponseItem} from "./Contracts/GetAllCurrenciesResponseItem";
 import {CategoryDto} from "./Contracts/CategoryDto";
+import {Category} from "../Models/Category";
 
 
 @Injectable({
@@ -154,5 +155,18 @@ export class SpendingApiService {
 
   getAllCurrencies(): Observable<GetAllCurrenciesResponseItem[]> {
     return this.http.get(this.apiBaseUrl + 'v1/currency/list') as Observable<GetAllCurrenciesResponseItem[]>;
+  }
+
+  updateCategory(category: Category) {
+    if (!category || !category.id)
+      throw Error("Внутренная ошибка. Пустая категория.");
+
+    return this.http.post(
+      this.apiBaseUrl + 'v1/category/update',
+      {
+        id: category.id,
+        title: category.title
+      }
+    );
   }
 }

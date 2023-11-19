@@ -8,7 +8,7 @@ import {SpendingsComponent} from "./Domain/Components/spendings/spendings.compon
 
 const menuRoutes: Routes = [
   { path: '', redirectTo: '/spending', pathMatch: 'full' },
-  { path: 'categories', component: CategoriesListComponent },
+  { path: 'categories-list', component: CategoriesListComponent },
   { path: 'spending', component: SpendingsComponent },
 ];
 

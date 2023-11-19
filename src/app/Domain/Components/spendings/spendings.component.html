@@ -20,7 +20,7 @@
             <div (click)="$event.stopPropagation()">
               <button mat-icon-button
                       (click)="toggleExpand(spending)"
-                      matTooltip="Раскрыть категории1">
+                      matTooltip="Раскрыть категории">
                 <mat-icon>{{expandedElements.includes(spending.id) ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}}</mat-icon>
               </button>
             </div>
@@ -96,7 +96,7 @@
 <!--  </div>-->
 
 
-  <div class="content-in-center" [ngStyle]="{'display': showLoadMoreButton ? 'flex' : 'none'}">
+  <div [ngClass]="showLoadMoreButton() ? 'content-in-center' : 'display-none'">
     <button mat-flat-button (click)="loadMoreSpendings()">More</button>
   </div>
 
