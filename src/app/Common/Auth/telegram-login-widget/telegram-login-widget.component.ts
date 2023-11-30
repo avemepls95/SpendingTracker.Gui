@@ -6,6 +6,7 @@ import { LocalStorageManager } from "../../../LocalStorageManager";
 import {FromTelegramAuthDto} from "../Contracts/FromTelegramAuthDto";
 import {CommonDtoMapper} from "../../../Converters/CommonDtoMapper";
 import {AuthService} from "../Services/auth.service";
+import {environment} from "../../../../environments/environment";
 
 @Component({
   selector: 'app-telegram-login-widget',
@@ -35,7 +36,7 @@ export class TelegramLoginWidget implements AfterViewInit {
     const element = this.script.nativeElement;
     const script = document.createElement('script');
     script.src = 'https://telegram.org/js/telegram-widget.js?22';
-    script.setAttribute('data-telegram-login', 'SpendingMoneyBot');
+    script.setAttribute('data-telegram-login', environment.telegramBotName);
     script.setAttribute('data-size', 'large');
     // Callback function in global scope
     script.setAttribute('data-onauth', 'loginViaTelegram(user)');

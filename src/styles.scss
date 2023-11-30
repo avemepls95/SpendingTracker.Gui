@@ -172,8 +172,17 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   .mdc-data-table__cell, .mdc-data-table__header-cell {
     padding: 0 8px 0 6px !important;
   }
+
+  .row-actions-td {
+    padding-right: 0 !important;
+  }
+
+  .vw-100 {
+    width: 100vw !important;
+  }
 }
 
 .display-none {
   display: none;
 }
+

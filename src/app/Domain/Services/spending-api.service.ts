@@ -27,7 +27,7 @@ export class SpendingApiService {
   getSpendings(offset: number, count: number): Observable<GetSpendingsResponseItem[]> {
     const params = new HttpParams()
       .set('offset', offset.toString())
-      .set('limit', count.toString());
+      .set('count', count.toString());
 
     return this.http.get(this.apiBaseUrl + 'v1/spending/list', { params }) as Observable<GetSpendingsResponseItem[]>;
   }
@@ -40,6 +40,18 @@ export class SpendingApiService {
       this.apiBaseUrl + 'v1/category/create',
       {
         title: title
+      }
+    );
+  }
+
+  deleteSpending(id: string) {
+    if (!id)
+      throw Error("Внутренная ошибка. Пустой идентификатор траты.");
+
+    return this.http.post(
+      this.apiBaseUrl + 'v1/spending/delete',
+      {
+        id: id
       }
     );
   }

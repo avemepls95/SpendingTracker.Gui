@@ -24,3 +24,10 @@ mat-card {
   height: 100%;
 }
 
+@media only screen and (max-width: 600px) {
+  .toogle-row {
+    padding: 0;
+    width: 6vw;
+    height: 6vw;
+  }
+}

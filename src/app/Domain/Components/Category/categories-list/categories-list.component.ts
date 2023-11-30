@@ -82,7 +82,7 @@ export class CategoriesListComponent {
           'Вы уверены, что хотите удалить категорию? В этом случае все траты отвяжутся от нее');
         const dialogRef = this.dialog.open(ConfirmDialogComponent, {
             maxWidth: "405px",
-            height: "180px",
+            height: "200px",
             data: dialogData
         });
 

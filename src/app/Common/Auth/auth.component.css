@@ -10,12 +10,10 @@
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    padding: 15px;
     background-repeat: no-repeat;
     background-position: center;
     background-size: cover;
     /* background-color: green; */
-    background-image: url('src/assets/images/gradient-1.jpg');
 }
 
 .login-form {
@@ -136,7 +134,7 @@ a {
 .btn:hover {
     background-position: right center;
 }
-  
+
 .login100-form-btn {
     font-family: Poppins-Medium;
     font-size: 16px;

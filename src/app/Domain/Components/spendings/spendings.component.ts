@@ -94,7 +94,7 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
       console.log("Invalid check id:" + id);
     }
 
-    const dialogData = new ConfirmDialogModel('Подтверждение', 'Вы уверены, что хотите удалить категорию?');
+    const dialogData = new ConfirmDialogModel('Подтверждение', 'Вы уверены, что хотите удалить трату?');
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       maxWidth: "420px",
       height: "160px",
@@ -106,7 +106,7 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
         return;
 
       this.loaderService.show();
-      this.spendingApiService.deleteCategory(id)
+      this.spendingApiService.deleteSpending(id)
         .pipe(finalize(() => {
           this.loaderService.hide();
         }))
@@ -182,15 +182,6 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
   onCategoriesUpdated({response}: { response: any }) {
     this.spendingsCategoriesExpandingStates[response.spendingId] = response.categoriesExpandingStates;
     this.loaderService.show();
-    // this.spendingApiService.getSpendings(0, this.loadedRecordsCount)
-    //   .pipe(finalize(() => this.loaderService.hide()))
-    //   .subscribe(
-    //     (response) => {
-    //       this.spendings = response.map(s => SpendingMapper.convertFromDto(s));
-    //       this.dataSource = new MatTableDataSource(this.spendings);
-    //     },
-    //     (error) => console.error(error)
-    //   );
 
     let spendingsObservable = this.spendingApiService.getSpendings(0, this.loadedRecordsCount);
     let categoriesObservable = this.spendingApiService.getCategories();

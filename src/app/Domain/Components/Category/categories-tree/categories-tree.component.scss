@@ -43,6 +43,12 @@
   }
 }
 
+@media only screen and (max-width: 600px) {
+  .icon-button {
+    margin-left: 0px;
+  }
+}
+
 .inputCategory {
   display: flex;
   align-items: center;

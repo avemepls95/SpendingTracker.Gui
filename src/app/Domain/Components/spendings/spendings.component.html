@@ -1,5 +1,10 @@
-<div class="search-results" infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="500"
-     (scrolled)="onScroll()" [scrollWindow]="false">
+<div class="search-results"
+     *ngIf="!!spendings && spendings.length != 0"
+     infiniteScroll
+     [infiniteScrollDistance]="2"
+     [infiniteScrollThrottle]="500"
+     (scrolled)="onScroll()"
+     [scrollWindow]="false">
 
   <mat-card
     class="content-card content-in-center"
@@ -12,13 +17,14 @@
 
       <table mat-table
              [dataSource]="dataSource" multiTemplateDataRows
-             class="mat-elevation-z8">
+             class="mat-elevation-z8 vw-100">
 
         <ng-container matColumnDef="show-category">
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let spending" class="row-actions-td">
             <div (click)="$event.stopPropagation()">
               <button mat-icon-button
+                      class="toogle-row"
                       (click)="toggleExpand(spending)"
                       matTooltip="Раскрыть категории">
                 <mat-icon>{{expandedElements.includes(spending.id) ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}}</mat-icon>
@@ -103,6 +109,8 @@
 
 </div>
 
-<div class="zero-balance-wrap" *ngIf="!!spendings && spendings.length == 0">
-  <h1>Список трат пока пуст</h1>
+<div class="content-in-center" *ngIf="!!spendings && spendings.length == 0">
+  <span style="text-align: center">
+    <h1>Список трат пока пуст</h1>
+  </span>
 </div>

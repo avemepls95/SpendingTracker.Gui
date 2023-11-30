@@ -51,10 +51,12 @@
 
 </mat-card>
 
-<div class="zero-balance-wrap" *ngIf="!!categories && categories.length == 0">
-  <h1>Список категорий пуст. Самое время добавить первую!</h1>
+<div class="content-in-center" *ngIf="!!categories && categories.length == 0">
+  <span style="text-align: center">
+    <h1>Список категорий пуст. Самое время добавить первую!</h1>
+  </span>
   <button class="process-check-button" mat-button (click)="createCategory()" mat-flat-button>
-    <mat-icon mat-list-icon color="primary" class='process-check-icon'>refresh</mat-icon>
+    <mat-icon color="primary" class='process-check-icon'>refresh</mat-icon>
     <span class="process">Создать</span>
   </button>
 </div>
