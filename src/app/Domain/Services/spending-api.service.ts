@@ -7,6 +7,7 @@ import {Spending} from "../Models/Spending";
 import {GetAllCurrenciesResponseItem} from "./Contracts/GetAllCurrenciesResponseItem";
 import {CategoryDto} from "./Contracts/CategoryDto";
 import {Category} from "../Models/Category";
+import {GetSpendingsRequest} from "./Contracts/GetSpendingsRequest";
 
 
 @Injectable({
@@ -24,10 +25,12 @@ export class SpendingApiService {
     return this.http.get(this.apiBaseUrl + 'v1/category/list') as Observable<CategoryDto[]>;
   }
 
-  getSpendings(offset: number, count: number): Observable<GetSpendingsResponseItem[]> {
+  getSpendings(request: GetSpendingsRequest): Observable<GetSpendingsResponseItem[]> {
     const params = new HttpParams()
-      .set('offset', offset.toString())
-      .set('count', count.toString());
+      .set('offset', request.offset.toString())
+      .set('count', request.count.toString())
+      .set('searchString', request.searchString)
+      .set('onlyWithoutCategories', request.onlyWithoutCategories);
 
     return this.http.get(this.apiBaseUrl + 'v1/spending/list', { params }) as Observable<GetSpendingsResponseItem[]>;
   }

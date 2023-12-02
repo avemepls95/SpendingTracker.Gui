@@ -1,5 +1,5 @@
-import {AfterViewInit, Component, ElementRef, HostListener, Input, OnInit, ViewChild} from '@angular/core';
-import {MatDialog, MatDialogRef} from "@angular/material/dialog";
+import {AfterViewInit, Component, OnInit} from '@angular/core';
+import {MatDialog} from "@angular/material/dialog";
 import {MatTableDataSource} from "@angular/material/table";
 import {SpendingApiService} from "../../Services/spending-api.service";
 import {LoaderService} from "../../../Common/Services/loader.service";
@@ -20,6 +20,7 @@ import {animate, state, style, transition, trigger} from "@angular/animations";
 import {Category} from "../../Models/Category";
 import {CategoryMapper} from "../../../Converters/CategoryMapper";
 import {NgxSpinnerService} from "ngx-spinner";
+import {GetSpendingsRequest} from "../../Services/Contracts/GetSpendingsRequest";
 
 @Component({
   selector: 'app-spendings',
@@ -43,15 +44,16 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
   currencyMap = new Map<string, Currency>();
 
   displayedColumns: string[] = ['show-category', 'date', 'amount', 'description', 'currencyCode', 'actions'];
-
+  filtrationPanelIsOpen = false;
   expandedElements: string[] = [];
+  onlyWithoutCategories: boolean = false;
 
   spendingsCategoriesExpandingStates: { [id: string]: { [id: string]: boolean } } = {};
 
   isLoading: boolean = false;
-  private recordsCountToShowInitially: number = 10;
   private recordsCountToLoad: number = 10;
   private loadedRecordsCount: number = 0;
+  searchString: string = '';
 
   protected readonly FlagEmojiiConverter = FlagEmojiiConverter;
 
@@ -66,7 +68,8 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
 
   loadData() {
     this.loaderService.show();
-    let spendingsObservable = this.spendingApiService.getSpendings(0, this.recordsCountToShowInitially);
+    let request = this.buildGetSpendingsRequest(0, this.recordsCountToLoad);
+    let spendingsObservable = this.spendingApiService.getSpendings(request);
     let currenciesObservable = this.spendingApiService.getAllCurrencies();
 
     forkJoin([spendingsObservable, currenciesObservable])
@@ -183,7 +186,8 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
     this.spendingsCategoriesExpandingStates[response.spendingId] = response.categoriesExpandingStates;
     this.loaderService.show();
 
-    let spendingsObservable = this.spendingApiService.getSpendings(0, this.loadedRecordsCount);
+    let request = this.buildGetSpendingsRequest(0, this.loadedRecordsCount);
+    let spendingsObservable = this.spendingApiService.getSpendings(request);
     let categoriesObservable = this.spendingApiService.getCategories();
 
     forkJoin([spendingsObservable, categoriesObservable])
@@ -207,7 +211,8 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
     this.isLoading = true;
     this.spinner.show();
 
-    this.spendingApiService.getSpendings(this.loadedRecordsCount, this.recordsCountToLoad).pipe(
+    let request = this.buildGetSpendingsRequest(this.loadedRecordsCount, this.recordsCountToLoad);
+    this.spendingApiService.getSpendings(request).pipe(
       finalize(() => {
         this.spinner.hide();
         this.isLoading = false;
@@ -219,19 +224,48 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
         this.dataSource = new MatTableDataSource(this.spendings);
         this.loadedRecordsCount += response.length;
 
-        this.loadMoreButtonClickedOnce = false;
+        this.loadMoreButtonNotClicked = false;
       },
       (error) => console.error(error)
     );
   }
 
-  loadMoreButtonClickedOnce: boolean = true;
+  loadMoreButtonNotClicked: boolean = true;
 
   showLoadMoreButton(){
-    return this.loadMoreButtonClickedOnce && !!this.spendings && this.spendings.length !=0;
+    return this.loadMoreButtonNotClicked && !!this.spendings && this.spendings.length == this.recordsCountToLoad;
   }
 
   loadMoreSpendings() {
     this.onScroll();
+  }
+
+  applyFiltration() {
+    this.loadedRecordsCount = 0;
+    let request = this.buildGetSpendingsRequest(0, this.recordsCountToLoad);
+    this.spendingApiService.getSpendings(request).pipe(
+      finalize(() => {
+        this.spinner.hide();
+        this.isLoading = false;
+      })
+    ).subscribe(
+      (response) => {
+        this.spendings = response.map(s => SpendingMapper.convertFromDto(s));
+        this.dataSource = new MatTableDataSource(this.spendings);
+        this.loadedRecordsCount += response.length;
+
+        this.loadMoreButtonNotClicked = true;
+      },
+      (error) => console.error(error)
+    );
+  }
+
+  buildGetSpendingsRequest(offset: number, count: number): GetSpendingsRequest {
+    return new GetSpendingsRequest({
+      offset: offset,
+      count: count,
+      searchString: this.searchString,
+      onlyWithoutCategories: this.onlyWithoutCategories
+    })
   }
 }

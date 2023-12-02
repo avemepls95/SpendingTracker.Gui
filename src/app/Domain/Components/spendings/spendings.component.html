@@ -15,7 +15,45 @@
     <!--  </mat-card-header>-->
     <mat-card-content>
 
-      <table mat-table
+      <mat-accordion>
+        <mat-expansion-panel
+          (opened)="filtrationPanelIsOpen"
+          (closed)="!filtrationPanelIsOpen">
+
+          <mat-expansion-panel-header>
+            <mat-panel-description class="flex-h-center">
+              Фильтрация
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="flex-h-center flex-v-center">
+            <div #myTable>
+              <mat-form-field appearance="outline">
+                <input matInput [(ngModel)]="searchString" placeholder="Фильтр">
+              </mat-form-field>
+              <button
+                mat-raised-button
+                (click)="applyFiltration()"
+                style="margin: 0 0 0 5px"> Поиск
+              </button>
+            </div>
+          </div>
+
+          <div class="flex-h-center">
+            <section class="example-section" [ngStyle]="{'width.px': myTable.offsetWidth, 'margin-left': '-21px' }">
+              <mat-checkbox
+                color="primary"
+                onclick="this.blur()"
+                [(ngModel)]="onlyWithoutCategories"
+                (click)="applyFiltration()">Без категорий</mat-checkbox>
+            </section>
+          </div>
+
+        </mat-expansion-panel>
+      </mat-accordion>
+
+
+      <table mat-table matTableFilter
              [dataSource]="dataSource" multiTemplateDataRows
              class="mat-elevation-z8 vw-100">
 

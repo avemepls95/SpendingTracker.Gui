@@ -9,9 +9,8 @@
   }
 }
 
-.mat-tree-node:first-of-type {
-  padding: 5px 0 0 0;
-}
+.mat-tree-node:first-of-type {  padding: 5px 0 0 0;}
+.mat-tree-node[aria-level="2"] {  padding-left: 23px !important;}
 
 .mat-tree {
   padding-left: 35px;
@@ -21,7 +20,6 @@
   width: 32px !important;
   height: 32px !important;
   padding: 0 !important;
-  margin-left: 15px;
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
@@ -45,19 +43,23 @@
 
 @media only screen and (max-width: 600px) {
   .icon-button {
-    margin-left: 0px;
+    margin-left: 0;
   }
+
 }
 
 .inputCategory {
   display: flex;
   align-items: center;
-  padding-left: 47px;
+
+  mat-form-field {
+    width: 190px;
+    margin-right: 5px;
+  }
 
   .mat-mdc-text-field-wrapper {
     height: 25px !important;
     position: relative !important;
-    top: 10px;
 
     .mat-mdc-form-field-infix {
       top: -9px!important;

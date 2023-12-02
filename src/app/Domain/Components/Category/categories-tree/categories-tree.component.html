@@ -1,14 +1,21 @@
 <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
-  <!-- This is the tree node template for leaf nodes -->
-  <mat-tree-node *matTreeNodeDef="let categoryNode" matTreeNodePadding>
-    <!-- use a disabled button to provide padding for tree leaf -->
+
+  <mat-tree-node
+    *matTreeNodeDef="let categoryNode"
+    matTreeNodePadding
+    matTreeNodePaddingIndent="25">
+
+    <div style="width: 32px;height: 32px" class="content-in-center">
+      <mat-icon class="dark-gray">remove</mat-icon>
+    </div>
     <div *ngIf="!!categoryNode.id" style="display: contents;">
-      <button mat-icon-button disabled></button>
+<!--      <button mat-icon-button disabled></button>-->
       {{categoryNode.name}}
       <button mat-icon-button
               (click)="addParentNode(categoryNode)"
               matTooltip="Добавить в родительскую категорию"
               class="icon-button"
+              *ngIf="categoryNode.level != 2"
               [disabled]="isAddingToCategoryInProcess()">
         <mat-icon>add</mat-icon>
       </button>
@@ -21,18 +28,7 @@
       </button>
     </div>
     <div *ngIf="!categoryNode.id" class="inputCategory">
-<!--      <mat-form-field appearance="fill">-->
-<!--        <mat-label>Валюта</mat-label>-->
-<!--        <mat-select #singleSelect>-->
-<!--          <mat-option>-->
-<!--            <ngx-mat-select-search ></ngx-mat-select-search>-->
-<!--          </mat-option>-->
-<!--&lt;!&ndash;          <mat-option *ngFor="let currency of filteredCurrencies | async" [value]="currency.id">&ndash;&gt;-->
-<!--&lt;!&ndash;            {{currency.code}}&ndash;&gt;-->
-<!--&lt;!&ndash;          </mat-option>&ndash;&gt;-->
-<!--        </mat-select>-->
-<!--      </mat-form-field>-->
-      <mat-form-field class="example-full-width" appearance="outline">
+      <mat-form-field appearance="outline">
         <div>
           <input type="text"
                  placeholder="Название"
@@ -66,8 +62,12 @@
 
     </div>
   </mat-tree-node>
-  <!-- This is the tree node template for expandable nodes -->
-  <mat-tree-node *matTreeNodeDef="let categoryNode; when: hasChild" matTreeNodePadding>
+
+  <mat-tree-node
+    *matTreeNodeDef="let categoryNode; when: hasChild"
+    matTreeNodePadding
+    matTreeNodePaddingIndent="25">
+
     <button mat-icon-button class="icon-button" matTreeNodeToggle
             [attr.aria-label]="'Toggle ' + categoryNode.name"
             (click)="expandingStates[categoryNode.id] = treeControl.isExpanded(categoryNode)">
