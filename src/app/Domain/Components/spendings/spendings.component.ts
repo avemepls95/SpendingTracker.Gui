@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, OnInit} from '@angular/core';
+import {AfterViewInit, Component, LOCALE_ID, OnInit} from '@angular/core';
 import {MatDialog} from "@angular/material/dialog";
 import {MatTableDataSource} from "@angular/material/table";
 import {SpendingApiService} from "../../Services/spending-api.service";
@@ -21,6 +21,10 @@ import {Category} from "../../Models/Category";
 import {CategoryMapper} from "../../../Converters/CategoryMapper";
 import {NgxSpinnerService} from "ngx-spinner";
 import {GetSpendingsRequest} from "../../Services/Contracts/GetSpendingsRequest";
+import localeRu from '@angular/common/locales/ru';
+import {registerLocaleData} from "@angular/common";
+
+registerLocaleData(localeRu);
 
 @Component({
   selector: 'app-spendings',
@@ -32,6 +36,9 @@ import {GetSpendingsRequest} from "../../Services/Contracts/GetSpendingsRequest"
       state('expanded', style({height: '*'})),
       transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
     ]),
+  ],
+  providers: [
+    { provide: LOCALE_ID, useValue: 'ru' }
   ],
 })
 export class SpendingsComponent implements OnInit, AfterViewInit {

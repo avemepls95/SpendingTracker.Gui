@@ -1,7 +1,4 @@
 <mat-card class="content-card" *ngIf="!!categories && categories.length != 0">
-  <mat-card-header class="content-in-center">
-    <mat-card-title class="categories-list-header">Мои категории трат</mat-card-title>
-  </mat-card-header>
   <mat-card-content>
 
     <div class="container positions-block">
@@ -10,7 +7,7 @@
       <!--                    <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Фильтр">-->
       <!--                </mat-form-field>-->
       <!--            </div>-->
-      <div class="content-in-center" style="margin: 15px 0px 5px 0px">
+      <div class="content-in-center">
         <button class="process-check-button" mat-button (click)="createCategory()" mat-flat-button>
           <mat-icon style="transform: scale(1.3); color: green">add</mat-icon>
           <span class="process">Создать</span>

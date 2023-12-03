@@ -3,10 +3,6 @@
 .mat-tree-node {
   min-height: 30px;
   height: 30px;
-
-  button:nth-child(n+2) {
-    margin: 0;
-  }
 }
 
 .mat-tree-node:first-of-type {  padding: 5px 0 0 0;}
@@ -53,7 +49,7 @@
   align-items: center;
 
   mat-form-field {
-    width: 190px;
+    width: 175px;
     margin-right: 5px;
   }
 
@@ -87,10 +83,9 @@ button:disabled {
   color: gray !important;
 }
 
-.add-first-root-category-button-wrap {
+.add-root-category-button-wrap {
   display: flex;
-  padding-left: 45px;
-  margin-bottom: 5px;
+  padding-left: 31px;
 
   span {
     font-size: 15px;
@@ -100,4 +95,8 @@ button:disabled {
 .add-root-category-button {
   margin-top: 5px;
   height: 30px !important;
+}
+
+.remove-category {
+  margin-left: -5px;
 }

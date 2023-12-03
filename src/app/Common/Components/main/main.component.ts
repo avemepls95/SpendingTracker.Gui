@@ -12,6 +12,7 @@ import {MenuItem} from "./MenuItem";
 export class MainComponent implements OnInit {
   title: string = 'Balance';
   userFirstName: string;
+  currentPageTitle: string;
   avatarUrl: string;
   menuItems: MenuItem[] = [
     { route: '/spending', text: 'Траты', icon: 'money_off' },
@@ -22,15 +23,13 @@ export class MainComponent implements OnInit {
     private router: Router,
     private authService: AuthService,
   ) {
-
-    // @ts-ignore
-    this.userFirstName = localStorage.getItem(LocalStorageManager.userFirstNameKey);
-    let avatarTmp = localStorage.getItem(LocalStorageManager.userPhotoUrlKey);
-    // @ts-ignore
-    this.avatarUrl = avatarTmp ? 'assets/images/empty-avatar.png' : avatarTmp;
+    this.userFirstName = localStorage.getItem(LocalStorageManager.userFirstNameKey)!;
+    let avatarTmp = localStorage.getItem(LocalStorageManager.userPhotoUrlKey)!;
+    this.avatarUrl = avatarTmp ? avatarTmp : 'assets/images/empty-avatar.png';
   }
 
   ngOnInit() {
+    this.currentPageTitle = this.menuItems.find(i => i.route == this.router.url)!.text;
   }
 
   refreshPage(): void {

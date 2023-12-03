@@ -6,7 +6,7 @@
       <button mat-icon-button style="color: white;" (click)="sidenav.toggle()" onclick="this.blur()">
         <mat-icon>menu</mat-icon>
       </button>
-      <span class="menu-spacer"></span>
+      <span style="color: white; font-size: 18px;">{{currentPageTitle}}</span>
     </div>
     <div class="flex-v-center name-avatar">
       <button mat-icon-button (click)="refreshPage()" class="refresh-button content-in-center"
@@ -29,7 +29,7 @@
     <mat-nav-list>
       <div *ngFor="let item of menuItems">
         <mat-list-item
-          (click)="sidenav.close()"
+          (click)="sidenav.close();currentPageTitle=item.text"
           routerLinkActive
           #routerLinkActiveInstance="routerLinkActive"
           [attr.tabindex]="routerLinkActiveInstance.isActive ? 0 : -1"

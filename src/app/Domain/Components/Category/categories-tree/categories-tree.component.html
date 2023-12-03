@@ -86,14 +86,14 @@
     <button mat-icon-button
             (click)="categoryNode.level == 0 ? removeSpendingFromCategory(categoryNode) : removeCategoryFromParent(categoryNode)"
             [matTooltip]="categoryNode.level == 0 ? 'Удалить трату из категории' : 'Удалить категорию из родительской'"
-            class="icon-button"
+            class="icon-button remove-category"
             [disabled]="isAddingToCategoryInProcess()">
       <mat-icon class="red">remove_circle</mat-icon>
     </button>
   </mat-tree-node>
 </mat-tree>
 
-<div [ngClass]="treeCategories.length != 0 ? 'add-first-root-category-button-wrap' : ''">
+<div [ngClass]="treeCategories.length != 0 ? 'add-root-category-button-wrap' : ''" style="margin-bottom: 5px">
   <button
     class="add-root-category-button"
     (click)="addRootNodeCategory()"
