@@ -13,7 +13,7 @@ import {Spending} from "../../Models/Spending";
 import {CopyUtils} from "../../../Common/Utils/CopyUtils";
 import {SpendingCardComponent} from "../spending-card/spending-card.component";
 import {FlagEmojiiConverter} from "../../Models/FlagEmojiiConverter";
-import {forkJoin} from "rxjs";
+import {EMPTY, forkJoin, Observable} from "rxjs";
 import {Currency} from "../../Models/Currency";
 import {CurrencyMapper} from "../../../Converters/CurrencyMapper";
 import {animate, state, style, transition, trigger} from "@angular/animations";
@@ -23,6 +23,7 @@ import {NgxSpinnerService} from "ngx-spinner";
 import {GetSpendingsRequest} from "../../Services/Contracts/GetSpendingsRequest";
 import localeRu from '@angular/common/locales/ru';
 import {registerLocaleData} from "@angular/common";
+import {GetSpendingsResponseItem} from "../../Services/Contracts/GetSpendingsResponseItem";
 
 registerLocaleData(localeRu);
 
@@ -193,19 +194,36 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
     this.spendingsCategoriesExpandingStates[response.spendingId] = response.categoriesExpandingStates;
     this.loaderService.show();
 
-    let request = this.buildGetSpendingsRequest(0, this.loadedRecordsCount);
+    let countToLoad = this.loadedRecordsCount;
+    let oneSpendingObservable: Observable<GetSpendingsResponseItem> = EMPTY;
+    if (this.onlyWithoutCategories) {
+      oneSpendingObservable = this.spendingApiService.getSpendingById(response.spendingId);
+      countToLoad -= 1;
+    }
+
+    let request = this.buildGetSpendingsRequest(0, countToLoad);
     let spendingsObservable = this.spendingApiService.getSpendings(request);
     let categoriesObservable = this.spendingApiService.getCategories();
 
-    forkJoin([spendingsObservable, categoriesObservable])
+    forkJoin([spendingsObservable, oneSpendingObservable, categoriesObservable])
       .pipe(
         finalize(() => this.loaderService.hide())
       )
       .subscribe(
         responses => {
-          this.spendings = responses[0].map(s => SpendingMapper.convertFromDto(s));
+          let spendingsResponse = responses[0].map(s => SpendingMapper.convertFromDto(s));
+          if (this.onlyWithoutCategories) {
+            let oneSpendingResponse = SpendingMapper.convertFromDto(responses[1]);
+            spendingsResponse.push(oneSpendingResponse);
+            this.spendings = spendingsResponse
+              .sort((s1, s2) => new Date(s2.date).getTime() - new Date(s1.date).getTime())
+              .sort((s1, s2) => new Date(s2.createDate).getTime() - new Date(s1.createDate).getTime());
+          } else {
+            this.spendings = spendingsResponse;
+          }
+
           this.dataSource = new MatTableDataSource(this.spendings);
-          this.categoriesForSelect = responses[1].map(c => CategoryMapper.convertFromDto(c));
+          this.categoriesForSelect = responses[2].map(c => CategoryMapper.convertFromDto(c));
         },
         (error) => console.error(error)
       );

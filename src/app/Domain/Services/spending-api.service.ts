@@ -25,6 +25,14 @@ export class SpendingApiService {
     return this.http.get(this.apiBaseUrl + 'v1/category/list') as Observable<CategoryDto[]>;
   }
 
+  getSpendingById(id: string): Observable<GetSpendingsResponseItem> {
+    const params = new HttpParams().set('id', id);
+
+    return this.http.get(
+      this.apiBaseUrl + 'v1/spending/get-by-id',
+      { params }) as Observable<GetSpendingsResponseItem>;
+  }
+
   getSpendings(request: GetSpendingsRequest): Observable<GetSpendingsResponseItem[]> {
     const params = new HttpParams()
       .set('offset', request.offset.toString())
