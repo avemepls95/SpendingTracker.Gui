@@ -24,6 +24,7 @@ import {GetSpendingsRequest} from "../../Services/Contracts/GetSpendingsRequest"
 import localeRu from '@angular/common/locales/ru';
 import {registerLocaleData} from "@angular/common";
 import {GetSpendingsResponseItem} from "../../Services/Contracts/GetSpendingsResponseItem";
+import {CategoryDto} from "../../Services/Contracts/CategoryDto";
 
 registerLocaleData(localeRu);
 
@@ -195,9 +196,7 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
     this.loaderService.show();
 
     let countToLoad = this.loadedRecordsCount;
-    let oneSpendingObservable: Observable<GetSpendingsResponseItem> = EMPTY;
     if (this.onlyWithoutCategories) {
-      oneSpendingObservable = this.spendingApiService.getSpendingById(response.spendingId);
       countToLoad -= 1;
     }
 
@@ -205,15 +204,23 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
     let spendingsObservable = this.spendingApiService.getSpendings(request);
     let categoriesObservable = this.spendingApiService.getCategories();
 
-    forkJoin([spendingsObservable, oneSpendingObservable, categoriesObservable])
+
+    let observables: (Observable<GetSpendingsResponseItem[]> | Observable<CategoryDto[]> | Observable<GetSpendingsResponseItem>)[] = [spendingsObservable, categoriesObservable];
+
+    if (this.onlyWithoutCategories) {
+      observables.push(this.spendingApiService.getSpendingById(response.spendingId));
+    }
+
+
+    forkJoin(observables)
       .pipe(
         finalize(() => this.loaderService.hide())
       )
       .subscribe(
         responses => {
-          let spendingsResponse = responses[0].map(s => SpendingMapper.convertFromDto(s));
+          let spendingsResponse = (responses[0] as GetSpendingsResponseItem[]).map(s => SpendingMapper.convertFromDto(s));
           if (this.onlyWithoutCategories) {
-            let oneSpendingResponse = SpendingMapper.convertFromDto(responses[1]);
+            let oneSpendingResponse = SpendingMapper.convertFromDto((responses[2] as GetSpendingsResponseItem));
             spendingsResponse.push(oneSpendingResponse);
             this.spendings = spendingsResponse
               .sort((s1, s2) => new Date(s2.date).getTime() - new Date(s1.date).getTime())
@@ -223,7 +230,7 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
           }
 
           this.dataSource = new MatTableDataSource(this.spendings);
-          this.categoriesForSelect = responses[2].map(c => CategoryMapper.convertFromDto(c));
+          this.categoriesForSelect = (responses[1] as CategoryDto[]).map(c => CategoryMapper.convertFromDto(c));
         },
         (error) => console.error(error)
       );

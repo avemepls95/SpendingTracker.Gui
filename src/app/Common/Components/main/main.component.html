@@ -8,7 +8,7 @@
       </button>
       <span style="color: white; font-size: 18px;">{{currentPageTitle}}</span>
     </div>
-    <div class="flex-v-center name-avatar">
+    <div *ngIf="!isFromTelegramWebApp" class="flex-v-center name-avatar">
       <button mat-icon-button (click)="refreshPage()" class="refresh-button content-in-center"
               matTooltip="Обновить страницу" onclick="this.blur()">
         <mat-icon class="icon-font-large content-in-center">refresh</mat-icon>

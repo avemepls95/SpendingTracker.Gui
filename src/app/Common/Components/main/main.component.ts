@@ -14,6 +14,7 @@ export class MainComponent implements OnInit {
   userFirstName: string;
   currentPageTitle: string;
   avatarUrl: string;
+  isFromTelegramWebApp: string;
   menuItems: MenuItem[] = [
     { route: '/spending', text: 'Траты', icon: 'money_off' },
     { route: '/categories-list', text: 'Мои категории', icon: 'folder_shared' },
@@ -26,6 +27,8 @@ export class MainComponent implements OnInit {
     this.userFirstName = localStorage.getItem(LocalStorageManager.userFirstNameKey)!;
     let avatarTmp = localStorage.getItem(LocalStorageManager.userPhotoUrlKey)!;
     this.avatarUrl = avatarTmp ? avatarTmp : 'assets/images/empty-avatar.png';
+
+    this.isFromTelegramWebApp = localStorage.getItem(LocalStorageManager.isFromTelegramWebApp)!;
   }
 
   ngOnInit() {

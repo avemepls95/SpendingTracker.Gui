@@ -1,9 +1,13 @@
-import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+import {Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { LoaderService } from 'src/app/Common/Services/loader.service';
 import { LocalStorageManager } from 'src/app/LocalStorageManager';
 import {AuthService} from "./Services/auth.service";
 import {AuthByTelegramResponse} from "./Contracts/AuthByTelegramResponse";
+import {CommonDtoMapper} from "../../Converters/CommonDtoMapper";
+import {finalize} from "rxjs/operators";
+import {HttpErrorResponse} from "@angular/common/http";
+import {FromTelegramAuthDto} from "./Contracts/FromTelegramAuthDto";
 
 @Component({
   selector: 'app-auth',
@@ -13,6 +17,7 @@ import {AuthByTelegramResponse} from "./Contracts/AuthByTelegramResponse";
 export class AuthComponent implements OnInit {
 
   isAuthError: boolean = false;
+  fromTelegramWebApp: boolean;
 
   constructor(
     private authService: AuthService,
@@ -22,10 +27,41 @@ export class AuthComponent implements OnInit {
     private ngZone: NgZone) { }
 
   ngOnInit() {
-    if (!this.authService.isAuthenticated())
-      return;
+    if (this.authService.isAuthenticated()){
+      this.router.navigate(['/main']);
+    }
 
-    this.router.navigate(['/main']);
+    let userData = (window as any).Telegram.WebApp.initDataUnsafe.user;
+    this.fromTelegramWebApp = !!userData;
+    if (this.fromTelegramWebApp) {
+      LocalStorageManager.setIsFromTelegramWebApp(true);
+      this.login(new FromTelegramAuthDto({
+        id: userData.id,
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        photo_url: userData.photo_url
+      }));
+    }
+  }
+
+  login(loginData: FromTelegramAuthDto) {
+    let body = CommonDtoMapper.getTelegramAuthDto(loginData);
+    this.authService.generateTokenByTelegramAuth(body)
+      .pipe(
+        finalize(() => {
+          this.loaderService.hide();
+        })
+      )
+      .subscribe(
+        (response: AuthByTelegramResponse) => {
+          this.loginSuccessful(response);
+        },
+        (error: any) => {
+          if (error instanceof HttpErrorResponse) {
+            this.isAuthError = true;
+          }
+        }
+      );
   }
 
   setIsAuthError(value: boolean) {
@@ -41,7 +77,7 @@ export class AuthComponent implements OnInit {
     this.loaderService.hide();
   }
 
-  loginSuccessful({response}: { response: AuthByTelegramResponse }) {
+  loginSuccessful(response: AuthByTelegramResponse) {
     this.authService.saveTokenInformation(response.tokenInformation);
     LocalStorageManager.setUserLocalInformation(response.id);
 

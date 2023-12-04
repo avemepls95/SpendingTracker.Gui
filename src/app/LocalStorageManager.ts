@@ -11,6 +11,7 @@ export class LocalStorageManager {
     static tokenKey = 'token';
     static tokenExpireDateKey = 'tokenExpireDate';
     static refreshTokenKey = 'refreshToken';
+    static isFromTelegramWebApp = 'isFromTelegramWebApp';
 
     private static authFieldsKeys = [
         LocalStorageManager.userFirstNameKey,
@@ -49,4 +50,8 @@ export class LocalStorageManager {
     static setUserLocalInformation(id: string) {
         localStorage.setItem(LocalStorageManager.userLocalIdKey, id.toString());
     }
+
+  static setIsFromTelegramWebApp(value: boolean) {
+    localStorage.setItem(LocalStorageManager.isFromTelegramWebApp, value.toString());
+  }
 }

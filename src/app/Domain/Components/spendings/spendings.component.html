@@ -124,8 +124,9 @@
 
         <div *ngIf="isLoading" class="content-in-center">Loading...</div>
 
-        <div [ngClass]="showLoadMoreButton() ? 'content-in-center' : 'display-none'">
-          <button mat-flat-button (click)="loadMoreSpendings()">More</button>
+        <div [ngClass]="showLoadMoreButton() ? 'content-in-center' : 'display-none'"
+             style="margin-top: 5px">
+          <button mat-button (click)="loadMoreSpendings()">More</button>
         </div>
 
       </mat-card-content>
