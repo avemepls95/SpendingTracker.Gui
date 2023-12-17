@@ -5,11 +5,13 @@ import {AuthGuard} from "./Common/Guards/auth.guard";
 import {MainComponent} from "./Common/Components/main/main.component";
 import {CategoriesListComponent} from "./Domain/Components/Category/categories-list/categories-list.component";
 import {SpendingsComponent} from "./Domain/Components/spendings/spendings.component";
+import {AnalyticsComponent} from "./Domain/Components/analytics/analytics.component";
 
 const menuRoutes: Routes = [
   { path: '', redirectTo: '/spending', pathMatch: 'full' },
   { path: 'categories-list', component: CategoriesListComponent },
   { path: 'spending', component: SpendingsComponent },
+  { path: 'analytics', component: AnalyticsComponent },
 ];
 
 const routes: Routes = [

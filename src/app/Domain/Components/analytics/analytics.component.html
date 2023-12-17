@@ -1,0 +1,40 @@
+<div class="content-in-center" style="margin-top: 10px;">
+  <div class="dates-block">
+    <mat-form-field class="example-form-field">
+      <mat-label>Введите период</mat-label>
+      <mat-date-range-input [rangePicker]="rangePicker" (change)="loadAnalytics()">
+        <input matStartDate placeholder="Начало" [(ngModel)]="dateFrom">
+        <input matEndDate placeholder="Конец" [(ngModel)]="dateTo">
+      </mat-date-range-input>
+      <mat-datepicker-toggle matIconSuffix [for]="rangePicker"></mat-datepicker-toggle>
+      <mat-date-range-picker #rangePicker>
+        <mat-date-range-picker-actions>
+          <button mat-button matDateRangePickerCancel>Отмена</button>
+          <button
+            mat-raised-button
+            color="primary"
+            matDateRangePickerApply
+            (click)="loadAnalytics()">Применить
+          </button>
+        </mat-date-range-picker-actions>
+      </mat-date-range-picker>
+    </mat-form-field>
+  </div>
+
+  <div *ngIf="!!analytics" class="content-in-center">
+
+    <div #totalAmountSpentDiv class="total-amount-spent-dev">
+      <span>Потрачено {{analytics.totalAmount | number: '1.0-0':'ru'}} рублей</span>
+    </div>
+
+    <div *ngIf="!!analytics.categoryInfos && analytics.categoryInfos.length != 0" class="content-in-center">
+
+      <h2>Траты по категориям:</h2>
+
+      <div class="categories-tree-wrap" [ngStyle]="{'width.px': totalAmountSpentDiv.offsetWidth + 50 }">
+        <app-analytics-categories-tree [categoryAnalyticsItems]=analytics.categoryInfos>
+        </app-analytics-categories-tree>
+      </div>
+    </div>
+  </div>
+</div>

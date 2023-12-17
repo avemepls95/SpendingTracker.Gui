@@ -22,12 +22,14 @@ import { SpendingCardComponent } from './Domain/Components/spending-card/spendin
 import {MaskDirective} from "./Common/Directives/mask.directive";
 import {NgxMatSelectSearchModule} from "ngx-mat-select-search";
 import {MatSelectModule} from "@angular/material/select";
-import {MAT_DATE_LOCALE} from "@angular/material/core";
+import {DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE} from "@angular/material/core";
 import {ResponseInterceptor} from "./Common/Interceptors/Response/response.interceptor";
-import { CategoriesTreeComponent } from './Domain/Components/Category/categories-tree/categories-tree.component';
+import { SpendingCategoriesTreeComponent } from './Domain/Components/Category/spending-categories-tree/spending-categories-tree.component';
 import {NgxSpinnerModule} from "ngx-spinner";
 import {InfiniteScrollModule} from "ngx-infinite-scroll";
 import {CategoryCardComponent} from "./Domain/Components/Category/category-card/category-card.component";
+import {AnalyticsComponent} from "./Domain/Components/analytics/analytics.component";
+import { AnalyticsCategoriesTreeComponent } from './Domain/Components/analytics/analytics-categories-tree/analytics-categories-tree.component';
 
 @NgModule({
   declarations: [
@@ -43,7 +45,9 @@ import {CategoryCardComponent} from "./Domain/Components/Category/category-card/
     SpendingCardComponent,
     CategoryCardComponent,
     MaskDirective,
-    CategoriesTreeComponent,
+    SpendingCategoriesTreeComponent,
+    AnalyticsComponent,
+    AnalyticsCategoriesTreeComponent,
   ],
   imports: [
     BrowserModule,

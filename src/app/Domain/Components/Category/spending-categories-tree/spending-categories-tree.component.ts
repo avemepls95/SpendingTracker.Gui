@@ -9,12 +9,12 @@ import {LoaderService} from "../../../../Common/Services/loader.service";
 import {SpendingApiService} from "../../../Services/spending-api.service";
 
 @Component({
-  selector: 'app-categories-tree',
-  templateUrl: './categories-tree.component.html',
-  styleUrls: ['./categories-tree.component.scss'],
+  selector: 'app-spending-categories-tree',
+  templateUrl: './spending-categories-tree.component.html',
+  styleUrls: ['./spending-categories-tree.component.scss'],
   encapsulation: ViewEncapsulation.None,
 })
-export class CategoriesTreeComponent implements OnInit {
+export class SpendingCategoriesTreeComponent implements OnInit {
 
   @Input() treeCategories: Category[];
   @Input() categoriesForSelect: Category[]

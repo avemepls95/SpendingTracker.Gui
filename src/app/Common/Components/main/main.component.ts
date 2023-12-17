@@ -18,6 +18,7 @@ export class MainComponent implements OnInit {
   menuItems: MenuItem[] = [
     { route: '/spending', text: 'Траты', icon: 'money_off' },
     { route: '/categories-list', text: 'Мои категории', icon: 'folder_shared' },
+    { route: '/analytics', text: 'Аналитика', icon: 'show_chart' },
   ]
 
   constructor(

@@ -8,6 +8,7 @@ import {GetAllCurrenciesResponseItem} from "./Contracts/GetAllCurrenciesResponse
 import {CategoryDto} from "./Contracts/CategoryDto";
 import {Category} from "../Models/Category";
 import {GetSpendingsRequest} from "./Contracts/GetSpendingsRequest";
+import {CategoryAnalytics} from "../Models/Analytics/CategoryAnalytics";
 
 
 @Injectable({
@@ -191,5 +192,14 @@ export class SpendingApiService {
         title: category.title
       }
     );
+  }
+
+  getCategoriesAnalytics(dateFrom: Date, dateTo: Date, currencyId: string): Observable<CategoryAnalytics> {
+    const params = new HttpParams()
+      .set('dateFrom', new Date(dateFrom).toLocaleDateString())
+      .set('dateTo', new Date(dateTo).toLocaleDateString())
+      .set('targetCurrencyId', currencyId);
+
+    return this.http.get(this.apiBaseUrl + 'v1/analytics/by-date-range', {params}) as Observable<CategoryAnalytics>;
   }
 }

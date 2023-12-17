@@ -1,0 +1,29 @@
+.dates-block {
+  display: flex;
+  justify-content: center;
+
+  mat-form-field {
+    width: 300px;
+  }
+}
+
+::ng-deep .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+  /*change color of label*/
+  background-color: transparent !important;
+}
+
+.total-amount-spent-dev {
+  font-size: 18px;
+  padding: 10px;
+  box-shadow: rgba(6, 24, 44, 0.4) 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+}
+
+.categories-tree-wrap {
+  margin-top: 10px;
+  //width: 100%;
+  margin-left: 50px;
+}
+
+h2 {
+  margin-bottom: 0;
+}

@@ -9,7 +9,6 @@
       <mat-icon class="dark-gray">remove</mat-icon>
     </div>
     <div *ngIf="!!categoryNode.id" style="display: contents;">
-<!--      <button mat-icon-button disabled></button>-->
       {{categoryNode.name}}
       <button mat-icon-button
               (click)="addParentNode(categoryNode)"
