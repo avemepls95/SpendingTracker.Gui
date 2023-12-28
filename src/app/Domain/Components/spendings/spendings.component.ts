@@ -20,7 +20,7 @@ import {animate, state, style, transition, trigger} from "@angular/animations";
 import {Category} from "../../Models/Category";
 import {CategoryMapper} from "../../../Converters/CategoryMapper";
 import {NgxSpinnerService} from "ngx-spinner";
-import {GetSpendingsRequest} from "../../Services/Contracts/GetSpendingsRequest";
+import {GetSpendingsWithCategoriesTreeRequest} from "../../Services/Contracts/GetSpendingsWithCategoriesTreeRequest";
 import localeRu from '@angular/common/locales/ru';
 import {registerLocaleData} from "@angular/common";
 import {GetSpendingsResponseItem} from "../../Services/Contracts/GetSpendingsResponseItem";
@@ -78,7 +78,7 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
   loadData() {
     this.loaderService.show();
     let request = this.buildGetSpendingsRequest(0, this.recordsCountToLoad);
-    let spendingsObservable = this.spendingApiService.getSpendings(request);
+    let spendingsObservable = this.spendingApiService.getSpendingsWithCategoriesTree(request);
     let currenciesObservable = this.spendingApiService.getAllCurrencies();
 
     forkJoin([spendingsObservable, currenciesObservable])
@@ -201,7 +201,7 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
     }
 
     let request = this.buildGetSpendingsRequest(0, countToLoad);
-    let spendingsObservable = this.spendingApiService.getSpendings(request);
+    let spendingsObservable = this.spendingApiService.getSpendingsWithCategoriesTree(request);
     let categoriesObservable = this.spendingApiService.getCategories();
 
 
@@ -244,7 +244,7 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
     this.spinner.show();
 
     let request = this.buildGetSpendingsRequest(this.loadedRecordsCount, this.recordsCountToLoad);
-    this.spendingApiService.getSpendings(request).pipe(
+    this.spendingApiService.getSpendingsWithCategoriesTree(request).pipe(
       finalize(() => {
         this.spinner.hide();
         this.isLoading = false;
@@ -275,7 +275,7 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
   applyFiltration() {
     this.loadedRecordsCount = 0;
     let request = this.buildGetSpendingsRequest(0, this.recordsCountToLoad);
-    this.spendingApiService.getSpendings(request).pipe(
+    this.spendingApiService.getSpendingsWithCategoriesTree(request).pipe(
       finalize(() => {
         this.spinner.hide();
         this.isLoading = false;
@@ -292,8 +292,8 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
     );
   }
 
-  buildGetSpendingsRequest(offset: number, count: number): GetSpendingsRequest {
-    return new GetSpendingsRequest({
+  buildGetSpendingsRequest(offset: number, count: number): GetSpendingsWithCategoriesTreeRequest {
+    return new GetSpendingsWithCategoriesTreeRequest({
       offset: offset,
       count: count,
       searchString: this.searchString,

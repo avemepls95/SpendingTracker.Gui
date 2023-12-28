@@ -1,4 +1,4 @@
-import {Component, Input, OnChanges, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnChanges, OnInit, Output} from '@angular/core';
 import {FlatTreeControl} from "@angular/cdk/tree";
 import {MatTreeFlatDataSource, MatTreeFlattener} from "@angular/material/tree";
 import {CategoryAnalyticsItem} from "../../../Models/Analytics/CategoryAnalyticsItem";
@@ -10,6 +10,9 @@ import {CategoryAnalyticsItem} from "../../../Models/Analytics/CategoryAnalytics
 })
 export class AnalyticsCategoriesTreeComponent implements OnInit, OnChanges {
   @Input() categoryAnalyticsItems: CategoryAnalyticsItem[];
+
+  @Output()
+  categoryClicked = new EventEmitter();
 
   private _transformer = (node: CategoryAnalyticsItem, level: number) => {
     return {

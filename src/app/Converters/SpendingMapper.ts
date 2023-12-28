@@ -5,7 +5,7 @@ import {CategoryMapper} from "./CategoryMapper";
 
 export class SpendingMapper {
   static convertFromDto(dto: GetSpendingsResponseItem): Spending {
-    let categories = dto.categories.map(c => CategoryMapper.convertFromDto(c));
+    let categories = dto.categories?.map(c => CategoryMapper.convertFromDto(c));
     return new Spending({
       id: dto.id,
       createDate: dto.createDate,

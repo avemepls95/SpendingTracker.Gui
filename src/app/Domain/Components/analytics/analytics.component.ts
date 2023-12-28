@@ -10,6 +10,9 @@ import {
   MAT_MOMENT_DATE_ADAPTER_OPTIONS,
 } from '@angular/material-moment-adapter';
 import {DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE} from '@angular/material/core';
+import {MatBottomSheet} from "@angular/material/bottom-sheet";
+import {CategorySpendingsComponent} from "./category-spendings/category-spendings.component";
+import {GetFilteredSpendingsRequest} from "../../Services/Contracts/GetFilteredSpendingsRequest";
 
 @Component({
   selector: 'app-analytics',
@@ -31,12 +34,14 @@ export class AnalyticsComponent implements OnInit {
   dateFrom: Date = new Date();
   dateTo: Date = new Date();
 
+  targetCurrencyId: string = '17d5494d-d969-465d-b5cc-16979e3fe5f8';
+
   constructor(
     private spendingApiService: SpendingApiService,
     private loaderService: LoaderService,
+    private _bottomSheet: MatBottomSheet
   )
   {
-
   }
 
   ngOnInit(): void {
@@ -50,7 +55,7 @@ export class AnalyticsComponent implements OnInit {
     }
 
     this.loaderService.show();
-    this.spendingApiService.getCategoriesAnalytics(this.dateFrom, this.dateTo, '17d5494d-d969-465d-b5cc-16979e3fe5f8').pipe(
+    this.spendingApiService.getCategoriesAnalytics(this.dateFrom, this.dateTo, this.targetCurrencyId).pipe(
       finalize(() => this.loaderService.hide())
     ).subscribe(
       (response) => {
@@ -58,5 +63,16 @@ export class AnalyticsComponent implements OnInit {
       },
       (error) => console.error(error)
     );
+  }
+
+  onCategoryClicked(categoryId: string) {
+    this._bottomSheet.open(CategorySpendingsComponent, {
+      data: new GetFilteredSpendingsRequest({
+        categoryId: categoryId,
+        dateFrom: this.dateFrom,
+        dateTo: this.dateTo,
+        targetCurrencyId: this.targetCurrencyId
+      })
+    });
   }
 }

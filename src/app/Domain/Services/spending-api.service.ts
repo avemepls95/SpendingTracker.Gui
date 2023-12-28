@@ -7,8 +7,9 @@ import {Spending} from "../Models/Spending";
 import {GetAllCurrenciesResponseItem} from "./Contracts/GetAllCurrenciesResponseItem";
 import {CategoryDto} from "./Contracts/CategoryDto";
 import {Category} from "../Models/Category";
-import {GetSpendingsRequest} from "./Contracts/GetSpendingsRequest";
+import {GetSpendingsWithCategoriesTreeRequest} from "./Contracts/GetSpendingsWithCategoriesTreeRequest";
 import {CategoryAnalytics} from "../Models/Analytics/CategoryAnalytics";
+import {GetFilteredSpendingsRequest} from "./Contracts/GetFilteredSpendingsRequest";
 
 
 @Injectable({
@@ -34,14 +35,24 @@ export class SpendingApiService {
       { params }) as Observable<GetSpendingsResponseItem>;
   }
 
-  getSpendings(request: GetSpendingsRequest): Observable<GetSpendingsResponseItem[]> {
+  getSpendingsWithCategoriesTree(request: GetSpendingsWithCategoriesTreeRequest): Observable<GetSpendingsResponseItem[]> {
     const params = new HttpParams()
       .set('offset', request.offset.toString())
       .set('count', request.count.toString())
       .set('searchString', request.searchString)
       .set('onlyWithoutCategories', request.onlyWithoutCategories);
 
-    return this.http.get(this.apiBaseUrl + 'v1/spending/list', { params }) as Observable<GetSpendingsResponseItem[]>;
+    return this.http.get(this.apiBaseUrl + 'v1/spending/list-with-categories', { params }) as Observable<GetSpendingsResponseItem[]>;
+  }
+
+  getFilteredSpendings(request: GetFilteredSpendingsRequest): Observable<GetSpendingsResponseItem[]> {
+    const params = new HttpParams()
+      .set('targetCurrencyId', request.targetCurrencyId)
+      .set('categoryId', request.categoryId)
+      .set('dateFrom', new Date(request.dateFrom).toLocaleDateString())
+      .set('dateTo', new Date(request.dateTo).toLocaleDateString());
+
+    return this.http.get(this.apiBaseUrl + 'v1/spending/filtered-list', { params }) as Observable<GetSpendingsResponseItem[]>;
   }
 
   createCategory(title: string) {

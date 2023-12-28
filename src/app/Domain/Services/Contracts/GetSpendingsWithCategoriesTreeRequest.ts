@@ -1,4 +1,4 @@
-export class GetSpendingsRequest {
+export class GetSpendingsWithCategoriesTreeRequest {
   offset: number;
   count: number;
   searchString: string;

@@ -1,6 +1,7 @@
-table {
-  width: 100%;
-}
+table { width: 100%; }
+
+th { text-align: center !important; }
+td { text-align: center !important; }
 
 tr.example-detail-row {
   height: 0;
@@ -12,6 +13,7 @@ mat-card {
 
 .spending-row {
   cursor: pointer;
+  background-color: ghostwhite;
 }
 
 .spendings-search-results {

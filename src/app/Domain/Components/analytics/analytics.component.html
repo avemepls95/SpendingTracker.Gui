@@ -32,7 +32,9 @@
       <h2>Траты по категориям:</h2>
 
       <div class="categories-tree-wrap" [ngStyle]="{'width.px': totalAmountSpentDiv.offsetWidth + 50 }">
-        <app-analytics-categories-tree [categoryAnalyticsItems]=analytics.categoryInfos>
+        <app-analytics-categories-tree
+          [categoryAnalyticsItems]=analytics.categoryInfos
+          (categoryClicked)="onCategoryClicked($event)">
         </app-analytics-categories-tree>
       </div>
     </div>
