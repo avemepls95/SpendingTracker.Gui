@@ -39,7 +39,10 @@ export class AuthComponent implements OnInit {
         id: userData.id,
         first_name: userData.first_name,
         last_name: userData.last_name,
-        photo_url: userData.photo_url
+        photo_url: userData.photo_url,
+        auth_date: userData.auth_date,
+        hash: userData.hash,
+        username: userData.username
       }));
     }
   }

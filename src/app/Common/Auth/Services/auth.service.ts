@@ -1,13 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-// import { AppConfig } from '../app.config';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import {TelegramToBalanceAuthDto} from "../Contracts/TelegramToBalanceAuthDto";
+import {TelegramAuthDto} from "../Contracts/TelegramAuthDto";
 import {LocalStorageManager} from "../../../LocalStorageManager";
 import { JwtHelperService } from '@auth0/angular-jwt';
 import {TokenInformationDto} from "../Contracts/TokenInformationDto";
-import {FromTelegramAuthDto} from "../Contracts/FromTelegramAuthDto";
 import {AuthByTelegramResponse} from "../Contracts/AuthByTelegramResponse";
 import {Router} from "@angular/router";
 
@@ -27,7 +25,7 @@ export class AuthService {
     this.apiBaseUrl = environment.spendingApi;
   }
 
-  generateTokenByTelegramAuth(loginData: TelegramToBalanceAuthDto): Observable<AuthByTelegramResponse> {
+  generateTokenByTelegramAuth(loginData: TelegramAuthDto): Observable<AuthByTelegramResponse> {
     return this.http.post<AuthByTelegramResponse>(this.apiBaseUrl + 'v1/auth/token/generate/telegram', loginData);
   }
 
