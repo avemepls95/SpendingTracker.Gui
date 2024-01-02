@@ -14,7 +14,7 @@
 
     <mat-form-field>
       <mat-label>Валюта</mat-label>
-      <mat-select [formControl]="cuurencyCtrl" [(ngModel)]="selectedCurrencyId" #singleSelect>
+      <mat-select [(ngModel)]="selectedCurrencyId" #singleSelect>
         <mat-option>
           <ngx-mat-select-search [formControl]="currencyFilterCtrl"></ngx-mat-select-search>
         </mat-option>

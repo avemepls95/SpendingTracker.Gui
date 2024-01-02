@@ -8,8 +8,7 @@ export class CurrencyMapper {
       id: dto.id,
       code: dto.code,
       flagEmojiCode: dto.flagEmojiCode,
-      description: dto.code,
-      title: dto.code,
+      title: dto.title,
     })
   }
 }

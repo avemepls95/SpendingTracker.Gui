@@ -33,6 +33,9 @@ import { AnalyticsCategoriesTreeComponent } from './Domain/Components/analytics/
 import {
   CategorySpendingsComponent
 } from "./Domain/Components/analytics/category-spendings/category-spendings.component";
+import { UserSettingsComponent } from './Domain/Components/user-settings/user-settings.component';
+import {UserSettingsStore} from "./Domain/Store/UserSettingsStore";
+import {CurrenciesStore} from "./Domain/Store/CurrenciesStore";
 
 @NgModule({
   declarations: [
@@ -51,7 +54,8 @@ import {
     SpendingCategoriesTreeComponent,
     AnalyticsComponent,
     AnalyticsCategoriesTreeComponent,
-    CategorySpendingsComponent
+    CategorySpendingsComponent,
+    UserSettingsComponent
   ],
   imports: [
     BrowserModule,
@@ -72,6 +76,8 @@ import {
   providers: [
       LoaderService,
       JwtHelperService,
+      UserSettingsStore,
+      CurrenciesStore,
       { provide: JWT_OPTIONS, useValue: JWT_OPTIONS },
       { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
       { provide: MAT_DATE_LOCALE, useValue: 'en-GB' },

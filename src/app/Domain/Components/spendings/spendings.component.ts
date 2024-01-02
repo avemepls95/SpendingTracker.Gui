@@ -25,6 +25,7 @@ import localeRu from '@angular/common/locales/ru';
 import {registerLocaleData} from "@angular/common";
 import {GetSpendingsResponseItem} from "../../Services/Contracts/GetSpendingsResponseItem";
 import {CategoryDto} from "../../Services/Contracts/CategoryDto";
+import {CurrenciesStore} from "../../Store/CurrenciesStore";
 
 registerLocaleData(localeRu);
 
@@ -71,30 +72,28 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
     private loaderService: LoaderService,
     private dialog: MatDialog,
     private copyUtils: CopyUtils,
-    private spinner: NgxSpinnerService
+    private spinner: NgxSpinnerService,
+    currenciesStore: CurrenciesStore
   ) {
+    currenciesStore.currencies.value$.subscribe(value => {
+      this.currencies = value;
+      this.currencies.forEach(currency => {
+        this.currencyMap.set(currency.id, currency);
+      });
+    })
   }
 
   loadData() {
     this.loaderService.show();
     let request = this.buildGetSpendingsRequest(0, this.recordsCountToLoad);
-    let spendingsObservable = this.spendingApiService.getSpendingsWithCategoriesTree(request);
-    let currenciesObservable = this.spendingApiService.getAllCurrencies();
 
-    forkJoin([spendingsObservable, currenciesObservable])
-      .pipe(
-        finalize(() => this.loaderService.hide())
-      )
+    this.spendingApiService.getSpendingsWithCategoriesTree(request)
+      .pipe( finalize(() => this.loaderService.hide()))
       .subscribe(
-        responses => {
-          this.spendings = responses[0].map(s => SpendingMapper.convertFromDto(s));
+        response => {
+          this.spendings = response.map(s => SpendingMapper.convertFromDto(s));
           this.dataSource = new MatTableDataSource(this.spendings);
-          this.loadedRecordsCount += responses[0].length;
-
-          this.currencies = responses[1].map(s => CurrencyMapper.convertFromDto(s));
-          this.currencies.forEach(currency => {
-            this.currencyMap.set(currency.id, currency);
-          });
+          this.loadedRecordsCount += response.length;
         },
         (error) => console.error(error)
       );

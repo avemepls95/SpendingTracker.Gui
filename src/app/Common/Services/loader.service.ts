@@ -5,15 +5,20 @@ import { Subject } from 'rxjs';
 export class LoaderService {
 
   isLoading = new Subject<boolean>();
+  loadingIncrement: number = 0;
 
   constructor(){
   }
 
   show() {
     this.isLoading.next(true);
+    this.loadingIncrement++;
   }
 
   hide() {
-    this.isLoading.next(false);
+    this.loadingIncrement--;
+    if (this.loadingIncrement == 0) {
+      this.isLoading.next(false);
+    }
   }
 }

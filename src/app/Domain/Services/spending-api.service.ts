@@ -10,6 +10,7 @@ import {Category} from "../Models/Category";
 import {GetSpendingsWithCategoriesTreeRequest} from "./Contracts/GetSpendingsWithCategoriesTreeRequest";
 import {CategoryAnalytics} from "../Models/Analytics/CategoryAnalytics";
 import {GetFilteredSpendingsRequest} from "./Contracts/GetFilteredSpendingsRequest";
+import {UserSettings} from "../Models/UserSettings";
 
 
 @Injectable({
@@ -212,5 +213,9 @@ export class SpendingApiService {
       .set('targetCurrencyId', currencyId);
 
     return this.http.get(this.apiBaseUrl + 'v1/analytics/by-date-range', {params}) as Observable<CategoryAnalytics>;
+  }
+
+  getUserSettings(): Observable<UserSettings> {
+    return this.http.get(this.apiBaseUrl + 'v1/user-settings/list') as Observable<UserSettings>;
   }
 }

@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { LocalStorageManager } from 'src/app/LocalStorageManager';
 import {AuthService} from "../../Auth/Services/auth.service";
 import {MenuItem} from "./MenuItem";
+import {UserSettingsStore} from "../../../Domain/Store/UserSettingsStore";
+import {CurrenciesStore} from "../../../Domain/Store/CurrenciesStore";
 
 @Component({
   selector: 'app-main',
@@ -16,14 +18,15 @@ export class MainComponent implements OnInit {
   avatarUrl: string;
   isFromTelegramWebApp: string;
   menuItems: MenuItem[] = [
-    { route: '/spending', text: 'Траты', icon: 'money_off' },
-    { route: '/categories-list', text: 'Мои категории', icon: 'folder_shared' },
-    { route: '/analytics', text: 'Аналитика', icon: 'show_chart' },
+    { route: '/spending', text: 'Траты', icon: 'money_off', withDivider: false },
+    { route: '/categories-list', text: 'Мои категории', icon: 'folder_shared', withDivider: false },
+    { route: '/analytics', text: 'Аналитика', icon: 'show_chart', withDivider: true },
+    { route: '/settings', text: 'Настройки', icon: 'settings', withDivider: false },
   ]
 
   constructor(
     private router: Router,
-    private authService: AuthService,
+    private authService: AuthService
   ) {
     this.userFirstName = localStorage.getItem(LocalStorageManager.userFirstNameKey)!;
     let avatarTmp = localStorage.getItem(LocalStorageManager.userPhotoUrlKey)!;

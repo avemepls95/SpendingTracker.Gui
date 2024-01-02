@@ -21,7 +21,6 @@ export class AuthService {
     private jwtHelper: JwtHelperService,
     private router: Router
   ) {
-    console.log(environment.spendingApi);
     this.apiBaseUrl = environment.spendingApi;
   }
 

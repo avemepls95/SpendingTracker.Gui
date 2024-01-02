@@ -40,14 +40,13 @@
             {{item.text}}
           </div>
         </mat-list-item>
+        <mat-divider *ngIf="item.withDivider"></mat-divider>
       </div>
 
-      <mat-divider></mat-divider>
       <!-- <mat-list-item [routerLink]="'/settings'" (click)="sidenav.toggle()">
           <mat-icon mat-list-icon>settings</mat-icon>
           <h4 mat-line>Настройки</h4>
       </mat-list-item> -->
-      <mat-divider></mat-divider>
       <mat-list-item (click)="sidenav.toggle()">
         <div style="display: flex">
           <mat-icon class="nav-list-icon"></mat-icon>Закрыть
