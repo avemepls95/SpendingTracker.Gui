@@ -13,7 +13,7 @@ import {Spending} from "../../Models/Spending";
 import {CopyUtils} from "../../../Common/Utils/CopyUtils";
 import {SpendingCardComponent} from "../spending-card/spending-card.component";
 import {FlagEmojiiConverter} from "../../Models/FlagEmojiiConverter";
-import {EMPTY, forkJoin, Observable} from "rxjs";
+import {forkJoin, Observable, of} from "rxjs";
 import {Currency} from "../../Models/Currency";
 import {CurrencyMapper} from "../../../Converters/CurrencyMapper";
 import {animate, state, style, transition, trigger} from "@angular/animations";
@@ -199,27 +199,30 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
       countToLoad -= 1;
     }
 
-    let request = this.buildGetSpendingsRequest(0, countToLoad);
-    let spendingsObservable = this.spendingApiService.getSpendingsWithCategoriesTree(request);
     let categoriesObservable = this.spendingApiService.getCategories();
 
+    let observables: (Observable<GetSpendingsResponseItem[]> | Observable<CategoryDto[]> | Observable<GetSpendingsResponseItem>)[]
+      = [categoriesObservable];
 
-    let observables: (Observable<GetSpendingsResponseItem[]> | Observable<CategoryDto[]> | Observable<GetSpendingsResponseItem>)[] = [spendingsObservable, categoriesObservable];
+    if (countToLoad != 0) {
+      let requestModel = this.buildGetSpendingsRequest(0, countToLoad);
+      observables.push(this.spendingApiService.getSpendingsWithCategoriesTree(requestModel));
+    }
+    else{
+      observables.push(of([]));
+    }
 
     if (this.onlyWithoutCategories) {
       observables.push(this.spendingApiService.getSpendingById(response.spendingId));
     }
 
-
     forkJoin(observables)
-      .pipe(
-        finalize(() => this.loaderService.hide())
-      )
+      .pipe(finalize(() => this.loaderService.hide()))
       .subscribe(
-        responses => {
-          let spendingsResponse = (responses[0] as GetSpendingsResponseItem[]).map(s => SpendingMapper.convertFromDto(s));
+        ([categoryDtos, spendingDtos, oneSpendingDto]) => {
+          let spendingsResponse = (spendingDtos as GetSpendingsResponseItem[]).map(s => SpendingMapper.convertFromDto(s));
           if (this.onlyWithoutCategories) {
-            let oneSpendingResponse = SpendingMapper.convertFromDto((responses[2] as GetSpendingsResponseItem));
+            let oneSpendingResponse = SpendingMapper.convertFromDto((oneSpendingDto as GetSpendingsResponseItem));
             spendingsResponse.push(oneSpendingResponse);
             this.spendings = spendingsResponse
               .sort((s1, s2) => new Date(s2.date).getTime() - new Date(s1.date).getTime())
@@ -229,7 +232,7 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
           }
 
           this.dataSource = new MatTableDataSource(this.spendings);
-          this.categoriesForSelect = (responses[1] as CategoryDto[]).map(c => CategoryMapper.convertFromDto(c));
+          this.categoriesForSelect = (categoryDtos as CategoryDto[]).map(c => CategoryMapper.convertFromDto(c));
         },
         (error) => console.error(error)
       );
