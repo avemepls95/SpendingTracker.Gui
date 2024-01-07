@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { LocalStorageManager } from "../../../LocalStorageManager";
 import {FromTelegramAuthDto} from "../Contracts/FromTelegramAuthDto";
-import {CommonDtoMapper} from "../../../Converters/CommonDtoMapper";
+import {TelegramDtoMapper} from "../../../Converters/TelegramDtoMapper";
 import {AuthService} from "../Services/auth.service";
 import {environment} from "../../../../environments/environment";
 
@@ -45,7 +45,7 @@ export class TelegramLoginWidget implements AfterViewInit {
 
   ngAfterViewInit() {
     // @ts-ignore
-      window['loginViaTelegram'] = (loginData: FromTelegramAuthDto) => {
+    window['loginViaTelegram'] = (loginData: FromTelegramAuthDto) => {
       LocalStorageManager.setUserData(loginData as FromTelegramAuthDto);
       this.loginViaTelegram(loginData)
     };
@@ -55,11 +55,8 @@ export class TelegramLoginWidget implements AfterViewInit {
   private loginViaTelegram(loginData: FromTelegramAuthDto) {
     this.loginStarted.emit();
 
-    this.authService.generateTokenByTelegramAuth(CommonDtoMapper.getTelegramAuthDto(loginData))
-      .pipe(
-        finalize(() => {
-          this.loginEnded.emit()
-        })
+    this.authService.generateTokenByTelegramAuth(TelegramDtoMapper.fromWidget(loginData))
+      .pipe(finalize(() => this.loginEnded.emit())
       )
       .subscribe(
         (response: any) => {

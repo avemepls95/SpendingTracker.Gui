@@ -200,17 +200,16 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
       countToLoad -= 1;
     }
 
-    let request = this.buildGetSpendingsRequest(0, countToLoad);
-    let spendingsObservable = this.spendingApiService.getSpendingsWithCategoriesTree(request);
+    let requestModel = this.buildGetSpendingsRequest(0, countToLoad);
+    let spendingsObservable = this.spendingApiService.getSpendingsWithCategoriesTree(requestModel);
     let categoriesObservable = this.spendingApiService.getCategories();
 
-
-    let observables: (Observable<GetSpendingsResponseItem[]> | Observable<CategoryDto[]> | Observable<GetSpendingsResponseItem>)[] = [spendingsObservable, categoriesObservable];
+    let observables: (Observable<GetSpendingsResponseItem[]> | Observable<CategoryDto[]> | Observable<GetSpendingsResponseItem>)[]
+      = [spendingsObservable, categoriesObservable];
 
     if (this.onlyWithoutCategories) {
       observables.push(this.spendingApiService.getSpendingById(response.spendingId));
     }
-
 
     forkJoin(observables)
       .pipe(

@@ -4,10 +4,9 @@ import { LoaderService } from 'src/app/Common/Services/loader.service';
 import { LocalStorageManager } from 'src/app/LocalStorageManager';
 import {AuthService} from "./Services/auth.service";
 import {AuthByTelegramResponse} from "./Contracts/AuthByTelegramResponse";
-import {CommonDtoMapper} from "../../Converters/CommonDtoMapper";
 import {finalize} from "rxjs/operators";
 import {HttpErrorResponse} from "@angular/common/http";
-import {FromTelegramAuthDto} from "./Contracts/FromTelegramAuthDto";
+import {TelegramAuthDto} from "./Contracts/TelegramAuthDto";
 
 @Component({
   selector: 'app-auth',
@@ -31,24 +30,27 @@ export class AuthComponent implements OnInit {
       this.router.navigate(['/main']);
     }
 
-    let userData = (window as any).Telegram.WebApp.initDataUnsafe.user;
+    let telegramWebApp = (window as any).Telegram.WebApp;
+    let userData = telegramWebApp.initDataUnsafe.user;
+    // console.log("telegram1:" + JSON.stringify((window as any).Telegram.WebApp));
     this.fromTelegramWebApp = !!userData;
     if (this.fromTelegramWebApp) {
       LocalStorageManager.setIsFromTelegramWebApp(true);
-      this.login(new FromTelegramAuthDto({
-        id: userData.id,
-        first_name: userData.first_name,
-        last_name: userData.last_name,
-        photo_url: userData.photo_url,
-        auth_date: userData.auth_date,
-        hash: userData.hash,
-        username: userData.username
-      }));
+      this.login(telegramWebApp);
     }
   }
 
-  login(loginData: FromTelegramAuthDto) {
-    let body = CommonDtoMapper.getTelegramAuthDto(loginData);
+  login(telegramWebApp: any) {
+    let userData = telegramWebApp.initDataUnsafe.user;
+    let body = new TelegramAuthDto({
+      firstName: userData.first_name,
+      userId: userData.id,
+      lastName: userData.last_name,
+      username: userData.username,
+      checkString: telegramWebApp.initData,
+      authType: 'webApp'
+    });
+
     this.authService.generateTokenByTelegramAuth(body)
       .pipe(
         finalize(() => {
