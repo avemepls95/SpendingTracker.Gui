@@ -13,6 +13,10 @@ import {DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE} from '@angular/material/
 import {MatBottomSheet} from "@angular/material/bottom-sheet";
 import {CategorySpendingsComponent} from "./category-spendings/category-spendings.component";
 import {GetFilteredSpendingsRequest} from "../../Services/Contracts/GetFilteredSpendingsRequest";
+import {UserSettingsStore} from "../../Store/UserSettingsStore";
+import {CurrenciesStore} from "../../Store/CurrenciesStore";
+import {Currency} from "../../Models/Currency";
+import {zip} from "rxjs";
 
 @Component({
   selector: 'app-analytics',
@@ -34,11 +38,13 @@ export class AnalyticsComponent implements OnInit {
   dateFrom: Date = new Date();
   dateTo: Date = new Date();
 
-  targetCurrencyId: string = '17d5494d-d969-465d-b5cc-16979e3fe5f8';
+  targetCurrency: Currency;
 
   constructor(
     private spendingApiService: SpendingApiService,
     private loaderService: LoaderService,
+    private userSettingsStore: UserSettingsStore,
+    private currenciesStore: CurrenciesStore,
     private _bottomSheet: MatBottomSheet
   )
   {
@@ -46,7 +52,18 @@ export class AnalyticsComponent implements OnInit {
 
   ngOnInit(): void {
     this.dateFrom.setDate(this.dateFrom.getDate() - 30);
-    this.loadAnalytics();
+    zip([this.userSettingsStore.settings.value$, this.currenciesStore.currencies.value$])
+      .pipe()
+      .subscribe(([userSettings, currencies]) => {
+        if (!userSettings.viewCurrencyId) {
+          return;
+        }
+
+        let targetCurrencyId = userSettings.viewCurrencyId;
+        this.targetCurrency = currencies.find(c => c.id == targetCurrencyId)!;
+
+        this.loadAnalytics();
+      })
   }
 
   loadAnalytics() {
@@ -55,7 +72,7 @@ export class AnalyticsComponent implements OnInit {
     }
 
     this.loaderService.show();
-    this.spendingApiService.getCategoriesAnalytics(this.dateFrom, this.dateTo, this.targetCurrencyId).pipe(
+    this.spendingApiService.getCategoriesAnalytics(this.dateFrom, this.dateTo, this.targetCurrency.id).pipe(
       finalize(() => this.loaderService.hide())
     ).subscribe(
       (response) => {
@@ -71,7 +88,7 @@ export class AnalyticsComponent implements OnInit {
         categoryId: categoryId,
         dateFrom: this.dateFrom,
         dateTo: this.dateTo,
-        targetCurrencyId: this.targetCurrencyId
+        targetCurrencyId: this.targetCurrency.id
       })
     });
   }

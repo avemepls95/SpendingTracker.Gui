@@ -1,7 +1,6 @@
 <div *ngIf="!!currentCurrency" class="content-in-center">
-  <div class="content-in-center">
+  <div class="content-in-center view-currency-wrap">
     <h2>Текущая валюта отображения</h2>
-    <span>{{currentCurrency.title}}</span>
     <mat-form-field>
       <mat-label>Валюта</mat-label>
       <mat-select [ngModel]="currentCurrency.id" (selectionChange)="changeCurrency($event)">
@@ -24,4 +23,6 @@
 <!--      <mat-option *ngFor="let currency of filteredCurrencies | async" [value]="currency">{{currency.code}} {{currency.title}}</mat-option>-->
 <!--    </mat-select>-->
   </div>
+
+  <button mat-button (click)="save()">Сохранить</button>
 </div>

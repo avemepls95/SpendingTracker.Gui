@@ -26,8 +26,13 @@ export class MainComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    userSettingsStore: UserSettingsStore,
+    currenciesStore: CurrenciesStore
   ) {
+    userSettingsStore.initialize();
+    currenciesStore.initialize();
+
     this.userFirstName = localStorage.getItem(LocalStorageManager.userFirstNameKey)!;
     let avatarTmp = localStorage.getItem(LocalStorageManager.userPhotoUrlKey)!;
     this.avatarUrl = avatarTmp ? avatarTmp : 'assets/images/empty-avatar.png';

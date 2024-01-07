@@ -34,7 +34,7 @@ export class UserSettingsComponent implements OnInit {
     zip([this.userSettingsStore.settings.value$, this.currenciesStore.currencies.value$])
       .pipe()
       .subscribe(([userSettings, currencies]) => {
-        this.settings = userSettings;
+        this.settings = Object.assign({}, userSettings);
         this.currencies = currencies;
         this.filteredCurrencies.next(this.currencies.slice());
 
@@ -72,5 +72,10 @@ export class UserSettingsComponent implements OnInit {
 
   changeCurrency($event: MatSelectChange) {
     this.currentCurrency = this.currencies.find(c => c.id == $event.value)!;
+    this.settings.viewCurrencyId = this.currentCurrency.id;
+  }
+
+  save() {
+    this.userSettingsStore.set(this.settings);
   }
 }

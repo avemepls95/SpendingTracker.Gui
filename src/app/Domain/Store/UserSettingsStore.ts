@@ -31,13 +31,9 @@ export class UserSettingsStore {
   }
 
   set(value: UserSettings) {
-    this.settings.value = value;
-    // this.spendingApiService.updateUserSettings()
-    //   .pipe(finalize(() => { this.loaderService.hide() }))
-    //   .subscribe(
-    //     response => {
-    //       this.settings.value = response;
-    //     }
-    //   );
+    this.loaderService.show();
+    this.spendingApiService.updateUserSettings(value)
+      .pipe(finalize(() => this.loaderService.hide()))
+      .subscribe(_ => this.settings.value = value);
   }
 }

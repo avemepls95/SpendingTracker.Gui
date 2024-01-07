@@ -218,4 +218,16 @@ export class SpendingApiService {
   getUserSettings(): Observable<UserSettings> {
     return this.http.get(this.apiBaseUrl + 'v1/user-settings/list') as Observable<UserSettings>;
   }
+
+  updateUserSettings(userSettings: UserSettings) {
+    if (!userSettings || !userSettings.viewCurrencyId)
+      throw Error("Внутренная ошибка. Пустые настройки пользователя.");
+
+    return this.http.post(
+      this.apiBaseUrl + 'v1/user-settings/update',
+      {
+        ViewCurrencyId: userSettings.viewCurrencyId
+      }
+    );
+  }
 }

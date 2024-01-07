@@ -32,7 +32,6 @@ export class AuthComponent implements OnInit {
 
     let telegramWebApp = (window as any).Telegram.WebApp;
     let userData = telegramWebApp.initDataUnsafe.user;
-    // console.log("telegram1:" + JSON.stringify((window as any).Telegram.WebApp));
     this.fromTelegramWebApp = !!userData;
     if (this.fromTelegramWebApp) {
       LocalStorageManager.setIsFromTelegramWebApp(true);
