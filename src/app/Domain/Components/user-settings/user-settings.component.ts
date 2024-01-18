@@ -7,6 +7,7 @@ import {ReplaySubject, Subject, takeUntil, zip} from "rxjs";
 import {FlagEmojiiConverter} from "../../Models/FlagEmojiiConverter";
 import {FormControl} from "@angular/forms";
 import {MatSelectChange} from "@angular/material/select";
+import {CurrencyService} from "../../Services/CurrencyService";
 
 @Component({
   selector: 'app-user-settings',
@@ -29,7 +30,8 @@ export class UserSettingsComponent implements OnInit {
 
   constructor(
     private userSettingsStore: UserSettingsStore,
-    private currenciesStore: CurrenciesStore
+    private currenciesStore: CurrenciesStore,
+    public currencyService: CurrencyService
   ) {
     zip([this.userSettingsStore.settings.value$, this.currenciesStore.currencies.value$])
       .pipe()
@@ -49,8 +51,6 @@ export class UserSettingsComponent implements OnInit {
         this.filterCurrencies();
       });
   }
-
-  protected readonly FlagEmojiiConverter = FlagEmojiiConverter;
 
   private filterCurrencies() {
     if (!this.currencies) {

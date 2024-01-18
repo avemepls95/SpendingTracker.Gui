@@ -5,6 +5,7 @@ import {AuthService} from "../../Auth/Services/auth.service";
 import {MenuItem} from "./MenuItem";
 import {UserSettingsStore} from "../../../Domain/Store/UserSettingsStore";
 import {CurrenciesStore} from "../../../Domain/Store/CurrenciesStore";
+import {AccountTypeToViewInfoMapping} from "../../../Domain/Models/Accounts/AccountTypeEnum";
 
 @Component({
   selector: 'app-main',
@@ -18,10 +19,11 @@ export class MainComponent implements OnInit {
   avatarUrl: string;
   isFromTelegramWebApp: string;
   menuItems: MenuItem[] = [
-    { route: '/spending', text: 'Траты', icon: 'money_off', withDivider: false },
-    { route: '/categories-list', text: 'Мои категории', icon: 'folder_shared', withDivider: false },
-    { route: '/analytics', text: 'Аналитика', icon: 'show_chart', withDivider: true },
-    { route: '/settings', text: 'Настройки', icon: 'settings', withDivider: false },
+    { route: '/spending', text: 'Траты', iconUrl: 'assets/images/menu-spendings-30.png', withDivider: false },
+    { route: '/accounts', text: 'Счета', iconUrl: 'assets/images/menu-bills-30.png', withDivider: false },
+    { route: '/categories-list', text: 'Мои категории', iconUrl: 'assets/images/menu-categories-30.png', withDivider: false },
+    { route: '/analytics', text: 'Аналитика', iconUrl: 'assets/images/menu-analytics-30.png', withDivider: true },
+    { route: '/settings', text: 'Настройки', iconUrl: 'assets/images/menu-settings-30.png', withDivider: false },
   ]
 
   constructor(
@@ -52,4 +54,6 @@ export class MainComponent implements OnInit {
     this.authService.removeCurrentToken();
     this.router.navigate(['/auth']);
   }
+
+  protected readonly AccountTypeToViewInfoMapping = AccountTypeToViewInfoMapping;
 }

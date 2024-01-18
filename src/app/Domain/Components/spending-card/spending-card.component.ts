@@ -20,7 +20,6 @@ export class SpendingCardComponent implements OnInit, OnDestroy {
   public currencyFilterCtrl: FormControl = new FormControl();
   protected _onDestroy = new Subject<void>();
   public filteredCurrencies: ReplaySubject<Currency[]> = new ReplaySubject<Currency[]>(1);
-  @ViewChild('singleSelect') singleSelect: MatSelect;
 
   constructor(
     public dialogRef: MatDialogRef<SpendingCardComponent>,

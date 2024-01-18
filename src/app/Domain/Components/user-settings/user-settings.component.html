@@ -8,7 +8,7 @@
           <ngx-mat-select-search [formControl]="currencyFilterCtrl"></ngx-mat-select-search>
         </mat-option>
         <mat-option *ngFor="let currency of filteredCurrencies | async" [value]="currency.id">
-          <img [src]=FlagEmojiiConverter.getSrcByEmojiCode(currency.flagEmojiCode)>
+          <img [src]=currencyService.getIconByFlagEmojiCode(currency.flagEmojiCode)>
           {{currency.code}}
         </mat-option>
       </mat-select>

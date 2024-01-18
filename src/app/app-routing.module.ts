@@ -7,6 +7,7 @@ import {CategoriesListComponent} from "./Domain/Components/Category/categories-l
 import {SpendingsComponent} from "./Domain/Components/spendings/spendings.component";
 import {AnalyticsComponent} from "./Domain/Components/analytics/analytics.component";
 import {UserSettingsComponent} from "./Domain/Components/user-settings/user-settings.component";
+import {AccountsComponent} from "./Domain/Components/accounts/accounts.component";
 
 const menuRoutes: Routes = [
   { path: '', redirectTo: '/spending', pathMatch: 'full' },
@@ -14,6 +15,7 @@ const menuRoutes: Routes = [
   { path: 'spending', component: SpendingsComponent },
   { path: 'analytics', component: AnalyticsComponent },
   { path: 'settings', component: UserSettingsComponent },
+  { path: 'accounts', component: AccountsComponent },
 ];
 
 const routes: Routes = [

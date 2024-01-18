@@ -17,7 +17,7 @@ export class LoaderService {
 
   hide() {
     this.loadingIncrement--;
-    if (this.loadingIncrement == 0) {
+    if (this.loadingIncrement < 1) {
       this.isLoading.next(false);
     }
   }

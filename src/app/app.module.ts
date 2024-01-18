@@ -36,6 +36,9 @@ import {
 import { UserSettingsComponent } from './Domain/Components/user-settings/user-settings.component';
 import {UserSettingsStore} from "./Domain/Store/UserSettingsStore";
 import {CurrenciesStore} from "./Domain/Store/CurrenciesStore";
+import { AccountsComponent } from './Domain/Components/accounts/accounts.component';
+import { AccountCardComponent } from './Domain/Components/accounts/account-card/account-card.component';
+import {TypeSafeMatCellDef} from "./Common/Directives/TypeSafeMatCellDef";
 
 @NgModule({
   declarations: [
@@ -55,7 +58,10 @@ import {CurrenciesStore} from "./Domain/Store/CurrenciesStore";
     AnalyticsComponent,
     AnalyticsCategoriesTreeComponent,
     CategorySpendingsComponent,
-    UserSettingsComponent
+    UserSettingsComponent,
+    AccountsComponent,
+    AccountCardComponent,
+    TypeSafeMatCellDef
   ],
   imports: [
     BrowserModule,
