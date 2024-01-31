@@ -54,7 +54,7 @@ export class ErrorReponseHandler {
           if (error.messageIsCustom) {
             message = error.message;
           } else {
-            message = ErrorCodeMessages.Instance.get(error.code);
+            message = ErrorCodeMessages.Instance.get(error.code, error.data);
             if (!message) {
               this.snackbarService.showErrorMessage("Произошла непредвиденная ошибка");
               return EMPTY;
