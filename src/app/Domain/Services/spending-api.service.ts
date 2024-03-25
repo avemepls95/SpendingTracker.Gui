@@ -10,6 +10,10 @@ import {Category} from "../Models/Category";
 import {GetSpendingsWithCategoriesTreeRequest} from "./Contracts/GetSpendingsWithCategoriesTreeRequest";
 import {CategoryAnalytics} from "../Models/Analytics/CategoryAnalytics";
 import {GetFilteredSpendingsRequest} from "./Contracts/GetFilteredSpendingsRequest";
+import {UserSettings} from "../Models/UserSettings";
+import {GetUserAccountsResponse} from "./Contracts/Accounts/GetUserAccountsResponse";
+import {CreateUserAccountRequest} from "./Contracts/Accounts/CreateUserAccountRequest";
+import {UpdateUserAccountRequest} from "./Contracts/Accounts/UpdateUserAccountRequest";
 
 
 @Injectable({
@@ -212,5 +216,66 @@ export class SpendingApiService {
       .set('targetCurrencyId', currencyId);
 
     return this.http.get(this.apiBaseUrl + 'v1/analytics/by-date-range', {params}) as Observable<CategoryAnalytics>;
+  }
+
+  getUserSettings(): Observable<UserSettings> {
+    return this.http.get(this.apiBaseUrl + 'v1/user-settings/list') as Observable<UserSettings>;
+  }
+
+  updateUserSettings(userSettings: UserSettings) {
+    if (!userSettings || !userSettings.viewCurrencyId)
+      throw Error("Внутренная ошибка. Пустые настройки пользователя.");
+
+    return this.http.post(
+      this.apiBaseUrl + 'v1/user-settings/update',
+      {
+        ViewCurrencyId: userSettings.viewCurrencyId
+      }
+    );
+  }
+
+  getUserAccounts(currencyId: string): Observable<GetUserAccountsResponse> {
+    const params = new HttpParams()
+      .set('currencyId', currencyId);
+
+    return this.http.get(this.apiBaseUrl + 'v1/account/get-list-info', {params}) as Observable<GetUserAccountsResponse>;
+  }
+
+  createUserAccount(request: CreateUserAccountRequest) {
+    if (!request || !request.amount || !request.name || !request.currencyId)
+      throw Error("Внутренная ошибка. Некоррекотные данные счета.");
+
+    return this.http.post(
+      this.apiBaseUrl + 'v1/account/create',
+      {
+        name: request.name,
+        type: request.type,
+        currencyId: request.currencyId,
+        amount: request.amount,
+      }
+    );
+  }
+
+  updateUserAccount(request: UpdateUserAccountRequest) {
+    if (!request || !request.amount || !request.name || !request.currencyId)
+      throw Error("Внутренная ошибка. Некорректные данные счета.");
+
+    return this.http.post(
+      this.apiBaseUrl + 'v1/account/update',
+      {
+        id: request.id,
+        name: request.name,
+        type: request.type,
+        currencyId: request.currencyId,
+        amount: request.amount,
+      }
+    );
+  }
+
+  deleteUserAccount(id: string) {
+    if (!id)
+      throw Error("Внутренная ошибка. Некорректный идентификатор счета.");
+
+    return this.http.post(this.apiBaseUrl + 'v1/account/delete', { id: id });
   }
 }

@@ -17,11 +17,9 @@ export class SpendingCardComponent implements OnInit, OnDestroy {
   selectedCurrencyId: string;
   currencies: Currency[] = [];
 
-  public cuurencyCtrl: FormControl = new FormControl();
   public currencyFilterCtrl: FormControl = new FormControl();
   protected _onDestroy = new Subject<void>();
   public filteredCurrencies: ReplaySubject<Currency[]> = new ReplaySubject<Currency[]>(1);
-  @ViewChild('singleSelect') singleSelect: MatSelect;
 
   constructor(
     public dialogRef: MatDialogRef<SpendingCardComponent>,
@@ -41,7 +39,7 @@ export class SpendingCardComponent implements OnInit, OnDestroy {
     this.currencyFilterCtrl.valueChanges
       .pipe(takeUntil(this._onDestroy))
       .subscribe(() => {
-        this.filterBanks();
+        this.filterCurrencies();
       });
   }
 
@@ -71,11 +69,11 @@ export class SpendingCardComponent implements OnInit, OnDestroy {
       && this.selectedCurrencyId != null;
   }
 
-  protected filterBanks() {
+  protected filterCurrencies() {
     if (!this.currencies) {
       return;
     }
-    // get the search keyword
+
     let search = this.currencyFilterCtrl.value;
     if (!search) {
       this.filteredCurrencies.next(this.currencies.slice());
@@ -83,7 +81,7 @@ export class SpendingCardComponent implements OnInit, OnDestroy {
     } else {
       search = search.toLowerCase();
     }
-    // filter the banks
+
     this.filteredCurrencies.next(
       this.currencies.filter(bank => bank.code.toLowerCase().indexOf(search) > -1)
     );

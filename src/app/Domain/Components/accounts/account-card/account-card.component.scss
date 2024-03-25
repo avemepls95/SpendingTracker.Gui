@@ -1,0 +1,23 @@
+::ng-deep .main-div .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+  background-color: transparent !important;
+}
+
+::ng-deep .main-div .mat-mdc-form-field-subscript-wrapper {
+  display: none !important;
+}
+
+.mat-dialog-actions {
+  margin-top: 15px;
+}
+
+.span-input-tmp {
+  position: absolute;
+  font-size: 12px;
+  top: 0;
+  transform: translateY(-3px);
+}
+
+.delete-button {
+  position: absolute;
+  transform: translateX(-110px);
+}

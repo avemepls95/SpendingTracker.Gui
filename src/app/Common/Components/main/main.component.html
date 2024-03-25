@@ -35,19 +35,18 @@
           [attr.tabindex]="routerLinkActiveInstance.isActive ? 0 : -1"
           [class.list-item-active]="routerLinkActiveInstance.isActive"
           [routerLink]="[item.route]">
-          <div style="display: flex">
-            <mat-icon class="nav-list-icon">{{item.icon}}</mat-icon>
+          <div style="display: flex; align-items: center">
+            <img width="30" height="30" src="{{item.iconUrl}}" style="margin-right: 10px"/>
             {{item.text}}
           </div>
         </mat-list-item>
+        <mat-divider *ngIf="item.withDivider"></mat-divider>
       </div>
 
-      <mat-divider></mat-divider>
       <!-- <mat-list-item [routerLink]="'/settings'" (click)="sidenav.toggle()">
           <mat-icon mat-list-icon>settings</mat-icon>
           <h4 mat-line>Настройки</h4>
       </mat-list-item> -->
-      <mat-divider></mat-divider>
       <mat-list-item (click)="sidenav.toggle()">
         <div style="display: flex">
           <mat-icon class="nav-list-icon"></mat-icon>Закрыть

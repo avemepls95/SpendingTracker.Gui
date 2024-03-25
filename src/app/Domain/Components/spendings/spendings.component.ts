@@ -12,10 +12,8 @@ import {SpendingMapper} from "../../../Converters/SpendingMapper";
 import {Spending} from "../../Models/Spending";
 import {CopyUtils} from "../../../Common/Utils/CopyUtils";
 import {SpendingCardComponent} from "../spending-card/spending-card.component";
-import {FlagEmojiiConverter} from "../../Models/FlagEmojiiConverter";
 import {forkJoin, Observable, of} from "rxjs";
 import {Currency} from "../../Models/Currency";
-import {CurrencyMapper} from "../../../Converters/CurrencyMapper";
 import {animate, state, style, transition, trigger} from "@angular/animations";
 import {Category} from "../../Models/Category";
 import {CategoryMapper} from "../../../Converters/CategoryMapper";
@@ -25,6 +23,8 @@ import localeRu from '@angular/common/locales/ru';
 import {registerLocaleData} from "@angular/common";
 import {GetSpendingsResponseItem} from "../../Services/Contracts/GetSpendingsResponseItem";
 import {CategoryDto} from "../../Services/Contracts/CategoryDto";
+import {CurrenciesStore} from "../../Store/CurrenciesStore";
+import {CurrencyService} from "../../Services/CurrencyService";
 
 registerLocaleData(localeRu);
 
@@ -50,8 +50,6 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
   currencies: Currency[] = [];
   categoriesForSelect: Category[] = [];
 
-  currencyMap = new Map<string, Currency>();
-
   displayedColumns: string[] = ['show-category', 'date', 'amount', 'description', 'currencyCode', 'actions'];
   filtrationPanelIsOpen = false;
   expandedElements: string[] = [];
@@ -64,37 +62,31 @@ export class SpendingsComponent implements OnInit, AfterViewInit {
   private loadedRecordsCount: number = 0;
   searchString: string = '';
 
-  protected readonly FlagEmojiiConverter = FlagEmojiiConverter;
-
   constructor(
     private spendingApiService: SpendingApiService,
     private loaderService: LoaderService,
     private dialog: MatDialog,
     private copyUtils: CopyUtils,
-    private spinner: NgxSpinnerService
+    private spinner: NgxSpinnerService,
+    currenciesStore: CurrenciesStore,
+    public currencyService: CurrencyService
   ) {
+    currenciesStore.currencies.value$.subscribe(value => {
+      this.currencies = value;
+    })
   }
 
   loadData() {
     this.loaderService.show();
     let request = this.buildGetSpendingsRequest(0, this.recordsCountToLoad);
-    let spendingsObservable = this.spendingApiService.getSpendingsWithCategoriesTree(request);
-    let currenciesObservable = this.spendingApiService.getAllCurrencies();
 
-    forkJoin([spendingsObservable, currenciesObservable])
-      .pipe(
-        finalize(() => this.loaderService.hide())
-      )
+    this.spendingApiService.getSpendingsWithCategoriesTree(request)
+      .pipe( finalize(() => this.loaderService.hide()))
       .subscribe(
-        responses => {
-          this.spendings = responses[0].map(s => SpendingMapper.convertFromDto(s));
+        response => {
+          this.spendings = response.map(s => SpendingMapper.convertFromDto(s));
           this.dataSource = new MatTableDataSource(this.spendings);
-          this.loadedRecordsCount += responses[0].length;
-
-          this.currencies = responses[1].map(s => CurrencyMapper.convertFromDto(s));
-          this.currencies.forEach(currency => {
-            this.currencyMap.set(currency.id, currency);
-          });
+          this.loadedRecordsCount += response.length;
         },
         (error) => console.error(error)
       );

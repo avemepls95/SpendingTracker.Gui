@@ -11,8 +11,6 @@ export class CreateCategoryCardComponent {
 
   category: Category = new Category()
 
-  @ViewChild('usersInput', { static: false }) usersInput: ElementRef<HTMLInputElement>;
-
   constructor(private dialogRef: MatDialogRef<CreateCategoryCardComponent>) {
   }
 

@@ -118,24 +118,28 @@ export class SpendingCategoriesTreeComponent implements OnInit {
   addSpendingToNewCategory(newCategoryTitle: string) {
     this.loaderService.show();
     this.spendingApiService.addSpendingToNewCategory(this.spendingId, newCategoryTitle)
+      .pipe(finalize(() => this.loaderService.hide()))
       .subscribe((response) => this.refreshTree());
   }
 
   addCategoryToExistParent(childId: string, parent: any) {
     this.loaderService.show();
     this.spendingApiService.linkParentAndChild(parent.id, childId)
+      .pipe(finalize(() => this.loaderService.hide()))
       .subscribe((response) => this.refreshTree());
   }
 
   addCategoryToNewParent(childId: string, newParentCategoryName: string) {
     this.loaderService.show();
     this.spendingApiService.addCategoryToNewParent(childId, newParentCategoryName)
+      .pipe(finalize(() => this.loaderService.hide()))
       .subscribe((response) => this.refreshTree());
   }
 
   addSpendingToExistCategory(selectedCategory: any) {
     this.loaderService.show();
     this.spendingApiService.linkCategoryWithSpending(this.spendingId, selectedCategory.id)
+      .pipe(finalize(() => this.loaderService.hide()))
       .subscribe(() => this.refreshTree());
   }
 
@@ -198,6 +202,7 @@ export class SpendingCategoriesTreeComponent implements OnInit {
   removeSpendingFromCategory(categoryNode: FlatNode) {
     this.loaderService.show();
     this.spendingApiService.removeSpendingFromCategory(this.spendingId, categoryNode.id)
+      .pipe(finalize(() => this.loaderService.hide()))
       .subscribe(() => this.refreshTree());
   }
 
@@ -205,6 +210,7 @@ export class SpendingCategoriesTreeComponent implements OnInit {
     this.loaderService.show();
     let childNode = this.getChild(categoryNode)!;
     this.spendingApiService.removeCategoryFromParent(childNode.id, categoryNode.id)
+      .pipe(finalize(() => this.loaderService.hide()))
       .subscribe(() => this.refreshTree());
   }
 

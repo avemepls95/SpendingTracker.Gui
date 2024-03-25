@@ -86,8 +86,9 @@
           <ng-container matColumnDef="currencyCode">
             <th mat-header-cell *matHeaderCellDef>Валюта</th>
             <td mat-cell *matCellDef="let spending">
-              <img [src]=FlagEmojiiConverter.getSrcByEmojiCode(currencyMap.get(spending.currencyId)!.flagEmojiCode)>
-              {{currencyMap.get(spending.currencyId)!.code}} </td>
+              <img [src]=currencyService.getIconById(spending.currencyId)>
+              {{currencyService.getById(spending.currencyId).code}}
+            </td>
           </ng-container>
 
           <ng-container matColumnDef="actions">
@@ -122,7 +123,7 @@
               (click)="openSpendingCard(spending)"
               class="spending-row">
           </tr>
-          <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="example-detail-row"></tr>
+          <tr mat-row *matRowDef="let _; columns: ['expandedDetail']" class="example-detail-row"></tr>
         </table>
 
         <div *ngIf="isLoading" class="content-in-center">Loading...</div>

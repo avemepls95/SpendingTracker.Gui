@@ -24,7 +24,7 @@
   <div *ngIf="!!analytics" class="content-in-center">
 
     <div #totalAmountSpentDiv class="total-amount-spent-dev">
-      <span>Потрачено {{analytics.totalAmount | number: '1.0-0':'ru'}} рублей</span>
+      <span>Потрачено {{analytics.totalAmount | number: '1.0-0':'ru'}} {{targetCurrency.code}}</span>
     </div>
 
     <div *ngIf="!!analytics.categoryInfos && analytics.categoryInfos.length != 0" class="content-in-center">

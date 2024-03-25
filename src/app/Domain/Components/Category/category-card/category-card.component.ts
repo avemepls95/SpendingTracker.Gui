@@ -11,8 +11,6 @@ import {Category} from "../../../Models/Category";
 export class CategoryCardComponent implements OnInit, OnDestroy {
   category: Category;
 
-  selectedCurrencyId: string;
-
   protected _onDestroy = new Subject<void>();
 
   constructor(
