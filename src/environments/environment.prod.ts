@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
   name: 'production',
-  spendingApi: 'https://api.spendings.pro/api/',
+  spendingApi: 'http://api.moneytrace.pro/api/',
   telegramBotName: 'SpendingMoneyBot'
 };
