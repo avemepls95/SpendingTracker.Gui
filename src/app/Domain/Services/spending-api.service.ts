@@ -14,6 +14,7 @@ import {UserSettings} from "../Models/UserSettings";
 import {GetUserAccountsResponse} from "./Contracts/Accounts/GetUserAccountsResponse";
 import {CreateUserAccountRequest} from "./Contracts/Accounts/CreateUserAccountRequest";
 import {UpdateUserAccountRequest} from "./Contracts/Accounts/UpdateUserAccountRequest";
+import { DatePipe } from '@angular/common';
 
 
 @Injectable({
@@ -23,7 +24,7 @@ export class SpendingApiService {
 
   private apiBaseUrl: string;
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private datePipe: DatePipe) {
     this.apiBaseUrl = environment.spendingApi;
   }
 
@@ -211,8 +212,8 @@ export class SpendingApiService {
 
   getCategoriesAnalytics(dateFrom: Date, dateTo: Date, currencyId: string): Observable<CategoryAnalytics> {
     const params = new HttpParams()
-      .set('dateFrom', new Date(dateFrom).toLocaleDateString())
-      .set('dateTo', new Date(dateTo).toLocaleDateString())
+      .set('dateFrom', this.datePipe.transform(dateFrom, 'dd.MM.yyyy')!.toString())
+      .set('dateTo', this.datePipe.transform(dateTo, 'dd.MM.yyyy')!.toString())
       .set('targetCurrencyId', currencyId);
 
     return this.http.get(this.apiBaseUrl + 'v1/analytics/by-date-range', {params}) as Observable<CategoryAnalytics>;

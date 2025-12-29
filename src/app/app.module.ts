@@ -39,6 +39,7 @@ import {CurrenciesStore} from "./Domain/Store/CurrenciesStore";
 import { AccountsComponent } from './Domain/Components/accounts/accounts.component';
 import { AccountCardComponent } from './Domain/Components/accounts/account-card/account-card.component';
 import {TypeSafeMatCellDef} from "./Common/Directives/TypeSafeMatCellDef";
+import { DatePipe } from '@angular/common';
 
 @NgModule({
   declarations: [
@@ -84,6 +85,7 @@ import {TypeSafeMatCellDef} from "./Common/Directives/TypeSafeMatCellDef";
       JwtHelperService,
       UserSettingsStore,
       CurrenciesStore,
+      DatePipe,
       { provide: JWT_OPTIONS, useValue: JWT_OPTIONS },
       { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
       { provide: MAT_DATE_LOCALE, useValue: 'en-GB' },
