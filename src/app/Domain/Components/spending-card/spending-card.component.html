@@ -27,7 +27,7 @@
     <mat-form-field>
       <mat-label>Дата</mat-label>
       <input placeholder="Дата" required matInput [matDatepicker]="picker" [(ngModel)]="spending.date">
-      <mat-hint>ДД/ММ/ГГГГ</mat-hint>
+      <mat-hint>ДД.ММ.ГГГГ</mat-hint>
       <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
       <mat-datepicker #picker></mat-datepicker>
     </mat-form-field>

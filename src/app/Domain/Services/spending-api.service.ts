@@ -54,8 +54,8 @@ export class SpendingApiService {
     const params = new HttpParams()
       .set('targetCurrencyId', request.targetCurrencyId)
       .set('categoryId', request.categoryId)
-      .set('dateFrom', new Date(request.dateFrom).toLocaleDateString())
-      .set('dateTo', new Date(request.dateTo).toLocaleDateString());
+      .set('dateFrom', this.transformDate(request.dateFrom))
+      .set('dateTo', this.transformDate(request.dateTo));
 
     return this.http.get(this.apiBaseUrl + 'v1/spending/filtered-list', { params }) as Observable<GetSpendingsResponseItem[]>;
   }
@@ -148,7 +148,7 @@ export class SpendingApiService {
         id: spending.id,
         amount: spending.amount,
         currencyId: spending.currencyId,
-        date: spending.date,
+        date: this.transformDate(spending.date),
         description: spending.description
       }
     );
@@ -212,8 +212,8 @@ export class SpendingApiService {
 
   getCategoriesAnalytics(dateFrom: Date, dateTo: Date, currencyId: string): Observable<CategoryAnalytics> {
     const params = new HttpParams()
-      .set('dateFrom', this.datePipe.transform(dateFrom, 'dd.MM.yyyy')!.toString())
-      .set('dateTo', this.datePipe.transform(dateTo, 'dd.MM.yyyy')!.toString())
+      .set('dateFrom', this.transformDate(dateFrom))
+      .set('dateTo', this.transformDate(dateTo))
       .set('targetCurrencyId', currencyId);
 
     return this.http.get(this.apiBaseUrl + 'v1/analytics/by-date-range', {params}) as Observable<CategoryAnalytics>;
@@ -278,5 +278,9 @@ export class SpendingApiService {
       throw Error("Внутренная ошибка. Некорректный идентификатор счета.");
 
     return this.http.post(this.apiBaseUrl + 'v1/account/delete', { id: id });
+  }
+
+  transformDate(date: Date) : string {
+    return this.datePipe.transform(date, 'dd.MM.yyyy')!.toString()
   }
 }

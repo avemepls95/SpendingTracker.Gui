@@ -5,11 +5,38 @@ import {Currency} from "../../Models/Currency";
 import {FormControl} from "@angular/forms";
 import {ReplaySubject, Subject, takeUntil} from "rxjs";
 import {MatSelect} from "@angular/material/select";
+import 'moment/locale/ru';
+import {
+  MomentDateAdapter,
+  MAT_MOMENT_DATE_ADAPTER_OPTIONS,
+} from '@angular/material-moment-adapter';
+import {DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE} from '@angular/material/core';
+
+export const MY_DATE_FORMATS = {
+  parse: {
+    dateInput: 'DD.MM.YYYY',
+  },
+  display: {
+    dateInput: 'DD.MM.YYYY',
+    monthYearLabel: 'MMM YYYY',
+    dateA11yLabel: 'LL',
+    monthYearA11yLabel: 'MMMM YYYY',
+  },
+};
 
 @Component({
   selector: 'app-spending-card',
   templateUrl: './spending-card.component.html',
-  styleUrls: ['./spending-card.component.scss']
+  styleUrls: ['./spending-card.component.scss'],
+  providers: [
+    {provide: MAT_DATE_LOCALE, useValue: 'ru-RU'},
+    {
+      provide: DateAdapter,
+      useClass: MomentDateAdapter,
+      deps: [MAT_DATE_LOCALE, MAT_MOMENT_DATE_ADAPTER_OPTIONS],
+    },
+    {provide: MAT_DATE_FORMATS, useValue: MY_DATE_FORMATS},
+  ]
 })
 export class SpendingCardComponent implements OnInit, OnDestroy {
   spending: Spending;
