@@ -1,0 +1,231 @@
+// Оформление наложений поверх примитивов CDK.
+//
+// CDK даёт поведение - позиционирование, ловушку фокуса, блокировку прокрутки,
+// закрытие по Escape - и не навязывает вид. Стили целиком наши, поэтому
+// не приходится перебивать чужой внутренний DOM через ::ng-deep.
+
+// Затемнение под шитом и диалогом.
+.overlay-scrim {
+  background: var(--c-scrim);
+  animation: scrim-in var(--dur) var(--ease);
+}
+
+@keyframes scrim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+// ---------------------------------------------------------------- нижний шит
+
+// Основной способ показать форму на телефоне: лист выезжает снизу,
+// его содержимое остаётся в зоне большого пальца.
+.sheet {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  max-width: var(--content-max);
+  max-height: 92dvh;
+  background: var(--c-surface);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  box-shadow: var(--sh-3);
+  animation: sheet-in var(--dur-slow) var(--ease);
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+// Полоска-ухватка: показывает, что лист закрывается смахиванием вниз.
+.sheet__grabber {
+  flex: none;
+  width: 36px;
+  height: 4px;
+  margin: var(--sp-2) auto var(--sp-1);
+  border-radius: var(--r-full);
+  background: var(--c-border-strong);
+}
+
+.sheet__header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+}
+
+.sheet__title {
+  flex: 1;
+  min-width: 0;
+  padding-left: var(--sp-2);
+  font-size: var(--fs-title);
+  font-weight: var(--fw-semibold);
+}
+
+.sheet__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--sp-4) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.sheet__footer {
+  flex: none;
+  display: flex;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  padding-bottom: calc(var(--sp-4) + var(--safe-bottom));
+  border-top: 1px solid var(--c-border);
+  background: var(--c-surface);
+
+  > * {
+    flex: 1;
+  }
+}
+
+// ---------------------------------------------------------------- диалог подтверждения
+
+// Диалог оставлен только для необратимых действий: он прерывает работу,
+// и это оправдано ровно тогда, когда цена ошибки - потерянные данные.
+.dialog {
+  width: min(340px, calc(100vw - var(--sp-8)));
+  padding: var(--sp-5);
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-2);
+  animation: dialog-in var(--dur) var(--ease);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.dialog__title {
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-semibold);
+  margin-bottom: var(--sp-2);
+}
+
+.dialog__message {
+  color: var(--c-text-2);
+  margin-bottom: var(--sp-5);
+}
+
+.dialog__actions {
+  display: flex;
+  gap: var(--sp-3);
+
+  > * {
+    flex: 1;
+  }
+}
+
+// ---------------------------------------------------------------- меню
+
+.menu {
+  min-width: 180px;
+  padding: var(--sp-1);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-2);
+}
+
+.menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 40px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-body);
+  text-align: left;
+  color: var(--c-text);
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--c-hover);
+    }
+  }
+
+  &:active {
+    background: var(--c-pressed);
+  }
+}
+
+.menu__item--danger {
+  color: var(--c-danger);
+}
+
+// ---------------------------------------------------------------- уведомления
+
+// Всплывают сверху: снизу их перекрыла бы панель вкладок и клавиатура.
+.toast-stack {
+  position: fixed;
+  top: calc(var(--safe-top) + var(--sp-2));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: min(calc(100vw - var(--sp-6)), 420px);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  box-shadow: var(--sh-2);
+  font-size: var(--fs-body);
+  pointer-events: auto;
+  animation: toast-in var(--dur) var(--ease);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.toast--error {
+  border-color: color-mix(in srgb, var(--c-danger) 40%, transparent);
+
+  .toast__icon {
+    color: var(--c-danger);
+  }
+}
+
+.toast--success .toast__icon {
+  color: var(--c-success);
+}
+
+.toast--info .toast__icon {
+  color: var(--c-accent);
+}
+
+.toast__icon {
+  flex: none;
+  margin-top: 1px;
+}
+
+.toast__text {
+  flex: 1;
+  min-width: 0;
+}

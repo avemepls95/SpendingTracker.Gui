@@ -2,16 +2,26 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <title>SpendingPro</title>
+  <title>MoneyTrace</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="assets/favicon.png">
-  <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- viewport-fit=cover отдаёт странице зоны под вырезом и жест-баром,
+       без него env(safe-area-inset-*) всегда возвращает ноль. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <!-- Цвет системной строки браузера подстраивается под тему. -->
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#17191c" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Учёт личных расходов">
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+
+  <!-- Мост Telegram Mini App. Грузится синхронно: приложение читает
+       initData до первого запроса к серверу. -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
- <app-root></app-root>
+  <app-root></app-root>
 </body>
 </html>

@@ -1,0 +1,44 @@
+<div class="auth">
+  <div class="auth__brand">
+    <div class="auth__mark" aria-hidden="true">
+      <app-icon name="receipt" />
+    </div>
+    <h1 class="auth__title">MoneyTrace</h1>
+    <p class="auth__subtitle">Учёт расходов и счетов</p>
+  </div>
+
+  @switch (state()) {
+    @case ('pending') {
+      <div class="auth__status" role="status">
+        <span class="skeleton auth__pending"></span>
+        <p class="text-2">Входим…</p>
+      </div>
+    }
+
+    @case ('failed') {
+      <div class="auth__status">
+        <app-icon class="auth__status-icon" name="alert-circle" />
+        <p class="auth__error">Не удалось войти</p>
+        <p class="text-2 auth__hint">
+          Сервер не ответил. Проверьте связь и попробуйте ещё раз.
+        </p>
+        <button type="button" class="btn btn--primary" (click)="retry()">
+          Повторить
+        </button>
+      </div>
+    }
+
+    @default {
+      @if (isMiniApp) {
+        <div class="auth__status" role="status">
+          <span class="skeleton auth__pending"></span>
+        </div>
+      } @else {
+        <app-telegram-login-widget
+          (authorized)="onWidgetAuth($event)"
+          (failed)="state.set('failed')"
+        />
+      }
+    }
+  }
+</div>

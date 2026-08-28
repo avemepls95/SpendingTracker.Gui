@@ -1,0 +1,360 @@
+// Общий словарь интерфейса. Кнопка, поле и строка списка выглядят одинаково
+// на всех экранах: расхождение вида одного и того же элемента между экранами
+// читается как дефект.
+//
+// Состояния hover заведены под `@media (hover: hover)`: на тач-экране
+// hover «залипает» после касания и элемент остаётся подсвеченным.
+
+// ---------------------------------------------------------------- кнопки
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--tap-min);
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-md);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semibold);
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background-color var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    opacity var(--dur) var(--ease);
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.btn--primary {
+  color: var(--c-accent-contrast);
+  background: var(--c-accent);
+
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--c-accent) 88%, var(--c-text));
+    }
+  }
+
+  &:active:not(:disabled) {
+    background: color-mix(in srgb, var(--c-accent) 80%, var(--c-text));
+  }
+}
+
+.btn--secondary {
+  color: var(--c-text);
+  background: var(--c-surface-2);
+
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--c-surface-2) 85%, var(--c-text));
+    }
+  }
+
+  &:active:not(:disabled) {
+    background: var(--c-pressed);
+  }
+}
+
+.btn--ghost {
+  color: var(--c-accent);
+  background: transparent;
+
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: var(--c-accent-soft);
+    }
+  }
+
+  &:active:not(:disabled) {
+    background: var(--c-accent-soft);
+  }
+}
+
+.btn--danger {
+  color: var(--c-danger);
+  background: var(--c-danger-soft);
+
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--c-danger) 20%, transparent);
+    }
+  }
+}
+
+.btn--block {
+  width: 100%;
+}
+
+// Кнопка-иконка. Визуальный размер меньше площади касания, поэтому цель
+// добирается псевдоэлементом до 44px, не раздувая саму кнопку в вёрстке.
+.icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: var(--r-full);
+  color: var(--c-text-2);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: var(--tap-min);
+    height: var(--tap-min);
+    transform: translate(-50%, -50%);
+  }
+
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: var(--c-hover);
+      color: var(--c-text);
+    }
+  }
+
+  &:active:not(:disabled) {
+    background: var(--c-pressed);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.icon-btn--danger {
+  color: var(--c-danger);
+}
+
+// ---------------------------------------------------------------- поля ввода
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.field__label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--c-text-2);
+}
+
+.field__control {
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: var(--fs-body);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+
+  &::placeholder {
+    color: var(--c-text-3);
+  }
+
+  &:focus {
+    border-color: var(--c-accent);
+    box-shadow: 0 0 0 3px var(--c-accent-soft);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.field__control--amount {
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.field__error {
+  font-size: var(--fs-sm);
+  color: var(--c-danger);
+}
+
+.field--invalid .field__control {
+  border-color: var(--c-danger);
+
+  &:focus {
+    box-shadow: 0 0 0 3px var(--c-danger-soft);
+  }
+}
+
+// ---------------------------------------------------------------- чипы
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 32px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  transition:
+    background-color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.chip--selected {
+  border-color: transparent;
+  background: var(--c-accent);
+  color: var(--c-accent-contrast);
+}
+
+// Неинтерактивный чип-метка: используется для категорий в строке траты.
+.chip--tag {
+  min-height: 22px;
+  padding: 0 var(--sp-2);
+  border-color: transparent;
+  background: var(--c-surface-2);
+  font-size: var(--fs-xs);
+}
+
+// ---------------------------------------------------------------- поверхности
+
+// Сгруппированный список. Разделители рисуются между строками, а не под
+// последней, поэтому нижняя граница группы не двоится с краем контейнера.
+.panel {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.panel--bordered {
+  border: 1px solid var(--c-border);
+}
+
+.panel__row + .panel__row {
+  border-top: 1px solid var(--c-border);
+}
+
+.panel__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: var(--sp-3) var(--sp-4);
+  text-align: left;
+  transition: background-color var(--dur-fast) var(--ease);
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--c-hover);
+    }
+  }
+}
+
+button.panel__row:active {
+  background: var(--c-pressed);
+}
+
+// Заголовок секции над группой.
+.section-title {
+  padding: 0 var(--sp-4) var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--c-text-2);
+  text-transform: none;
+}
+
+// ---------------------------------------------------------------- денежные суммы
+
+// Табличные цифры выравнивают разряды по вертикали: в столбце сумм
+// это единственное, что делает список читаемым при быстром просмотре.
+.amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+
+.amount--display {
+  font-size: var(--fs-display);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
+  line-height: var(--lh-tight);
+}
+
+.amount--muted {
+  font-weight: var(--fw-regular);
+  color: var(--c-text-2);
+}
+
+// ---------------------------------------------------------------- скелетоны
+
+// Плейсхолдер под форму будущего контента. Спиннер посреди экрана прячет
+// разметку и каждый раз ощущается как полная перезагрузка.
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-sm);
+  background: var(--c-skeleton);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--c-skeleton-shine),
+      transparent
+    );
+    animation: skeleton-shine 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes skeleton-shine {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+// ---------------------------------------------------------------- прочее
+
+.text-2 {
+  color: var(--c-text-2);
+}
+
+.text-sm {
+  font-size: var(--fs-sm);
+}
+
+// Доступно скринридеру, скрыто визуально.
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
