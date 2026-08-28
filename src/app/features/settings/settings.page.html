@@ -48,7 +48,7 @@
           @if (currencyFlag(); as flag) {
             <img class="row__flag" appHideOnError [src]="flag" width="20" height="15" alt="" />
           }
-          {{ currency()?.code ?? '—' }}
+          {{ currency()?.code ?? '-' }}
         </span>
         <app-icon class="row__chevron" name="chevron-right" />
       </button>
