@@ -20,6 +20,7 @@ import {
 import { ACCOUNT_TYPE_ICONS, IconComponent, IconName } from '../../shared/ui/icon.component';
 import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { parseAmount } from '../../shared/util/money.util';
+import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
 
 export type AccountEditData =
   | { readonly mode: 'create' }
@@ -30,7 +31,7 @@ export type AccountEditResult = { readonly kind: 'changed' };
 @Component({
   selector: 'app-account-edit',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent],
+  imports: [IconComponent, SwipeToCloseDirective],
   templateUrl: './account-edit.sheet.html',
   styleUrl: './account-edit.sheet.scss',
 })
@@ -106,9 +107,11 @@ export class AccountEditSheet {
 
   protected pickCurrency(): void {
     this.sheets
-      .openSheet<Currency, CurrencyPickerData>(CurrencyPickerSheet, {
-        selectedId: this.currencyId(),
-      })
+      .openSheet<Currency, CurrencyPickerData>(
+        CurrencyPickerSheet,
+        { selectedId: this.currencyId() },
+        { ariaLabel: 'Выбор валюты' },
+      )
       .closed.subscribe((currency) => {
         if (currency) {
           this.currencyId.set(currency.id);

@@ -14,24 +14,29 @@ const ICON_BY_KIND: Record<ToastKind, IconName> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [IconComponent],
   template: `
-    @if (toasts().length > 0) {
-      <div class="toast-stack" role="status" aria-live="polite">
-        @for (toast of toasts(); track toast.id) {
-          <div class="toast" [class]="'toast--' + toast.kind">
-            <app-icon class="toast__icon" [name]="iconFor(toast.kind)" />
-            <span class="toast__text">{{ toast.text }}</span>
-            <button
-              type="button"
-              class="icon-btn"
-              aria-label="Закрыть уведомление"
-              (click)="dismiss(toast.id)"
-            >
-              <app-icon name="close" />
-            </button>
-          </div>
-        }
-      </div>
-    }
+    <!--
+      Контейнер живой области присутствует в разметке всегда: aria-live
+      срабатывает на изменение содержимого уже существующего элемента, поэтому
+      контейнер, вставленный вместе с текстом, скринридер не озвучит. А
+      сообщения об ошибках сети - единственный канал, которым приложение
+      рассказывает о неудавшемся запросе.
+    -->
+    <div class="toast-stack" role="status" aria-live="polite">
+      @for (toast of toasts(); track toast.id) {
+        <div class="toast" [class]="'toast--' + toast.kind">
+          <app-icon class="toast__icon" [name]="iconFor(toast.kind)" />
+          <span class="toast__text">{{ toast.text }}</span>
+          <button
+            type="button"
+            class="icon-btn"
+            aria-label="Закрыть уведомление"
+            (click)="dismiss(toast.id)"
+          >
+            <app-icon name="close" />
+          </button>
+        </div>
+      }
+    </div>
   `,
   styles: `
     .toast__icon {

@@ -13,6 +13,8 @@ import {
 } from '../../shared/ui/category-picker.sheet';
 import { confirmAction } from '../../shared/ui/confirm.dialog';
 import { IconComponent } from '../../shared/ui/icon.component';
+import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
+import { closeOnDismiss } from '../../shared/util/dismiss.util';
 
 export type CategoryEditData =
   | { readonly mode: 'create' }
@@ -30,7 +32,7 @@ export type CategoryEditResult = { readonly kind: 'changed' };
 @Component({
   selector: 'app-category-edit',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent],
+  imports: [IconComponent, SwipeToCloseDirective],
   templateUrl: './category-edit.sheet.html',
   styleUrl: './category-edit.sheet.scss',
 })
@@ -65,6 +67,12 @@ export class CategoryEditSheet {
     () => !this.isSaving() && this.nameError() === null,
   );
 
+  constructor() {
+    // Родительские связи применяются сразу: список категорий нужно обновить
+    // и когда лист закрыли Escape или тапом мимо.
+    closeOnDismiss(this.dialogRef, () => this.close());
+  }
+
   protected onName(event: Event): void {
     this.name.set((event.target as HTMLInputElement).value);
   }
@@ -76,11 +84,15 @@ export class CategoryEditSheet {
     }
 
     this.sheets
-      .openSheet<CategoryPickerResult, CategoryPickerData>(CategoryPickerSheet, {
-        // Сама категория и её текущие родители из списка исключены: связать
-        // категорию с собой нельзя, повторная связь тоже отклоняется сервером.
-        excludedIds: [category.id, ...this.parents().map((parent) => parent.id)],
-      })
+      .openSheet<CategoryPickerResult, CategoryPickerData>(
+        CategoryPickerSheet,
+        {
+          // Сама категория и её текущие родители исключены: связать категорию
+          // с собой нельзя, повторная связь тоже отклоняется сервером.
+          excludedIds: [category.id, ...this.parents().map((parent) => parent.id)],
+        },
+        { ariaLabel: 'Выбор родительской категории' },
+      )
       .closed.subscribe((result) => {
         if (!result) {
           return;

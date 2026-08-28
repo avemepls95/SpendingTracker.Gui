@@ -8,7 +8,7 @@ import {
   provideZonelessChangeDetection,
   inject,
 } from '@angular/core';
-import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
+import { provideRouter, withInMemoryScrolling } from '@angular/router';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/http/auth.interceptor';
@@ -26,7 +26,6 @@ export const appConfig: ApplicationConfig = {
 
     provideRouter(
       routes,
-      withComponentInputBinding(),
       withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),
     ),
 

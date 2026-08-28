@@ -1,4 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { finalize } from 'rxjs';
 
 import { ToastService } from '../../core/ui/toast.service';
 import { SpendingApiService } from '../api/spending-api.service';
@@ -24,10 +25,12 @@ export class UserSettingsStore {
   private requested = false;
 
   readonly settings = this.state.asReadonly();
+
+  /** Ответ сервера получен: до этого пустая валюта ничего не означает. */
   readonly isLoaded = this.loaded.asReadonly();
   readonly isSaving = this.saving.asReadonly();
 
-  /** Валюта, в которой сводятся суммы. Пустая строка - настройки ещё не пришли. */
+  /** Валюта, в которой сводятся суммы. Пустая строка - валюта не выбрана. */
   readonly viewCurrencyId = computed(() => this.state().viewCurrencyId);
 
   load(): void {
@@ -35,12 +38,20 @@ export class UserSettingsStore {
       return;
     }
 
+    this.reload();
+  }
+
+  /** Повторная попытка после сбоя. */
+  reload(): void {
     this.requested = true;
+
     this.api.getUserSettings().subscribe({
       next: (settings) => {
         this.state.set(settings);
         this.loaded.set(true);
       },
+      // Сообщение показал errorInterceptor. Снимаем отметку о запросе,
+      // чтобы попытку можно было повторить, а не залипнуть навсегда.
       error: () => (this.requested = false),
     });
   }
@@ -48,21 +59,18 @@ export class UserSettingsStore {
   save(settings: UserSettings): void {
     const previous = this.state();
 
-    // Показываем новое значение сразу, чтобы экран не ждал ответа сервера.
+    // Новое значение показывается сразу, но при отказе сервера откатывается:
+    // иначе интерфейс считает в валюте, которой на сервере нет, а счета и
+    // аналитика молча пересчитываются по несохранённой настройке.
     this.state.set(settings);
     this.saving.set(true);
 
-    this.api.updateUserSettings(settings).subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.toast.success('Сохранено');
-      },
-      error: () => {
-        // Сообщение об ошибке показал интерцептор, здесь возвращаем прежнее
-        // значение, чтобы интерфейс не расходился с сервером.
-        this.state.set(previous);
-        this.saving.set(false);
-      },
-    });
+    this.api
+      .updateUserSettings(settings)
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: () => this.toast.success('Сохранено'),
+        error: () => this.state.set(previous),
+      });
   }
 }

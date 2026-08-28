@@ -10,8 +10,8 @@
 const REGIONAL_INDICATOR_A = 0x1f1e6;
 const LETTER_A = 'A'.charCodeAt(0);
 
-/** Возвращает ISO-код страны в нижнем регистре или null. */
-export function toCountryCode(flagEmoji: string): string | null {
+/** ISO-код страны в нижнем регистре или null. */
+function toCountryCode(flagEmoji: string): string | null {
   const codePoints = Array.from(flagEmoji, (character) => character.codePointAt(0));
   const letters = codePoints
     .filter((point): point is number => point !== undefined)

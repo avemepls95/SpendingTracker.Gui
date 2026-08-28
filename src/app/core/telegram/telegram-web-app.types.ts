@@ -21,47 +21,11 @@ export interface TelegramInitDataUnsafe {
   readonly hash?: string;
 }
 
-/** Цвета оформления клиента. Приходят в формате #rrggbb. */
-export interface TelegramThemeParams {
-  readonly bg_color?: string;
-  readonly secondary_bg_color?: string;
-  readonly section_bg_color?: string;
-  readonly text_color?: string;
-  readonly hint_color?: string;
-  readonly subtitle_text_color?: string;
-  readonly link_color?: string;
-  readonly button_color?: string;
-  readonly button_text_color?: string;
-  readonly accent_text_color?: string;
-  readonly destructive_text_color?: string;
-  readonly header_bg_color?: string;
-  readonly bottom_bar_bg_color?: string;
-}
-
 export interface TelegramInset {
   readonly top: number;
   readonly bottom: number;
   readonly left: number;
   readonly right: number;
-}
-
-export interface TelegramMainButton {
-  text: string;
-  isVisible: boolean;
-  isActive: boolean;
-  setParams(params: {
-    text?: string;
-    color?: string;
-    text_color?: string;
-    is_active?: boolean;
-    is_visible?: boolean;
-  }): void;
-  onClick(handler: () => void): void;
-  offClick(handler: () => void): void;
-  show(): void;
-  hide(): void;
-  showProgress(leaveActive?: boolean): void;
-  hideProgress(): void;
 }
 
 export interface TelegramBackButton {
@@ -81,24 +45,17 @@ export interface TelegramHapticFeedback {
   selectionChanged(): void;
 }
 
-export type TelegramEventName =
-  | 'themeChanged'
-  | 'viewportChanged'
-  | 'safeAreaChanged'
-  | 'contentSafeAreaChanged';
+export type TelegramEventName = 'safeAreaChanged' | 'contentSafeAreaChanged';
 
 export interface TelegramWebApp {
   readonly initData: string;
   readonly initDataUnsafe: TelegramInitDataUnsafe;
   readonly version: string;
   readonly platform: string;
-  readonly colorScheme: 'light' | 'dark';
-  readonly themeParams: TelegramThemeParams;
   readonly isExpanded: boolean;
   readonly viewportStableHeight: number;
   readonly safeAreaInset?: TelegramInset;
   readonly contentSafeAreaInset?: TelegramInset;
-  readonly MainButton: TelegramMainButton;
   readonly BackButton: TelegramBackButton;
   readonly HapticFeedback: TelegramHapticFeedback;
 
@@ -111,7 +68,6 @@ export interface TelegramWebApp {
   setBottomBarColor?(color: string): void;
   disableVerticalSwipes?(): void;
   onEvent(event: TelegramEventName, handler: () => void): void;
-  offEvent(event: TelegramEventName, handler: () => void): void;
 }
 
 interface TelegramNamespace {

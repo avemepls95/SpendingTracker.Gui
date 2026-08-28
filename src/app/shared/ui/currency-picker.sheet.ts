@@ -6,6 +6,7 @@ import { Currency } from '../../domain/models/models';
 import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { IconComponent } from './icon.component';
 import { HideOnErrorDirective } from '../util/hide-on-error.directive';
+import { SwipeToCloseDirective } from '../util/swipe-to-close.directive';
 
 export interface CurrencyPickerData {
   readonly selectedId: string;
@@ -20,9 +21,9 @@ export interface CurrencyPickerData {
 @Component({
   selector: 'app-currency-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, HideOnErrorDirective],
+  imports: [IconComponent, HideOnErrorDirective, SwipeToCloseDirective],
   template: `
-    <div class="sheet" role="dialog" aria-label="Выбор валюты">
+    <div class="sheet" appSwipeToClose (dismissed)="close()">
       <div class="sheet__grabber" aria-hidden="true"></div>
 
       <div class="sheet__header">

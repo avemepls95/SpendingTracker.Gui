@@ -14,11 +14,9 @@ export class CurrenciesStore {
   private readonly api = inject(SpendingApiService);
 
   private readonly items = signal<readonly Currency[]>([]);
-  private readonly loaded = signal(false);
   private requested = false;
 
   readonly currencies = this.items.asReadonly();
-  readonly isLoaded = this.loaded.asReadonly();
 
   private readonly index = computed(
     () => new Map(this.items().map((currency) => [currency.id, currency])),
@@ -31,10 +29,7 @@ export class CurrenciesStore {
 
     this.requested = true;
     this.api.getCurrencies().subscribe({
-      next: (currencies) => {
-        this.items.set(currencies);
-        this.loaded.set(true);
-      },
+      next: (currencies) => this.items.set(currencies),
       // Ошибку уже показал errorInterceptor. Снимаем флаг, чтобы попытку
       // можно было повторить, а не залипнуть в вечной загрузке.
       error: () => (this.requested = false),

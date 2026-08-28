@@ -60,21 +60,6 @@
   }
 }
 
-.btn--ghost {
-  color: var(--c-accent);
-  background: transparent;
-
-  @media (hover: hover) {
-    &:hover:not(:disabled) {
-      background: var(--c-accent-soft);
-    }
-  }
-
-  &:active:not(:disabled) {
-    background: var(--c-accent-soft);
-  }
-}
-
 .btn--danger {
   color: var(--c-danger);
   background: var(--c-danger-soft);
@@ -309,11 +294,6 @@ button.panel__row:active {
   line-height: var(--lh-tight);
 }
 
-.amount--muted {
-  font-weight: var(--fw-regular);
-  color: var(--c-text-2);
-}
-
 // ---------------------------------------------------------------- скелетоны
 
 // Плейсхолдер под форму будущего контента. Спиннер посреди экрана прячет
@@ -349,22 +329,6 @@ button.panel__row:active {
 
 .text-2 {
   color: var(--c-text-2);
-}
-
-.text-sm {
-  font-size: var(--fs-sm);
-}
-
-// Доступно скринридеру, скрыто визуально.
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
 }
 
 .truncate {

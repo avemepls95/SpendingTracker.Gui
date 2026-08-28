@@ -13,11 +13,13 @@ import {
   CurrencyPickerSheet,
 } from '../../shared/ui/currency-picker.sheet';
 import { IconComponent } from '../../shared/ui/icon.component';
+import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
 import {
   formatInputDate,
   parseCalendarDate,
 } from '../../shared/util/date.util';
 import { parseAmount } from '../../shared/util/money.util';
+import { closeOnDismiss } from '../../shared/util/dismiss.util';
 import {
   CategoryPickerData,
   CategoryPickerResult,
@@ -31,7 +33,7 @@ export type SpendingEditResult =
 @Component({
   selector: 'app-spending-edit',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent],
+  imports: [IconComponent, SwipeToCloseDirective],
   templateUrl: './spending-edit.sheet.html',
   styleUrl: './spending-edit.sheet.scss',
 })
@@ -87,6 +89,12 @@ export class SpendingEditSheet {
       this.currencyId() !== '',
   );
 
+  constructor() {
+    // Категории применяются сразу, поэтому лист обязан вернуть их странице
+    // при любом способе закрытия, включая Escape и клик мимо.
+    closeOnDismiss(this.dialogRef, () => this.close());
+  }
+
   // ------------------------------------------------------------ поля
 
   protected onDescription(event: Event): void {
@@ -103,9 +111,11 @@ export class SpendingEditSheet {
 
   protected pickCurrency(): void {
     this.sheets
-      .openSheet<Currency, CurrencyPickerData>(CurrencyPickerSheet, {
-        selectedId: this.currencyId(),
-      })
+      .openSheet<Currency, CurrencyPickerData>(
+        CurrencyPickerSheet,
+        { selectedId: this.currencyId() },
+        { ariaLabel: 'Выбор валюты' },
+      )
       .closed.subscribe((currency) => {
         if (currency) {
           this.currencyId.set(currency.id);
@@ -117,9 +127,11 @@ export class SpendingEditSheet {
 
   protected addCategory(): void {
     this.sheets
-      .openSheet<CategoryPickerResult, CategoryPickerData>(CategoryPickerSheet, {
-        excludedIds: this.categories().map((category) => category.id),
-      })
+      .openSheet<CategoryPickerResult, CategoryPickerData>(
+        CategoryPickerSheet,
+        { excludedIds: this.categories().map((category) => category.id) },
+        { ariaLabel: 'Выбор категории' },
+      )
       .closed.subscribe((result) => {
         if (!result) {
           return;

@@ -23,6 +23,16 @@
     </div>
   }
 
+  @case ('no-currency') {
+    <app-empty-state
+      icon="wallet"
+      title="Не выбрана валюта сводки"
+      hint="Суммы приводятся к одной валюте. Выберите её в настройках."
+    >
+      <a class="btn btn--primary" routerLink="/settings">Открыть настройки</a>
+    </app-empty-state>
+  }
+
   @case ('error') {
     <app-empty-state
       icon="alert-circle"

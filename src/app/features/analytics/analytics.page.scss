@@ -74,16 +74,54 @@
 }
 
 .bar {
-  // Вложенные категории сдвигаются вправо: уровень задаётся переменной,
-  // поэтому глубина дерева не требует отдельных классов.
-  padding-left: calc(var(--level, 0) * var(--sp-4));
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+// Вложенные категории сдвигаются вправо. Уровень читается из data-атрибута,
+// а не из подстроки сериализованного style: способ записи custom property
+// в атрибут не гарантирован, а «--level: 1» ещё и совпадает с началом «10».
+.bar[data-level='1'] {
+  padding-left: var(--sp-4);
+}
+
+.bar[data-level='2'] {
+  padding-left: var(--sp-8);
+}
+
+.bar[data-level='3'] {
+  padding-left: var(--sp-12);
+}
+
+// Раскрытие ветки и переход к тратам - разные действия, поэтому у них
+// разные цели касания.
+.bar__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: var(--tap-min);
+  border-radius: var(--r-sm);
+  color: var(--c-text-2);
+  --icon-size: 16px;
+
+  &:active {
+    background: var(--c-pressed);
+  }
+}
+
+.bar__toggle--empty {
+  pointer-events: none;
 }
 
 .bar__button {
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: var(--sp-2) var(--sp-1);
   border-radius: var(--r-sm);
   text-align: left;
@@ -98,13 +136,6 @@
   align-items: baseline;
   gap: var(--sp-2);
   width: 100%;
-}
-
-.bar__chevron {
-  align-self: center;
-  flex: none;
-  color: var(--c-text-3);
-  --icon-size: 16px;
 }
 
 .bar__title {
@@ -147,8 +178,7 @@
 }
 
 // Вложенные категории окрашены слабее: они уже посчитаны в родителе.
-.bar[style*='--level: 1'] .bar__fill,
-.bar[style*='--level: 2'] .bar__fill {
+.bar:not([data-level='0']) .bar__fill {
   background: color-mix(in srgb, var(--c-accent) 45%, var(--c-surface-2));
 }
 

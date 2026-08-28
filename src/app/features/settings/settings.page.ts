@@ -53,9 +53,11 @@ export class SettingsPage {
 
   protected pickCurrency(): void {
     this.sheets
-      .openSheet<Currency, CurrencyPickerData>(CurrencyPickerSheet, {
-        selectedId: this.settings.viewCurrencyId(),
-      })
+      .openSheet<Currency, CurrencyPickerData>(
+        CurrencyPickerSheet,
+        { selectedId: this.settings.viewCurrencyId() },
+        { ariaLabel: 'Выбор валюты' },
+      )
       .closed.subscribe((currency) => {
         if (currency && currency.id !== this.settings.viewCurrencyId()) {
           // Сохраняется сразу: отдельная кнопка «Сохранить» ради одного

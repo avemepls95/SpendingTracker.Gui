@@ -26,9 +26,12 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       display: flex;
       align-items: center;
       gap: var(--sp-2);
-      min-height: var(--appbar-h);
-      padding: var(--sp-2) var(--sp-4);
-      padding-top: calc(var(--sp-2) + var(--safe-top));
+      // Высота задана точно, а не через min-height: на неё опирается
+      // смещение липкой панели фильтров, и расхождение оставляло бы щель,
+      // сквозь которую при прокрутке видно список.
+      height: calc(var(--appbar-h) + var(--safe-top));
+      padding: 0 var(--sp-4);
+      padding-top: var(--safe-top);
       background: var(--c-bg);
     }
 

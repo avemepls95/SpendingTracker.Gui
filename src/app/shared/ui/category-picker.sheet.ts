@@ -5,6 +5,7 @@ import { SpendingApiService } from '../../domain/api/spending-api.service';
 import { Category } from '../../domain/models/models';
 import { EmptyStateComponent } from './empty-state.component';
 import { IconComponent } from './icon.component';
+import { SwipeToCloseDirective } from '../util/swipe-to-close.directive';
 
 export interface CategoryPickerData {
   /** Категории, уже привязанные к трате: повторно их предлагать незачем. */
@@ -18,9 +19,9 @@ export type CategoryPickerResult =
 @Component({
   selector: 'app-category-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, EmptyStateComponent],
+  imports: [IconComponent, EmptyStateComponent, SwipeToCloseDirective],
   template: `
-    <div class="sheet" role="dialog" aria-label="Выбор категории">
+    <div class="sheet" appSwipeToClose (dismissed)="close()">
       <div class="sheet__grabber" aria-hidden="true"></div>
 
       <div class="sheet__header">

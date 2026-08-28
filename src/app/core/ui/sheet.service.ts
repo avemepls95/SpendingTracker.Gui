@@ -5,6 +5,17 @@ import { Injectable, inject } from '@angular/core';
 
 import { TelegramService } from '../telegram/telegram.service';
 
+export interface SheetOptions {
+  /**
+   * Имя наложения для скринридера.
+   *
+   * Задаётся здесь, а не разметкой листа: роль dialog несёт контейнер CDK,
+   * и подпись должна лежать на нём же. Собственный role="dialog" внутри
+   * содержимого создавал бы вложенный диалог, а внешний оставался безымянным.
+   */
+  readonly ariaLabel: string;
+}
+
 /**
  * Нижние шиты и диалоги поверх примитивов CDK.
  *
@@ -25,7 +36,8 @@ export class SheetService {
   /** Лист, выезжающий снизу: основная форма на телефоне. */
   openSheet<TResult, TData>(
     component: ComponentType<unknown>,
-    data?: TData,
+    data: TData,
+    options: SheetOptions,
   ): DialogRef<TResult> {
     this.telegram.impact('light');
 
@@ -33,7 +45,11 @@ export class SheetService {
       data,
       panelClass: 'sheet-panel',
       backdropClass: 'overlay-scrim',
-      // Фон под листом не должен прокручиваться вместе с ним.
+      ariaLabel: options.ariaLabel,
+      // Фокус ставится на сам контейнер, а не на первый интерактивный элемент:
+      // в шапке листа первой стоит кнопка удаления, и она принимала бы Enter
+      // сразу после открытия.
+      autoFocus: 'dialog',
       scrollStrategy: this.overlay.scrollStrategies.block(),
       positionStrategy: this.overlay
         .position()
@@ -41,7 +57,6 @@ export class SheetService {
         .bottom('0')
         .centerHorizontally(),
       maxWidth: '100vw',
-      autoFocus: 'first-tabbable',
     });
 
     this.trackOverlay(ref);
@@ -51,14 +66,18 @@ export class SheetService {
   /** Диалог по центру: только для необратимых действий. */
   openDialog<TResult, TData>(
     component: ComponentType<unknown>,
-    data?: TData,
+    data: TData,
+    options: SheetOptions,
   ): DialogRef<TResult> {
     const ref = this.dialog.open<TResult>(component, {
       data,
       panelClass: 'dialog-panel',
       backdropClass: 'overlay-scrim',
+      ariaLabel: options.ariaLabel,
+      // Прерывает работу и требует ответа - роль alertdialog, а не dialog.
+      role: 'alertdialog',
+      autoFocus: 'dialog',
       scrollStrategy: this.overlay.scrollStrategies.block(),
-      autoFocus: 'first-tabbable',
     });
 
     this.trackOverlay(ref);

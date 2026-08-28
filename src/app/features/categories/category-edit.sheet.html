@@ -1,4 +1,4 @@
-<div class="sheet" role="dialog" [attr.aria-label]="title">
+<div class="sheet" appSwipeToClose (dismissed)="close()">
   <div class="sheet__grabber" aria-hidden="true"></div>
 
   <div class="sheet__header">

@@ -16,8 +16,8 @@ export interface ConfirmRequest {
   selector: 'app-confirm-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="dialog" role="alertdialog" aria-labelledby="confirm-title">
-      <h2 class="dialog__title" id="confirm-title">{{ data.title }}</h2>
+    <div class="dialog">
+      <h2 class="dialog__title">{{ data.title }}</h2>
       <p class="dialog__message">{{ data.message }}</p>
       <div class="dialog__actions">
         <button type="button" class="btn btn--secondary" (click)="close(false)">
@@ -60,7 +60,9 @@ export function confirmAction(
 
   return new Promise((resolve) => {
     sheets
-      .openDialog<boolean, ConfirmRequest>(ConfirmDialog, request)
+      .openDialog<boolean, ConfirmRequest>(ConfirmDialog, request, {
+        ariaLabel: request.title,
+      })
       .closed.subscribe((result) => resolve(result === true));
   });
 }

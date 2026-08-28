@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { SheetService } from '../../core/ui/sheet.service';
 import { SpendingApiService } from '../../domain/api/spending-api.service';
@@ -21,7 +22,7 @@ import {
   CategorySpendingsSheet,
 } from './category-spendings.sheet';
 
-type Status = 'loading' | 'ready' | 'error';
+type Status = 'loading' | 'ready' | 'error' | 'no-currency';
 export type PeriodPreset = 'month' | 'prevMonth' | 'quarter' | 'year' | 'custom';
 
 interface Period {
@@ -31,7 +32,16 @@ interface Period {
 
 /** Строка диаграммы: узел дерева, приведённый к плоскому виду. */
 export interface BarRow {
-  readonly id: string;
+  /**
+   * Путь от корня до узла.
+   *
+   * Одна категория может входить сразу в несколько родительских, и тогда
+   * сервер повторяет её в каждой ветке. По одному идентификатору такие строки
+   * неразличимы: @for ругался бы на повторяющиеся ключи, а раскрытие узла в
+   * одной ветке раскрывало бы его же во всех остальных.
+   */
+  readonly key: string;
+  readonly categoryId: string;
   readonly title: string;
   readonly amount: number;
   readonly share: number;
@@ -47,7 +57,7 @@ const MIN_VISIBLE_AMOUNT = 0.01;
 @Component({
   selector: 'app-analytics-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PageHeaderComponent, EmptyStateComponent, IconComponent, MoneyPipe],
+  imports: [PageHeaderComponent, EmptyStateComponent, IconComponent, MoneyPipe, RouterLink],
   templateUrl: './analytics.page.html',
   styleUrl: './analytics.page.scss',
 })
@@ -109,13 +119,19 @@ export class AnalyticsPage {
     const expanded = this.expanded();
     const rows: BarRow[] = [];
 
-    const walk = (items: readonly CategoryAnalyticsItem[], level: number): void => {
+    const walk = (
+      items: readonly CategoryAnalyticsItem[],
+      level: number,
+      parentKey: string,
+    ): void => {
       for (const item of visibleRoots(items)) {
         const children = visibleRoots(item.children);
-        const isExpanded = expanded.has(item.categoryId);
+        const key = parentKey ? `${parentKey}/${item.categoryId}` : item.categoryId;
+        const isExpanded = expanded.has(key);
 
         rows.push({
-          id: item.categoryId,
+          key,
+          categoryId: item.categoryId,
           title: item.categoryTitle,
           amount: item.amount,
           share: Math.round((item.amount / total) * 100),
@@ -128,12 +144,12 @@ export class AnalyticsPage {
         });
 
         if (isExpanded) {
-          walk(children, level + 1);
+          walk(children, level + 1, key);
         }
       }
     };
 
-    walk(roots, 0);
+    walk(roots, 0, '');
     return rows;
   });
 
@@ -144,6 +160,11 @@ export class AnalyticsPage {
       const period = this.period();
       if (currencyId) {
         this.load(period, currencyId);
+        return;
+      }
+
+      if (this.settings.isLoaded()) {
+        this.status.set('no-currency');
       }
     });
   }
@@ -160,16 +181,18 @@ export class AnalyticsPage {
     this.customTo.set((event.target as HTMLInputElement).value);
   }
 
+  /**
+   * Раскрывает или сворачивает ветку.
+   *
+   * Отделено от перехода к тратам: у родительской категории есть и свои
+   * траты, не отнесённые к дочерним, и раньше добраться до них было нельзя -
+   * нажатие только раскрывало список.
+   */
   protected toggle(row: BarRow): void {
-    if (!row.hasChildren) {
-      this.openCategory(row);
-      return;
-    }
-
     this.expanded.update((current) => {
       const next = new Set(current);
-      if (!next.delete(row.id)) {
-        next.add(row.id);
+      if (!next.delete(row.key)) {
+        next.add(row.key);
       }
       return next;
     });
@@ -178,22 +201,30 @@ export class AnalyticsPage {
   protected openCategory(row: BarRow): void {
     const period = this.period();
 
-    this.sheets.openSheet<void, CategorySpendingsData>(CategorySpendingsSheet, {
-      categoryId: row.id,
-      title: row.title,
-      amount: row.amount,
-      dateFrom: period.from,
-      dateTo: period.to,
-      targetCurrencyId: this.settings.viewCurrencyId(),
-      currencyCode: this.currencyCode(),
-    });
+    this.sheets.openSheet<void, CategorySpendingsData>(
+      CategorySpendingsSheet,
+      {
+        categoryId: row.categoryId,
+        title: row.title,
+        amount: row.amount,
+        dateFrom: period.from,
+        dateTo: period.to,
+        targetCurrencyId: this.settings.viewCurrencyId(),
+        currencyCode: this.currencyCode(),
+      },
+      { ariaLabel: `Траты категории ${row.title}` },
+    );
   }
 
   protected retry(): void {
     const currencyId = this.settings.viewCurrencyId();
     if (currencyId) {
       this.load(this.period(), currencyId);
+      return;
     }
+
+    this.status.set('loading');
+    this.settings.reload();
   }
 
   /** Границы выбранного периода. */

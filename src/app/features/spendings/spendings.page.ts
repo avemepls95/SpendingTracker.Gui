@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  OnDestroy,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 
 import { SheetService } from '../../core/ui/sheet.service';
 import { Spending } from '../../domain/models/models';
@@ -40,8 +49,20 @@ export class SpendingsPage implements OnDestroy {
 
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
 
+  private readonly searchInput =
+    viewChild<ElementRef<HTMLInputElement>>('searchInput');
+
   constructor() {
     this.store.reload();
+
+    // Атрибут autofocus действует только на элементы, присутствующие при
+    // разборе документа; поле поиска появляется по нажатию, поэтому фокус
+    // ставится вручную, как только элемент отрисован.
+    effect(() => {
+      if (this.isSearchOpen()) {
+        this.searchInput()?.nativeElement.focus();
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -84,7 +105,9 @@ export class SpendingsPage implements OnDestroy {
 
   protected openSpending(spending: Spending): void {
     this.sheets
-      .openSheet<SpendingEditResult, Spending>(SpendingEditSheet, spending)
+      .openSheet<SpendingEditResult, Spending>(SpendingEditSheet, spending, {
+        ariaLabel: 'Редактирование траты',
+      })
       .closed.subscribe((result) => {
         if (!result) {
           return;

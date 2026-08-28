@@ -35,6 +35,7 @@
 }
 
 .parents__remove {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -43,6 +44,17 @@
   border-radius: var(--r-full);
   color: var(--c-text-2);
   --icon-size: 14px;
+
+  // Видимый размер оставляем чиповым, а область касания доводим до нормы -
+  // так же, как у .icon-btn и нажимаемых чипов.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: var(--tap-min);
+    height: var(--tap-min);
+    transform: translate(-50%, -50%);
+  }
 
   &:active {
     background: var(--c-pressed);

@@ -7,7 +7,8 @@ import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { IconComponent } from '../../shared/ui/icon.component';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
-import { ShortDatePipe } from '../../shared/pipes/day-label.pipe';
+import { ShortDatePipe } from '../../shared/pipes/short-date.pipe';
+import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
 
 export interface CategorySpendingsData {
   readonly categoryId: string;
@@ -23,9 +24,9 @@ export interface CategorySpendingsData {
 @Component({
   selector: 'app-category-spendings',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, EmptyStateComponent, MoneyPipe, ShortDatePipe],
+  imports: [IconComponent, EmptyStateComponent, MoneyPipe, ShortDatePipe, SwipeToCloseDirective],
   template: `
-    <div class="sheet" role="dialog" [attr.aria-label]="'Траты: ' + data.title">
+    <div class="sheet" appSwipeToClose (dismissed)="close()">
       <div class="sheet__grabber" aria-hidden="true"></div>
 
       <div class="sheet__header">

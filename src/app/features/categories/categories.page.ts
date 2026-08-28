@@ -67,7 +67,10 @@ export class CategoriesPage {
 
   private openSheet(data: CategoryEditData): void {
     this.sheets
-      .openSheet<CategoryEditResult, CategoryEditData>(CategoryEditSheet, data)
+      .openSheet<CategoryEditResult, CategoryEditData>(CategoryEditSheet, data, {
+        ariaLabel:
+          data.mode === 'create' ? 'Новая категория' : 'Редактирование категории',
+      })
       .closed.subscribe((result) => {
         if (result?.kind === 'changed') {
           this.load();

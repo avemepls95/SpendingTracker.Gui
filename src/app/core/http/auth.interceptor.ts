@@ -1,9 +1,10 @@
 import { HttpErrorResponse, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { EMPTY, catchError, switchMap, throwError } from 'rxjs';
+import { catchError, switchMap, throwError } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
 import { TokenStorageService } from '../auth/token-storage.service';
+import { ToastService } from '../ui/toast.service';
 import { TokenRefreshService } from './token-refresh.service';
 
 /** Запросы самой авторизации не должны нести токен и не подлежат продлению. */
@@ -18,8 +19,9 @@ function withToken<T>(request: HttpRequest<T>, token: string): HttpRequest<T> {
 /**
  * Подставляет токен доступа и продлевает сессию при ответе 401.
  *
- * Раньше продление не вызывалось нигде, поэтому по истечении токена
- * пользователя просто выкидывало на экран входа.
+ * Ошибки пробрасываются подписчику, а не гасятся: на их обработчике держатся
+ * признаки занятости экранов, и проглоченная ошибка оставляет экран навсегда
+ * в состоянии загрузки.
  */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   if (isAuthEndpoint(request)) {
@@ -29,11 +31,17 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const storage = inject(TokenStorageService);
   const refresher = inject(TokenRefreshService);
   const auth = inject(AuthService);
+  const toast = inject(ToastService);
+
+  const endSession = (error: unknown) => {
+    toast.info('Время сессии истекло. Войдите заново');
+    auth.signOut();
+    return throwError(() => error);
+  };
 
   const token = storage.accessToken;
   if (!token) {
-    auth.signOut();
-    return EMPTY;
+    return endSession(new Error('Нет токена доступа'));
   }
 
   return next(withToken(request, token)).pipe(
@@ -43,16 +51,12 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
       }
 
       if (!storage.canRefresh) {
-        auth.signOut();
-        return EMPTY;
+        return endSession(error);
       }
 
       return refresher.refresh().pipe(
         switchMap((freshToken) => next(withToken(request, freshToken))),
-        catchError(() => {
-          auth.signOut();
-          return EMPTY;
-        }),
+        catchError((refreshError: unknown) => endSession(refreshError)),
       );
     }),
   );

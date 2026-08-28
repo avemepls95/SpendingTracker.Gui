@@ -43,6 +43,16 @@
     </div>
   }
 
+  @case ('no-currency') {
+    <app-empty-state
+      icon="wallet"
+      title="Не выбрана валюта сводки"
+      hint="Суммы приводятся к одной валюте. Выберите её в настройках."
+    >
+      <a class="btn btn--primary" routerLink="/settings">Открыть настройки</a>
+    </app-empty-state>
+  }
+
   @case ('error') {
     <app-empty-state
       icon="alert-circle"
@@ -79,21 +89,28 @@
           />
         } @else {
           <ul class="bars">
-            @for (row of rows(); track row.id) {
-              <li class="bar" [style.--level]="row.level">
-                <button
-                  type="button"
-                  class="bar__button"
-                  [attr.aria-expanded]="row.hasChildren ? row.isExpanded : null"
-                  (click)="toggle(row)"
-                >
+            @for (row of rows(); track row.key) {
+              <li class="bar" [attr.data-level]="row.level">
+                @if (row.hasChildren) {
+                  <button
+                    type="button"
+                    class="bar__toggle"
+                    [attr.aria-expanded]="row.isExpanded"
+                    [attr.aria-label]="
+                      (row.isExpanded ? 'Свернуть ' : 'Раскрыть ') + row.title
+                    "
+                    (click)="toggle(row)"
+                  >
+                    <app-icon
+                      [name]="row.isExpanded ? 'chevron-down' : 'chevron-right'"
+                    />
+                  </button>
+                } @else {
+                  <span class="bar__toggle bar__toggle--empty" aria-hidden="true"></span>
+                }
+
+                <button type="button" class="bar__button" (click)="openCategory(row)">
                   <span class="bar__head">
-                    @if (row.hasChildren) {
-                      <app-icon
-                        class="bar__chevron"
-                        [name]="row.isExpanded ? 'chevron-down' : 'chevron-right'"
-                      />
-                    }
                     <span class="bar__title truncate">{{ row.title }}</span>
                     <span class="bar__share">{{ row.share }}%</span>
                     <span class="bar__amount amount">{{ row.amount | money }}</span>

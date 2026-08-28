@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { SheetService } from '../../core/ui/sheet.service';
 import { SpendingApiService } from '../../domain/api/spending-api.service';
@@ -11,12 +12,12 @@ import { PageHeaderComponent } from '../../shared/ui/page-header.component';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { AccountEditData, AccountEditResult, AccountEditSheet } from './account-edit.sheet';
 
-type Status = 'loading' | 'ready' | 'error';
+type Status = 'loading' | 'ready' | 'error' | 'no-currency';
 
 @Component({
   selector: 'app-accounts-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PageHeaderComponent, EmptyStateComponent, IconComponent, MoneyPipe],
+  imports: [PageHeaderComponent, EmptyStateComponent, IconComponent, MoneyPipe, RouterLink],
   templateUrl: './accounts.page.html',
   styleUrl: './accounts.page.scss',
 })
@@ -45,6 +46,13 @@ export class AccountsPage {
       const currencyId = this.settings.viewCurrencyId();
       if (currencyId) {
         this.load(currencyId);
+        return;
+      }
+
+      // Настройки пришли, но валюта не выбрана - это не загрузка, а
+      // состояние, из которого пользователь должен выйти сам.
+      if (this.settings.isLoaded()) {
+        this.status.set('no-currency');
       }
     });
   }
@@ -83,12 +91,20 @@ export class AccountsPage {
     const currencyId = this.settings.viewCurrencyId();
     if (currencyId) {
       this.load(currencyId);
+      return;
     }
+
+    // Валюты нет, потому что не удалось прочитать настройки: повторяем
+    // именно этот запрос, иначе кнопка не делает ничего.
+    this.status.set('loading');
+    this.settings.reload();
   }
 
   private openSheet(data: AccountEditData): void {
     this.sheets
-      .openSheet<AccountEditResult, AccountEditData>(AccountEditSheet, data)
+      .openSheet<AccountEditResult, AccountEditData>(AccountEditSheet, data, {
+        ariaLabel: data.mode === 'create' ? 'Новый счёт' : 'Редактирование счёта',
+      })
       .closed.subscribe((result) => {
         // Закрытие по Escape или клику мимо возвращает undefined. Прежний код
         // сразу читал result.action и падал на этом.
