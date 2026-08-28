@@ -1,21 +1,24 @@
 # ----------------------------
-# build from source
+# сборка
 # ----------------------------
-FROM node:18 AS build
+# Angular 21 требует Node ^20.19 || ^22.12 || >=24: на прежнем node:18
+# сборка падает ещё до вызова ng.
+FROM node:22-alpine AS build
 
 WORKDIR /app
 
-COPY package*.json .
-RUN npm install --force
+COPY package.json package-lock.json ./
+# ci вместо install --force: флаг был нужен из-за конфликтов peer-зависимостей
+# старого набора пакетов, которых больше нет.
+RUN npm ci
 
 COPY . .
-ARG configuration=production
 RUN npm run build
 
 # ----------------------------
-# run with nginx
+# раздача через nginx
 # ----------------------------
-FROM nginx
+FROM nginx:alpine
 
 RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d
