@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { SheetService } from '../../core/ui/sheet.service';
@@ -54,6 +62,9 @@ export interface BarRow {
 /** Суммы ниже копейки в отчёте - шум округления, а не траты. */
 const MIN_VISIBLE_AMOUNT = 0.01;
 
+/** Пауза между правкой даты и запросом отчёта. */
+const DATE_INPUT_DEBOUNCE_MS = 400;
+
 @Component({
   selector: 'app-analytics-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,7 +72,7 @@ const MIN_VISIBLE_AMOUNT = 0.01;
   templateUrl: './analytics.page.html',
   styleUrl: './analytics.page.scss',
 })
-export class AnalyticsPage {
+export class AnalyticsPage implements OnDestroy {
   private readonly api = inject(SpendingApiService);
   private readonly sheets = inject(SheetService);
   private readonly settings = inject(UserSettingsStore);
@@ -74,6 +85,22 @@ export class AnalyticsPage {
   private readonly customFrom = signal(formatInputDate(addDays(new Date(), -30)));
   private readonly customTo = signal(formatInputDate(new Date()));
   private readonly expanded = signal<ReadonlySet<string>>(new Set());
+
+  /** Отсекает ответ на устаревший запрос при быстрой смене периода. */
+  private generation = 0;
+
+  /**
+   * Нативное поле даты шлёт событие на каждый изменённый сегмент - день,
+   * месяц, год. Без паузы отчёт перезапрашивался бы трижды подряд, и один из
+   * промежуточных ответов мог прийти последним.
+   *
+   * Таймеры у полей раздельные: общий отменял бы ещё не применённую правку
+   * начала периода, когда пользователь сразу переходит к его концу.
+   */
+  private readonly dateTimers: {
+    from?: ReturnType<typeof setTimeout>;
+    to?: ReturnType<typeof setTimeout>;
+  } = {};
 
   protected readonly presets: readonly { id: PeriodPreset; label: string }[] = [
     { id: 'month', label: 'Этот месяц' },
@@ -169,16 +196,28 @@ export class AnalyticsPage {
     });
   }
 
+  ngOnDestroy(): void {
+    clearTimeout(this.dateTimers.from);
+    clearTimeout(this.dateTimers.to);
+  }
+
   protected selectPreset(preset: PeriodPreset): void {
     this.preset.set(preset);
   }
 
   protected onFrom(event: Event): void {
-    this.customFrom.set((event.target as HTMLInputElement).value);
+    const value = (event.target as HTMLInputElement).value;
+    this.scheduleDateChange('from', () => this.customFrom.set(value));
   }
 
   protected onTo(event: Event): void {
-    this.customTo.set((event.target as HTMLInputElement).value);
+    const value = (event.target as HTMLInputElement).value;
+    this.scheduleDateChange('to', () => this.customTo.set(value));
+  }
+
+  private scheduleDateChange(field: 'from' | 'to', apply: () => void): void {
+    clearTimeout(this.dateTimers[field]);
+    this.dateTimers[field] = setTimeout(apply, DATE_INPUT_DEBOUNCE_MS);
   }
 
   /**
@@ -259,13 +298,24 @@ export class AnalyticsPage {
   private load(period: Period, currencyId: string): void {
     this.status.set('loading');
 
+    const generation = ++this.generation;
+    const isStale = (): boolean => generation !== this.generation;
+
     this.api.getCategoriesAnalytics(period.from, period.to, currencyId).subscribe({
       next: (analytics) => {
+        if (isStale()) {
+          return;
+        }
+
         this.analytics.set(analytics);
         this.expanded.set(new Set());
         this.status.set('ready');
       },
-      error: () => this.status.set('error'),
+      error: () => {
+        if (!isStale()) {
+          this.status.set('error');
+        }
+      },
     });
   }
 }

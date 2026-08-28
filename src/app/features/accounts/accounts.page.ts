@@ -30,6 +30,9 @@ export class AccountsPage {
   protected readonly status = signal<Status>('loading');
   protected readonly summary = signal<AccountsSummary | null>(null);
 
+  /** Отсекает ответ на устаревший запрос: валюту сводки можно сменить дважды подряд. */
+  private generation = 0;
+
   protected readonly viewCurrencyCode = computed(() =>
     this.currencies.codeOf(this.settings.viewCurrencyId()),
   );
@@ -117,8 +120,15 @@ export class AccountsPage {
   private load(currencyId: string): void {
     this.status.set('loading');
 
+    const generation = ++this.generation;
+    const isStale = (): boolean => generation !== this.generation;
+
     this.api.getAccounts(currencyId).subscribe({
       next: (summary) => {
+        if (isStale()) {
+          return;
+        }
+
         this.summary.set({
           ...summary,
           accounts: [...summary.accounts].sort(
@@ -127,7 +137,11 @@ export class AccountsPage {
         });
         this.status.set('ready');
       },
-      error: () => this.status.set('error'),
+      error: () => {
+        if (!isStale()) {
+          this.status.set('error');
+        }
+      },
     });
   }
 }

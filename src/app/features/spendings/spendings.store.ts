@@ -40,6 +40,16 @@ export class SpendingsStore {
   private readonly searchSignal = signal('');
   private readonly withoutCategoriesSignal = signal(false);
 
+  /**
+   * Номер поколения запроса.
+   *
+   * Быстрое переключение фильтров оставляет в полёте несколько запросов, и
+   * ответы приходят в произвольном порядке. Без отметки поколения ответ на
+   * отменённый фильтр перетирал бы актуальный список, и он расходился бы с
+   * выделенным чипом до следующей перезагрузки.
+   */
+  private generation = 0;
+
   readonly status = this.statusSignal.asReadonly();
   readonly isLoadingMore = this.loadingMoreSignal.asReadonly();
   readonly hasMore = this.hasMoreSignal.asReadonly();
@@ -113,6 +123,9 @@ export class SpendingsStore {
   }
 
   private fetch(offset: number, apply: (page: readonly Spending[]) => void): void {
+    const generation = ++this.generation;
+    const isStale = (): boolean => generation !== this.generation;
+
     this.api
       .getSpendings({
         offset,
@@ -122,6 +135,10 @@ export class SpendingsStore {
       })
       .subscribe({
         next: (page) => {
+          if (isStale()) {
+            return;
+          }
+
           apply(page);
           // Полная страница означает, что на сервере может быть продолжение.
           this.hasMoreSignal.set(page.length === PAGE_SIZE);
@@ -129,6 +146,10 @@ export class SpendingsStore {
           this.loadingMoreSignal.set(false);
         },
         error: () => {
+          if (isStale()) {
+            return;
+          }
+
           this.statusSignal.set(offset === 0 ? 'error' : 'ready');
           this.loadingMoreSignal.set(false);
         },
