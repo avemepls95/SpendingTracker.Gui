@@ -72,3 +72,51 @@ export function isSameDay(left: Date, right: Date): boolean {
 function pad(value: number): string {
   return String(value).padStart(2, '0');
 }
+
+const MONTHS_GENITIVE = [
+  'января',
+  'февраля',
+  'марта',
+  'апреля',
+  'мая',
+  'июня',
+  'июля',
+  'августа',
+  'сентября',
+  'октября',
+  'ноября',
+  'декабря',
+];
+
+const WEEKDAYS_SHORT = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+
+/**
+ * Подпись дня для заголовка группы.
+ *
+ * «Сегодня» и «Вчера» читаются быстрее даты, а год показывается только когда
+ * он отличается от текущего.
+ */
+export function formatDayLabel(date: Date, today = new Date()): string {
+  if (isSameDay(date, today)) {
+    return 'Сегодня';
+  }
+
+  if (isSameDay(date, addDays(today, -1))) {
+    return 'Вчера';
+  }
+
+  const day = date.getDate();
+  const month = MONTHS_GENITIVE[date.getMonth()];
+
+  if (date.getFullYear() !== today.getFullYear()) {
+    return `${day} ${month} ${date.getFullYear()}`;
+  }
+
+  return `${day} ${month}, ${WEEKDAYS_SHORT[date.getDay()]}`;
+}
+
+/** Короткая подпись даты для строк без группировки: 28.08.26. */
+export function formatShortDate(date: Date): string {
+  const year = String(date.getFullYear()).slice(-2);
+  return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${year}`;
+}

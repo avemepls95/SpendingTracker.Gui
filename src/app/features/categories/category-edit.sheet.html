@@ -1,0 +1,87 @@
+<div class="sheet" role="dialog" [attr.aria-label]="title">
+  <div class="sheet__grabber" aria-hidden="true"></div>
+
+  <div class="sheet__header">
+    <h2 class="sheet__title">{{ title }}</h2>
+    @if (isEdit) {
+      <button
+        type="button"
+        class="icon-btn icon-btn--danger"
+        aria-label="Удалить категорию"
+        [disabled]="isSaving()"
+        (click)="remove()"
+      >
+        <app-icon name="trash" />
+      </button>
+    }
+    <button type="button" class="icon-btn" aria-label="Закрыть" (click)="close()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <div class="sheet__body">
+    <div class="field" [class.field--invalid]="nameError()">
+      <label class="field__label" for="category-name">Название</label>
+      <input
+        id="category-name"
+        class="field__control"
+        type="text"
+        placeholder="Например, Продукты"
+        autocomplete="off"
+        [value]="name()"
+        (input)="onName($event)"
+      />
+      @if (nameError(); as error) {
+        <p class="field__error">{{ error }}</p>
+      }
+    </div>
+
+    @if (isEdit) {
+      <section class="parents">
+        <div class="parents__head">
+          <h3 class="field__label">Входит в категории</h3>
+          <span class="parents__hint">Сохраняются сразу</span>
+        </div>
+
+        <p class="parents__about">
+          Траты этой категории попадут и в родительскую — так в аналитике
+          получается дерево.
+        </p>
+
+        <div class="parents__list">
+          @for (parent of parents(); track parent.id) {
+            <span class="chip parents__chip">
+              {{ parent.title }}
+              <button
+                type="button"
+                class="parents__remove"
+                [attr.aria-label]="'Убрать из категории ' + parent.title"
+                [disabled]="isParentBusy()"
+                (click)="removeParent(parent)"
+              >
+                <app-icon name="close" />
+              </button>
+            </span>
+          }
+
+          <button
+            type="button"
+            class="chip parents__add"
+            [disabled]="isParentBusy()"
+            (click)="addParent()"
+          >
+            <app-icon name="plus" />
+            Добавить
+          </button>
+        </div>
+      </section>
+    }
+  </div>
+
+  <div class="sheet__footer">
+    <button type="button" class="btn btn--secondary" (click)="close()">Отмена</button>
+    <button type="button" class="btn btn--primary" [disabled]="!canSave()" (click)="save()">
+      {{ isSaving() ? 'Сохраняем…' : 'Сохранить' }}
+    </button>
+  </div>
+</div>

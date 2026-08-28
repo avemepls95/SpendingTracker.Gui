@@ -4,7 +4,6 @@ import {
   HapticImpactStyle,
   HapticNotificationType,
   TelegramInset,
-  TelegramThemeParams,
   TelegramUser,
   TelegramWebApp,
   readTelegramWebApp,
@@ -25,12 +24,6 @@ export class TelegramService {
   private readonly document = inject(DOCUMENT);
   private readonly webApp: TelegramWebApp | null = readTelegramWebApp();
 
-  private readonly themeParamsSignal = signal<TelegramThemeParams>(
-    this.webApp?.themeParams ?? {},
-  );
-  private readonly colorSchemeSignal = signal<'light' | 'dark'>(
-    this.webApp?.colorScheme ?? 'light',
-  );
   private readonly safeAreaSignal = signal<TelegramInset>(
     this.webApp?.safeAreaInset ?? NO_INSET,
   );
@@ -38,8 +31,15 @@ export class TelegramService {
     this.webApp?.contentSafeAreaInset ?? NO_INSET,
   );
 
-  /** Приложение открыто внутри Telegram, а не в обычном браузере. */
-  readonly isMiniApp = this.webApp !== null;
+  /**
+   * Приложение открыто внутри клиента Telegram, а не в обычном браузере.
+   *
+   * Проверять одно лишь наличие моста нельзя: telegram-web-app.js подключён
+   * в index.html и создаёт window.Telegram.WebApp в любом браузере. Вне
+   * клиента мост отдаёт platform === 'unknown'.
+   */
+  readonly isMiniApp =
+    this.webApp !== null && this.webApp.platform !== 'unknown';
 
   /**
    * Пользователь запущен из Mini App с готовыми данными авторизации.
@@ -50,8 +50,6 @@ export class TelegramService {
    */
   readonly isLaunchedFromTelegram = Boolean(this.webApp?.initDataUnsafe.user);
 
-  readonly themeParams = this.themeParamsSignal.asReadonly();
-  readonly colorScheme = this.colorSchemeSignal.asReadonly();
   readonly safeArea = this.safeAreaSignal.asReadonly();
   readonly contentSafeArea = this.contentSafeAreaSignal.asReadonly();
 
@@ -97,20 +95,14 @@ export class TelegramService {
       webApp.disableVerticalSwipes?.();
     }
 
-    const syncTheme = (): void => {
-      this.themeParamsSignal.set({ ...webApp.themeParams });
-      this.colorSchemeSignal.set(webApp.colorScheme);
-    };
     const syncInsets = (): void => {
       this.safeAreaSignal.set(webApp.safeAreaInset ?? NO_INSET);
       this.contentSafeAreaSignal.set(webApp.contentSafeAreaInset ?? NO_INSET);
     };
 
-    webApp.onEvent('themeChanged', syncTheme);
     webApp.onEvent('safeAreaChanged', syncInsets);
     webApp.onEvent('contentSafeAreaChanged', syncInsets);
 
-    syncTheme();
     syncInsets();
   }
 
@@ -163,10 +155,6 @@ export class TelegramService {
       backButton.offClick(handler);
       backButton.hide();
     };
-  }
-
-  close(): void {
-    this.webApp?.close();
   }
 
   /**

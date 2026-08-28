@@ -1,0 +1,70 @@
+<app-page-header title="Настройки" />
+
+<div class="content">
+  @if (profile().firstName; as firstName) {
+    <section class="profile">
+      @if (profile().photoUrl; as photoUrl) {
+        @if (!avatarFailed()) {
+          <img
+            class="profile__avatar"
+            [src]="photoUrl"
+            width="48"
+            height="48"
+            alt=""
+            (error)="avatarFailed.set(true)"
+          />
+        } @else {
+          <span class="profile__avatar profile__avatar--blank" aria-hidden="true">
+            {{ firstName.charAt(0) }}
+          </span>
+        }
+      } @else {
+        <span class="profile__avatar profile__avatar--blank" aria-hidden="true">
+          {{ firstName.charAt(0) }}
+        </span>
+      }
+      <span class="profile__name">{{ firstName }}</span>
+    </section>
+  }
+
+  <section>
+    <h2 class="section-title">Отображение</h2>
+    <div class="panel">
+      <button
+        type="button"
+        class="panel__row"
+        [disabled]="isSaving()"
+        (click)="pickCurrency()"
+      >
+        <app-icon class="row__icon" name="wallet" />
+        <span class="row__main">
+          <span class="row__title">Валюта сводки</span>
+          <span class="row__hint">
+            В неё пересчитываются общий баланс и аналитика
+          </span>
+        </span>
+
+        <span class="row__value">
+          @if (currencyFlag(); as flag) {
+            <img class="row__flag" appHideOnError [src]="flag" width="20" height="15" alt="" />
+          }
+          {{ currency()?.code ?? '—' }}
+        </span>
+        <app-icon class="row__chevron" name="chevron-right" />
+      </button>
+    </div>
+  </section>
+
+  @if (canSignOut) {
+    <section>
+      <div class="panel">
+        <button type="button" class="panel__row row--danger" (click)="signOut()">
+          <app-icon class="row__icon" name="logout" />
+          <span class="row__main">
+            <span class="row__title">Выйти</span>
+          </span>
+        </button>
+      </div>
+    </section>
+  }
+</div>

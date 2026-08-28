@@ -1,23 +1,18 @@
 // Токены приложения.
 //
-// Палитра задаётся тремя слоями, каждый следующий переопределяет предыдущий:
-//   1. :root                      - светлая тема по умолчанию;
-//   2. prefers-color-scheme/data-theme - тёмная тема в обычном браузере;
-//   3. data-tg-theme              - цвета из Telegram Mini App, их проставляет ThemeService.
-//
-// Производные токены (границы, подложки, состояния) считаются через color-mix от
-// базовых, поэтому подмены одних только базовых цветов достаточно, чтобы за ними
-// подтянулось всё остальное.
+// Тема одна - светлая. Производные токены (границы, подложки, состояния)
+// считаются через color-mix от базовых цветов, поэтому оттенки остаются
+// согласованными, а правится только небольшой набор базовых значений.
 
 :root {
   color-scheme: light;
 
-  // --- Базовые цвета: светлая тема ---
+  // --- Базовые цвета ---
   --c-bg: #ffffff;
   --c-surface: #ffffff;
   --c-surface-2: #f2f4f7;
   --c-text: #14161a;
-  --c-text-2: #5f6672;
+  --c-text-2: #545b66;
   --c-accent: #4f46e5;
   --c-accent-contrast: #ffffff;
   --c-danger: #d92d20;
@@ -29,62 +24,7 @@
   --sh-1: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 10%);
   --sh-2: 0 4px 8px -2px rgb(16 24 40 / 10%), 0 2px 4px -2px rgb(16 24 40 / 6%);
   --sh-3: 0 -8px 24px -4px rgb(16 24 40 / 12%), 0 -4px 8px -4px rgb(16 24 40 / 6%);
-  --sh-strength: 1;
 
-  // --- Категориальная палитра для диаграмм ---
-  --c-cat-1: #5b6ef5;
-  --c-cat-2: #0e9c99;
-  --c-cat-3: #b7791f;
-  --c-cat-4: #d6336c;
-  --c-cat-5: #7c3aed;
-  --c-cat-6: #1a7f4b;
-  --c-cat-7: #c2410c;
-  --c-cat-8: #52607a;
-}
-
-@mixin dark-palette {
-  color-scheme: dark;
-
-  --c-bg: #17191c;
-  --c-surface: #1f2226;
-  --c-surface-2: #282c31;
-  --c-text: #f0f2f5;
-  --c-text-2: #a1a7b0;
-  --c-accent: #8b91ff;
-  --c-accent-contrast: #14161a;
-  --c-danger: #ff6b63;
-  --c-success: #4ade80;
-  --c-warning: #fbbf24;
-
-  --sh-1: 0 1px 2px rgb(0 0 0 / 32%), 0 1px 3px rgb(0 0 0 / 40%);
-  --sh-2: 0 4px 8px -2px rgb(0 0 0 / 44%), 0 2px 4px -2px rgb(0 0 0 / 32%);
-  --sh-3: 0 -8px 24px -4px rgb(0 0 0 / 52%), 0 -4px 8px -4px rgb(0 0 0 / 32%);
-
-  --c-cat-1: #7c8cff;
-  --c-cat-2: #2dd4bf;
-  --c-cat-3: #fbbf24;
-  --c-cat-4: #f472b6;
-  --c-cat-5: #a78bfa;
-  --c-cat-6: #4ade80;
-  --c-cat-7: #fb923c;
-  --c-cat-8: #94a3b8;
-}
-
-// Тёмная тема в обычном браузере: по системной настройке,
-// если пользователь не выбрал светлую явно.
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    @include dark-palette;
-  }
-}
-
-// Явный выбор пользователя выигрывает у системной настройки в обе стороны.
-:root[data-theme='dark'] {
-  @include dark-palette;
-}
-
-
-:root {
   // --- Производные цвета ---
   --c-text-3: color-mix(in srgb, var(--c-text) 45%, transparent);
   --c-border: color-mix(in srgb, var(--c-text) 12%, transparent);

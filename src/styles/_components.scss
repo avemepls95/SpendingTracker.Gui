@@ -220,9 +220,24 @@
   color: var(--c-accent-contrast);
 }
 
+// Нажимаемый чип. Визуальная высота 32px читается как чип, но палец
+// промахивается: цель добирается псевдоэлементом до 44px, не меняя вёрстку.
+button.chip {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 50% 0 auto 0;
+    height: var(--tap-min);
+    transform: translateY(-50%);
+  }
+}
+
 // Неинтерактивный чип-метка: используется для категорий в строке траты.
 .chip--tag {
   min-height: 22px;
+  position: static;
   padding: 0 var(--sp-2);
   border-color: transparent;
   background: var(--c-surface-2);

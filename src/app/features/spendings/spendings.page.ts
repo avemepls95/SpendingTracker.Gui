@@ -1,11 +1,109 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, inject, signal } from '@angular/core';
 
+import { SheetService } from '../../core/ui/sheet.service';
+import { Spending } from '../../domain/models/models';
+import { CurrenciesStore } from '../../domain/stores/currencies.store';
+import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
+import { IconComponent } from '../../shared/ui/icon.component';
 import { PageHeaderComponent } from '../../shared/ui/page-header.component';
+import { MoneyPipe } from '../../shared/pipes/money.pipe';
+import { IntersectDirective } from '../../shared/util/intersect.directive';
+import {
+  SpendingEditResult,
+  SpendingEditSheet,
+} from './spending-edit.sheet';
+import { SpendingsStore } from './spendings.store';
+
+/** Пауза перед запросом, чтобы не дёргать сервер на каждую букву. */
+const SEARCH_DEBOUNCE_MS = 350;
 
 @Component({
   selector: 'app-spendings-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PageHeaderComponent],
-  template: `<app-page-header title="Траты" />`,
+  providers: [SpendingsStore],
+  imports: [
+    PageHeaderComponent,
+    EmptyStateComponent,
+    IconComponent,
+    IntersectDirective,
+    MoneyPipe,
+  ],
+  templateUrl: './spendings.page.html',
+  styleUrl: './spendings.page.scss',
 })
-export class SpendingsPage {}
+export class SpendingsPage implements OnDestroy {
+  private readonly sheets = inject(SheetService);
+  private readonly currencies = inject(CurrenciesStore);
+
+  protected readonly store = inject(SpendingsStore);
+  protected readonly isSearchOpen = signal(false);
+
+  private searchTimer: ReturnType<typeof setTimeout> | undefined;
+
+  constructor() {
+    this.store.reload();
+  }
+
+  ngOnDestroy(): void {
+    clearTimeout(this.searchTimer);
+  }
+
+  protected toggleSearch(): void {
+    const willOpen = !this.isSearchOpen();
+    this.isSearchOpen.set(willOpen);
+
+    if (!willOpen) {
+      clearTimeout(this.searchTimer);
+      this.store.setSearch('');
+    }
+  }
+
+  protected onSearchInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+
+    clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(
+      () => this.store.setSearch(value),
+      SEARCH_DEBOUNCE_MS,
+    );
+  }
+
+  /**
+   * Фильтр переключается по (change), а не по (click).
+   *
+   * Прежний чекбокс вызывал перезагрузку из обработчика клика, то есть до того,
+   * как ngModel успевал получить новое значение, и фильтр применялся со старым.
+   */
+  protected setOnlyWithoutCategories(value: boolean): void {
+    this.store.setOnlyWithoutCategories(value);
+  }
+
+  protected currencyCode(currencyId: string): string {
+    return this.currencies.codeOf(currencyId);
+  }
+
+  protected openSpending(spending: Spending): void {
+    this.sheets
+      .openSheet<SpendingEditResult, Spending>(SpendingEditSheet, spending)
+      .closed.subscribe((result) => {
+        if (!result) {
+          return;
+        }
+
+        if (result.kind === 'deleted') {
+          this.store.removeLocally(result.id);
+          return;
+        }
+
+        this.store.replaceLocally(result.spending);
+      });
+  }
+
+  protected retry(): void {
+    this.store.reload();
+  }
+
+  protected loadMore(): void {
+    this.store.loadMore();
+  }
+}

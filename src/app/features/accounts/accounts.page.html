@@ -1,0 +1,89 @@
+<app-page-header title="Счета">
+  <button type="button" class="icon-btn" aria-label="Добавить счёт" (click)="create()">
+    <app-icon name="plus" />
+  </button>
+</app-page-header>
+
+@switch (status()) {
+  @case ('loading') {
+    <div class="content" aria-busy="true">
+      <div class="total">
+        <span class="skeleton total__skeleton-label"></span>
+        <span class="skeleton total__skeleton-value"></span>
+      </div>
+      <div class="panel">
+        @for (row of [1, 2, 3, 4]; track row) {
+          <div class="panel__row">
+            <span class="skeleton account__skeleton-icon"></span>
+            <span class="skeleton account__skeleton-name"></span>
+            <span class="skeleton account__skeleton-amount"></span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @case ('error') {
+    <app-empty-state
+      icon="alert-circle"
+      title="Не удалось загрузить счета"
+      hint="Проверьте связь и попробуйте ещё раз."
+    >
+      <button type="button" class="btn btn--primary" (click)="retry()">Повторить</button>
+    </app-empty-state>
+  }
+
+  @default {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="wallet"
+        title="Счетов пока нет"
+        hint="Добавьте карты, наличные и брокерский счёт, чтобы видеть общий баланс в одной валюте."
+      >
+        <button type="button" class="btn btn--primary" (click)="create()">
+          Добавить счёт
+        </button>
+      </app-empty-state>
+    } @else if (summary(); as data) {
+      <div class="content">
+        <section class="total">
+          <h2 class="total__label">Всего на счетах</h2>
+          <p class="amount amount--display total__value">
+            {{ data.totalAmount | money }}&nbsp;{{ viewCurrencyCode() }}
+          </p>
+        </section>
+
+        <div class="panel">
+          @for (account of data.accounts; track account.id) {
+            <button type="button" class="panel__row account" (click)="edit(account)">
+              <span class="account__icon" aria-hidden="true">
+                <app-icon [name]="iconFor(account.type)" />
+              </span>
+
+              <span class="account__main">
+                <span class="account__name truncate">{{ account.name }}</span>
+                @if (needsConversion(account)) {
+                  <span class="account__converted">
+                    {{ account.targetCurrencyAmount | money }}&nbsp;{{ viewCurrencyCode() }}
+                  </span>
+                }
+              </span>
+
+              <span class="account__amount amount" [class.account__amount--negative]="account.originalCurrencyAmount < 0">
+                {{ account.originalCurrencyAmount | money }}
+                <span class="account__currency">{{
+                  currencyCode(account.originalCurrencyId)
+                }}</span>
+              </span>
+            </button>
+          }
+        </div>
+
+        <button type="button" class="btn btn--secondary btn--block" (click)="create()">
+          <app-icon name="plus" />
+          Добавить счёт
+        </button>
+      </div>
+    }
+  }
+}
