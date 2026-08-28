@@ -7,7 +7,8 @@
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
-          "style": "scss"
+          "style": "scss",
+          "changeDetection": "OnPush"
         }
       },
       "root": "",
@@ -15,24 +16,27 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular/build:application",
           "options": {
-            "outputPath": "dist/spending-tracker.gui",
+            "outputPath": {
+              "base": "dist/spending-tracker.gui",
+              "browser": ""
+            },
             "index": "src/index.html",
-            "main": "src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
+            "browser": "src/main.ts",
+            "polyfills": [],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
-              "src/assets/favicon.png",
-              "src/assets"
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "assets"
+              }
             ],
             "styles": [
-              "@angular/material/prebuilt-themes/indigo-pink.css",
-              "node_modules/ngx-spinner/animations/ball-scale-multiple.css",
-              "node_modules/ngx-spinner/animations/square-jelly-box.css",
+              "node_modules/@angular/cdk/overlay-prebuilt.css",
+              "node_modules/@angular/cdk/a11y-prebuilt.css",
               "src/styles.scss"
             ],
             "scripts": []
@@ -48,69 +52,44 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kb",
-                  "maximumError": "2mb"
+                  "maximumWarning": "700kb",
+                  "maximumError": "1mb"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4kb"
+                  "maximumWarning": "8kb",
+                  "maximumError": "16kb"
                 }
               ],
               "outputHashing": "all"
             },
             "development": {
-              "buildOptimizer": false,
               "optimization": false,
-              "vendorChunk": true,
               "extractLicenses": false,
-              "sourceMap": true,
-              "namedChunks": true
+              "sourceMap": true
             }
           },
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular/build:dev-server",
           "options": {
-            "browserTarget": "SpendingTracker.Gui:build"
+            "buildTarget": "SpendingTracker.Gui:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "SpendingTracker.Gui:build:production"
+              "buildTarget": "SpendingTracker.Gui:build:production"
             },
             "development": {
-              "browserTarget": "SpendingTracker.Gui:build:development"
+              "buildTarget": "SpendingTracker.Gui:build:development"
             }
           },
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "builder": "@angular/build:extract-i18n",
           "options": {
-            "browserTarget": "SpendingTracker.Gui:build"
-          }
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
-            "tsConfig": "tsconfig.spec.json",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              "src/assets",
-              "src/assets/favicon.png"
-            ],
-            "styles": [
-              "@angular/material/prebuilt-themes/indigo-pink.css",
-              "node_modules/ngx-spinner/animations/ball-scale-multiple.css",
-              "node_modules/ngx-spinner/animations/square-jelly-box.css",
-              "src/styles.scss"
-            ],
-            "scripts": []
+            "buildTarget": "SpendingTracker.Gui:build"
           }
         }
       }

@@ -1,0 +1,148 @@
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+
+/**
+ * Набор иконок приложения.
+ *
+ * Все контуры нарисованы на сетке 24x24 одной толщиной штриха: раньше в
+ * интерфейсе одновременно жили растровые эмодзи 30x30, шрифт Material Icons и
+ * флаги с внешнего CDN, и это читалось как три разных набора в одном экране.
+ */
+const ICONS = {
+  receipt: [
+    'M5 3.5h14v17.2l-2.33-1.7-2.34 1.7L12 19l-2.33 1.7-2.34-1.7L5 20.7z',
+    'M9 8.5h6',
+    'M9 12.5h4',
+  ],
+  wallet: [
+    'M3 7.5A2.5 2.5 0 0 1 5.5 5h13A2.5 2.5 0 0 1 21 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z',
+    'M16.6 11.25a.75.75 0 1 0 0 1.5.75.75 0 1 0 0-1.5',
+  ],
+  tag: [
+    'M3.5 3.5h7.2c.4 0 .78.16 1.06.44l8.3 8.3a1.5 1.5 0 0 1 0 2.12l-5.7 5.7a1.5 1.5 0 0 1-2.12 0l-8.3-8.3a1.5 1.5 0 0 1-.44-1.06z',
+    'M7.6 7.1a.6.6 0 1 0 0 1.2.6.6 0 1 0 0-1.2',
+  ],
+  chart: ['M4 20h16', 'M7.5 20v-5.5', 'M12 20V8', 'M16.5 20v-8.5'],
+  sliders: [
+    'M4 7.5h9',
+    'M19 7.5h1',
+    'M4 16.5h1',
+    'M11 16.5h9',
+    'M16 5.5a2 2 0 1 0 0 4 2 2 0 1 0 0-4',
+    'M8 14.5a2 2 0 1 0 0 4 2 2 0 1 0 0-4',
+  ],
+  search: ['M11 4.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 1 0 0-13', 'M15.8 15.8 20 20'],
+  close: ['M6.5 6.5l11 11', 'M17.5 6.5l-11 11'],
+  plus: ['M12 5.5v13', 'M5.5 12h13'],
+  check: ['M4.5 12.5 9.5 17.5 19.5 6.5'],
+  trash: [
+    'M4 7h16',
+    'M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8A1.6 1.6 0 0 1 14.5 5.6V7',
+    'M6.6 7l.79 12.06A2 2 0 0 0 9.39 21h5.22a2 2 0 0 0 2-1.94L17.4 7',
+    'M10.4 11v6',
+    'M13.6 11v6',
+  ],
+  'chevron-right': ['M9.5 5.5l6.5 6.5-6.5 6.5'],
+  'chevron-down': ['M5.5 9.5 12 16l6.5-6.5'],
+  'alert-circle': [
+    'M12 3.2a8.8 8.8 0 1 0 0 17.6 8.8 8.8 0 1 0 0-17.6',
+    'M12 7.6v5.2',
+    'M12 16.2h.01',
+  ],
+  'check-circle': [
+    'M12 3.2a8.8 8.8 0 1 0 0 17.6 8.8 8.8 0 1 0 0-17.6',
+    'M8 12.3l2.6 2.6L16 9.5',
+  ],
+  info: [
+    'M12 3.2a8.8 8.8 0 1 0 0 17.6 8.8 8.8 0 1 0 0-17.6',
+    'M12 11v5.2',
+    'M12 7.8h.01',
+  ],
+  'credit-card': [
+    'M3 7.5A2.5 2.5 0 0 1 5.5 5h13A2.5 2.5 0 0 1 21 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z',
+    'M3 10h18',
+    'M6.5 14.5h3',
+  ],
+  'debit-card': [
+    'M3 7.5A2.5 2.5 0 0 1 5.5 5h13A2.5 2.5 0 0 1 21 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z',
+    'M6 9h3.5v3H6z',
+    'M14 15h4',
+  ],
+  banknote: [
+    'M3 8.5A1.5 1.5 0 0 1 4.5 7h15A1.5 1.5 0 0 1 21 8.5v7a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 15.5z',
+    'M12 10a2 2 0 1 0 0 4 2 2 0 1 0 0-4',
+    'M6 10.5v3',
+    'M18 10.5v3',
+  ],
+  briefcase: [
+    'M3 9.5A1.5 1.5 0 0 1 4.5 8h15A1.5 1.5 0 0 1 21 9.5v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z',
+    'M9 8V6.5A1.5 1.5 0 0 1 10.5 5h3A1.5 1.5 0 0 1 15 6.5V8',
+    'M3 13h18',
+  ],
+  'money-bag': [
+    'M9.6 4.2h4.8l-1.5 3.3H11.1z',
+    'M11.1 7.5c-2.6 1.6-4.6 4.4-4.6 7.4 0 3.1 2.4 5 5.5 5s5.5-1.9 5.5-5c0-3-2-5.8-4.6-7.4',
+  ],
+  logout: [
+    'M14.5 5h4A1.5 1.5 0 0 1 20 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-4',
+    'M9 8l-4 4 4 4',
+    'M5 12h10',
+  ],
+  inbox: [
+    'M3 12.5h5l1.4 2.8h5.2L16 12.5h5',
+    'M5.6 5h12.8l2.6 7.5v5A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5v-5z',
+  ],
+} as const;
+
+export type IconName = keyof typeof ICONS;
+
+/** Названия иконок для типов счетов. */
+export const ACCOUNT_TYPE_ICONS = {
+  // Обе карты нарисованы карточками и различаются деталью: у дебетовой чип,
+  // у кредитной - полоса. Кошелёк здесь не используется: он обозначает
+  // раздел «Счета» в панели вкладок и подпись валюты в настройках.
+  DebitCard: 'debit-card',
+  CreditCard: 'credit-card',
+  Cash: 'banknote',
+  Brokerage: 'briefcase',
+  Other: 'money-bag',
+} as const satisfies Record<string, IconName>;
+
+@Component({
+  selector: 'app-icon',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'app-icon' },
+  template: `
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      @for (path of paths(); track path) {
+        <path [attr.d]="path" />
+      }
+    </svg>
+  `,
+  styles: `
+    :host {
+      display: inline-flex;
+      flex: none;
+      width: var(--icon-size, 24px);
+      height: var(--icon-size, 24px);
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  `,
+})
+export class IconComponent {
+  readonly name = input.required<IconName>();
+
+  protected readonly paths = computed<readonly string[]>(() => ICONS[this.name()]);
+}

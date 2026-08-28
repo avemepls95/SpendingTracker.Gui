@@ -1,0 +1,100 @@
+<div class="sheet" appSwipeToClose (dismissed)="close()">
+  <div class="sheet__grabber" aria-hidden="true"></div>
+
+  <div class="sheet__header">
+    <h2 class="sheet__title">{{ title }}</h2>
+    @if (isEdit) {
+      <button
+        type="button"
+        class="icon-btn icon-btn--danger"
+        aria-label="Удалить счёт"
+        [disabled]="isSaving()"
+        (click)="remove()"
+      >
+        <app-icon name="trash" />
+      </button>
+    }
+    <button type="button" class="icon-btn" aria-label="Закрыть" (click)="close()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <div class="sheet__body">
+    <div class="field" [class.field--invalid]="nameError()">
+      <label class="field__label" for="account-name">Название</label>
+      <input
+        id="account-name"
+        class="field__control"
+        type="text"
+        placeholder="Например, Тинькофф Black"
+        autocomplete="off"
+        [value]="name()"
+        (input)="onName($event)"
+      />
+      @if (nameError(); as error) {
+        <p class="field__error">{{ error }}</p>
+      }
+    </div>
+
+    <div class="amount-row">
+      <div class="field amount-row__amount" [class.field--invalid]="amountError()">
+        <label class="field__label" for="account-amount">Сумма</label>
+        <input
+          id="account-amount"
+          class="field__control field__control--amount"
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          [value]="amountText()"
+          (input)="onAmount($event)"
+        />
+      </div>
+
+      <div class="field amount-row__currency">
+        <span class="field__label" id="account-currency-label">Валюта</span>
+        <button
+          type="button"
+          class="field__control currency-button"
+          aria-labelledby="account-currency-label"
+          (click)="pickCurrency()"
+        >
+          <span>{{ currencyCode() }}</span>
+          <app-icon name="chevron-down" />
+        </button>
+      </div>
+    </div>
+
+    @if (amountError(); as error) {
+      <p class="field__error amount-row__error">{{ error }}</p>
+    } @else {
+      <!-- Долг по кредитке вводится минусом: подсказка снимает вопрос,
+           можно ли вообще сохранить отрицательную сумму. -->
+      <p class="hint">Для долга по кредитной карте укажите сумму со знаком минус.</p>
+    }
+
+    <fieldset class="types">
+      <legend class="field__label">Тип счёта</legend>
+      <div class="types__grid">
+        @for (accountType of accountTypes; track accountType) {
+          <button
+            type="button"
+            class="type"
+            [class.type--selected]="type() === accountType"
+            [attr.aria-pressed]="type() === accountType"
+            (click)="selectType(accountType)"
+          >
+            <app-icon [name]="iconFor(accountType)" />
+            <span class="type__label">{{ typeLabels[accountType] }}</span>
+          </button>
+        }
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="sheet__footer">
+    <button type="button" class="btn btn--secondary" (click)="close()">Отмена</button>
+    <button type="button" class="btn btn--primary" [disabled]="!canSave()" (click)="save()">
+      {{ isSaving() ? 'Сохраняем…' : 'Сохранить' }}
+    </button>
+  </div>
+</div>

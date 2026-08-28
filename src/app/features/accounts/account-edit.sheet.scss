@@ -1,0 +1,98 @@
+.amount-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-3);
+
+  .field__control {
+    height: 56px;
+    line-height: 1.2;
+  }
+}
+
+.amount-row__amount {
+  flex: 1;
+  min-width: 0;
+}
+
+.amount-row__currency {
+  flex: none;
+  width: 116px;
+}
+
+.amount-row__error,
+.hint {
+  margin-top: calc(var(--sp-3) * -1);
+}
+
+.hint {
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
+}
+
+.currency-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  font-weight: var(--fw-semibold);
+  text-align: left;
+  --icon-size: 18px;
+
+  app-icon {
+    color: var(--c-text-2);
+  }
+}
+
+// ------------------------------------------------------------ тип счёта
+
+.types {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+// Пять типов помещаются плиткой: выпадающий список ради пяти вариантов
+// требует лишнего касания и прячет их до открытия.
+.types__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--sp-2);
+}
+
+.type {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-height: 72px;
+  padding: var(--sp-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  color: var(--c-text-2);
+  text-align: center;
+  transition:
+    border-color var(--dur) var(--ease),
+    background-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+  --icon-size: 22px;
+
+  &:active {
+    background: var(--c-pressed);
+  }
+}
+
+.type--selected {
+  border-color: var(--c-accent);
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+}
+
+.type__label {
+  font-size: 11px;
+  font-weight: var(--fw-medium);
+  line-height: 1.2;
+}

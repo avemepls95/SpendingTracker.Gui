@@ -1,0 +1,131 @@
+<div class="sheet" appSwipeToClose (dismissed)="close()">
+  <div class="sheet__grabber" aria-hidden="true"></div>
+
+  <div class="sheet__header">
+    <h2 class="sheet__title">Трата</h2>
+    <button
+      type="button"
+      class="icon-btn icon-btn--danger"
+      aria-label="Удалить трату"
+      [disabled]="isSaving()"
+      (click)="remove()"
+    >
+      <app-icon name="trash" />
+    </button>
+    <button type="button" class="icon-btn" aria-label="Закрыть" (click)="close()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <div class="sheet__body">
+    <div class="field" [class.field--invalid]="descriptionError()">
+      <label class="field__label" for="spending-description">Описание</label>
+      <input
+        id="spending-description"
+        class="field__control"
+        type="text"
+        autocomplete="off"
+        [value]="description()"
+        (input)="onDescription($event)"
+      />
+      @if (descriptionError(); as error) {
+        <p class="field__error">{{ error }}</p>
+      }
+    </div>
+
+    <div class="amount-row">
+      <div class="field amount-row__amount" [class.field--invalid]="amountError()">
+        <label class="field__label" for="spending-amount">Сумма</label>
+        <!-- inputmode="decimal" открывает на телефоне числовую клавиатуру:
+             прежнее поле было обычным текстовым и вызывало буквенную. -->
+        <input
+          id="spending-amount"
+          class="field__control field__control--amount"
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          [value]="amountText()"
+          (input)="onAmount($event)"
+        />
+      </div>
+
+      <div class="field amount-row__currency">
+        <span class="field__label" id="spending-currency-label">Валюта</span>
+        <button
+          type="button"
+          class="field__control currency-button"
+          aria-labelledby="spending-currency-label"
+          (click)="pickCurrency()"
+        >
+          <span>{{ currencyCode() }}</span>
+          <app-icon name="chevron-down" />
+        </button>
+      </div>
+    </div>
+
+    @if (amountError(); as error) {
+      <p class="field__error amount-row__error">{{ error }}</p>
+    }
+
+    <div class="field" [class.field--invalid]="dateError()">
+      <label class="field__label" for="spending-date">Дата</label>
+      <!-- Нативное поле даты открывает системный выбор, привычный на телефоне. -->
+      <input
+        id="spending-date"
+        class="field__control"
+        type="date"
+        [value]="dateText()"
+        (input)="onDate($event)"
+      />
+      @if (dateError(); as error) {
+        <p class="field__error">{{ error }}</p>
+      }
+    </div>
+
+    <section class="categories">
+      <div class="categories__head">
+        <h3 class="field__label">Категории</h3>
+        <span class="categories__hint">Сохраняются сразу</span>
+      </div>
+
+      <div class="categories__list">
+        @for (category of categories(); track category.id) {
+          <span class="chip categories__chip">
+            {{ category.title }}
+            <button
+              type="button"
+              class="categories__remove"
+              [attr.aria-label]="'Убрать категорию ' + category.title"
+              [disabled]="isCategoryBusy()"
+              (click)="removeCategory(category)"
+            >
+              <app-icon name="close" />
+            </button>
+          </span>
+        }
+
+        <button
+          type="button"
+          class="chip categories__add"
+          [disabled]="isCategoryBusy()"
+          (click)="addCategory()"
+        >
+          <app-icon name="plus" />
+          Добавить
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div class="sheet__footer">
+    <button type="button" class="btn btn--secondary" (click)="close()">Отмена</button>
+    <button
+      type="button"
+      class="btn btn--primary"
+      [disabled]="!canSave()"
+      (click)="save()"
+    >
+      {{ isSaving() ? 'Сохраняем…' : 'Сохранить' }}
+    </button>
+  </div>
+</div>

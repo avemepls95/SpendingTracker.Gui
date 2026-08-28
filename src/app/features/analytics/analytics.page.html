@@ -1,0 +1,134 @@
+<app-page-header title="Аналитика" />
+
+<div class="periods" role="group" aria-label="Период отчёта">
+  @for (item of presets; track item.id) {
+    <button
+      type="button"
+      class="chip"
+      [class.chip--selected]="preset() === item.id"
+      [attr.aria-pressed]="preset() === item.id"
+      (click)="selectPreset(item.id)"
+    >
+      {{ item.label }}
+    </button>
+  }
+</div>
+
+@if (preset() === 'custom') {
+  <div class="range">
+    <label class="field range__field">
+      <span class="field__label">С</span>
+      <input class="field__control" type="date" [value]="fromValue()" (input)="onFrom($event)" />
+    </label>
+    <label class="field range__field">
+      <span class="field__label">По</span>
+      <input class="field__control" type="date" [value]="toValue()" (input)="onTo($event)" />
+    </label>
+  </div>
+}
+
+@switch (status()) {
+  @case ('loading') {
+    <div class="content" aria-busy="true">
+      <div class="total">
+        <span class="skeleton total__skeleton-label"></span>
+        <span class="skeleton total__skeleton-value"></span>
+      </div>
+      @for (row of [1, 2, 3, 4, 5]; track row) {
+        <div class="bar-skeleton">
+          <span class="skeleton bar-skeleton__label"></span>
+          <span class="skeleton bar-skeleton__bar" [style.width.%]="90 - row * 15"></span>
+        </div>
+      }
+    </div>
+  }
+
+  @case ('no-currency') {
+    <app-empty-state
+      icon="wallet"
+      title="Не выбрана валюта сводки"
+      hint="Суммы приводятся к одной валюте. Выберите её в настройках."
+    >
+      <a class="btn btn--primary" routerLink="/settings">Открыть настройки</a>
+    </app-empty-state>
+  }
+
+  @case ('error') {
+    <app-empty-state
+      icon="alert-circle"
+      title="Не удалось построить отчёт"
+      hint="Проверьте связь и попробуйте ещё раз."
+    >
+      <button type="button" class="btn btn--primary" (click)="retry()">Повторить</button>
+    </app-empty-state>
+  }
+
+  @default {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="chart"
+        title="За этот период трат нет"
+        hint="Выберите другой период или дождитесь новых чеков от бота."
+      />
+    } @else {
+      <div class="content">
+        <section class="total">
+          <h2 class="total__label">Потрачено за период</h2>
+          <p class="amount amount--display total__value">
+            {{ total() | money }}&nbsp;{{ currencyCode() }}
+          </p>
+        </section>
+
+        @if (hasUncategorizedOnly()) {
+          <!-- Именно этого объяснения не хватало прежнему экрану: он показывал
+               итог и оставлял ниже немую пустоту, неотличимую от сбоя. -->
+          <app-empty-state
+            icon="tag"
+            title="Траты не разнесены по категориям"
+            hint="Итог посчитан, но разбивки нет: ни одна трата за этот период не отнесена к категории. Откройте трату на вкладке «Траты» и добавьте категорию."
+          />
+        } @else {
+          <ul class="bars">
+            @for (row of rows(); track row.key) {
+              <li class="bar" [attr.data-level]="row.level">
+                @if (row.hasChildren) {
+                  <button
+                    type="button"
+                    class="bar__toggle"
+                    [attr.aria-expanded]="row.isExpanded"
+                    [attr.aria-label]="
+                      (row.isExpanded ? 'Свернуть ' : 'Раскрыть ') + row.title
+                    "
+                    (click)="toggle(row)"
+                  >
+                    <app-icon
+                      [name]="row.isExpanded ? 'chevron-down' : 'chevron-right'"
+                    />
+                  </button>
+                } @else {
+                  <span class="bar__toggle bar__toggle--empty" aria-hidden="true"></span>
+                }
+
+                <button type="button" class="bar__button" (click)="openCategory(row)">
+                  <span class="bar__head">
+                    <span class="bar__title truncate">{{ row.title }}</span>
+                    <span class="bar__share">{{ row.share }}%</span>
+                    <span class="bar__amount amount">{{ row.amount | money }}</span>
+                  </span>
+
+                  <span class="bar__track">
+                    <span class="bar__fill" [style.width.%]="row.width"></span>
+                  </span>
+                </button>
+              </li>
+            }
+          </ul>
+
+          <p class="hint">
+            Нажмите категорию, чтобы посмотреть траты в ней.
+          </p>
+        }
+      </div>
+    }
+  }
+}

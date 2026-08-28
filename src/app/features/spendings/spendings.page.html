@@ -1,0 +1,160 @@
+<app-page-header title="Траты">
+  <button
+    type="button"
+    class="icon-btn"
+    [class.icon-btn--active]="isSearchOpen()"
+    [attr.aria-label]="isSearchOpen() ? 'Скрыть поиск' : 'Искать трату'"
+    [attr.aria-expanded]="isSearchOpen()"
+    (click)="toggleSearch()"
+  >
+    <app-icon [name]="isSearchOpen() ? 'close' : 'search'" />
+  </button>
+</app-page-header>
+
+<div class="toolbar">
+  @if (isSearchOpen()) {
+    <div class="toolbar__search">
+      <app-icon class="toolbar__search-icon" name="search" />
+      <input
+        #searchInput
+        class="field__control toolbar__search-input"
+        type="search"
+        inputmode="search"
+        placeholder="Описание траты"
+        autocomplete="off"
+        [value]="store.search()"
+        (input)="onSearchInput($event)"
+      />
+    </div>
+  }
+
+  <div class="toolbar__filters" role="group" aria-label="Фильтр трат">
+    <button
+      type="button"
+      class="chip"
+      [class.chip--selected]="!store.onlyWithoutCategories()"
+      [attr.aria-pressed]="!store.onlyWithoutCategories()"
+      (click)="setOnlyWithoutCategories(false)"
+    >
+      Все
+    </button>
+    <button
+      type="button"
+      class="chip"
+      [class.chip--selected]="store.onlyWithoutCategories()"
+      [attr.aria-pressed]="store.onlyWithoutCategories()"
+      (click)="setOnlyWithoutCategories(true)"
+    >
+      Без категорий
+    </button>
+  </div>
+</div>
+
+@switch (store.status()) {
+  @case ('loading') {
+    <div class="list" aria-busy="true" aria-label="Загрузка трат">
+      @for (row of [1, 2, 3, 4, 5, 6]; track row) {
+        <div class="skeleton-row">
+          <span class="skeleton skeleton-row__title"></span>
+          <span class="skeleton skeleton-row__amount"></span>
+        </div>
+      }
+    </div>
+  }
+
+  @case ('error') {
+    <app-empty-state
+      icon="alert-circle"
+      title="Не удалось загрузить траты"
+      hint="Проверьте связь и попробуйте ещё раз."
+    >
+      <button type="button" class="btn btn--primary" (click)="retry()">Повторить</button>
+    </app-empty-state>
+  }
+
+  @default {
+    @if (store.isEmpty()) {
+      @if (store.onlyWithoutCategories()) {
+        <app-empty-state
+          icon="check-circle"
+          title="Все траты разнесены"
+          hint="Ни одной траты без категории не осталось."
+        />
+      } @else if (store.isFiltered()) {
+        <app-empty-state
+          icon="search"
+          title="Ничего не нашлось"
+          hint="Попробуйте другое слово из описания траты."
+        />
+      } @else {
+        <app-empty-state
+          icon="receipt"
+          title="Трат пока нет"
+          hint="Они появятся здесь, как только бот пришлёт первый чек."
+        />
+      }
+    } @else {
+      <div class="list">
+        @for (group of store.groups(); track group.key) {
+          <section class="day">
+            <header class="day__header">
+              <h2 class="day__label">{{ group.label }}</h2>
+              <p class="day__totals">
+                @for (total of group.totals; track total.currencyId) {
+                  <span class="amount day__total">
+                    {{ total.amount | money }}&nbsp;{{ currencyCode(total.currencyId) }}
+                  </span>
+                }
+              </p>
+            </header>
+
+            <div class="panel">
+              @for (spending of group.items; track spending.id) {
+                <button
+                  type="button"
+                  class="panel__row spending"
+                  (click)="openSpending(spending)"
+                >
+                  <span class="spending__main">
+                    <span class="spending__description">{{ spending.description }}</span>
+
+                    @if (spending.categories.length > 0) {
+                      <span class="spending__categories">
+                        @for (category of spending.categories; track category.id) {
+                          <span class="chip chip--tag">{{ category.title }}</span>
+                        }
+                      </span>
+                    } @else {
+                      <span class="spending__uncategorized">
+                        <app-icon name="plus" />
+                        Без категории
+                      </span>
+                    }
+                  </span>
+
+                  <span class="spending__amount amount">
+                    {{ spending.amount | money }}
+                    <span class="spending__currency">{{
+                      currencyCode(spending.currencyId)
+                    }}</span>
+                  </span>
+                </button>
+              }
+            </div>
+          </section>
+        }
+
+        @if (store.hasMore()) {
+          <div
+            class="list__sentinel"
+            appIntersect
+            (intersected)="loadMore()"
+            aria-hidden="true"
+          >
+            <span class="skeleton list__sentinel-bar"></span>
+          </div>
+        }
+      </div>
+    }
+  }
+}

@@ -1,0 +1,213 @@
+.periods {
+  display: flex;
+  gap: var(--sp-2);
+  // Пресеты не помещаются в 375px, поэтому ряд прокручивается вбок.
+  // Прокрутка живёт внутри ряда: страница по горизонтали не двигается.
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0 var(--sp-4) var(--sp-3);
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chip {
+    flex: none;
+  }
+}
+
+.range {
+  display: flex;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-4) var(--sp-4);
+}
+
+.range__field {
+  flex: 1;
+  min-width: 0;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--sp-4) var(--sp-6);
+}
+
+// ------------------------------------------------------------ итог
+
+.total {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: 0 var(--sp-1);
+}
+
+.total__label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--c-text-2);
+}
+
+.total__value {
+  overflow-wrap: anywhere;
+}
+
+.total__skeleton-label {
+  width: 150px;
+  height: 13px;
+}
+
+.total__skeleton-value {
+  width: 210px;
+  height: 32px;
+}
+
+// ------------------------------------------------------------ диаграмма
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+// Вложенные категории сдвигаются вправо. Уровень читается из data-атрибута,
+// а не из подстроки сериализованного style: способ записи custom property
+// в атрибут не гарантирован, а «--level: 1» ещё и совпадает с началом «10».
+.bar[data-level='1'] {
+  padding-left: var(--sp-4);
+}
+
+.bar[data-level='2'] {
+  padding-left: var(--sp-8);
+}
+
+.bar[data-level='3'] {
+  padding-left: var(--sp-12);
+}
+
+// Раскрытие ветки и переход к тратам - разные действия, поэтому у них
+// разные цели касания.
+.bar__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: var(--tap-min);
+  border-radius: var(--r-sm);
+  color: var(--c-text-2);
+  --icon-size: 16px;
+
+  &:active {
+    background: var(--c-pressed);
+  }
+}
+
+.bar__toggle--empty {
+  pointer-events: none;
+}
+
+.bar__button {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  flex: 1;
+  min-width: 0;
+  padding: var(--sp-2) var(--sp-1);
+  border-radius: var(--r-sm);
+  text-align: left;
+
+  &:active {
+    background: var(--c-hover);
+  }
+}
+
+.bar__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.bar__title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.bar__share {
+  flex: none;
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.bar__amount {
+  flex: none;
+  font-size: var(--fs-sm);
+}
+
+.bar__track {
+  display: block;
+  width: 100%;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--c-surface-2);
+  overflow: hidden;
+}
+
+// Единственный поставленный момент движения в приложении: столбцы
+// вырастают один раз при появлении отчёта.
+.bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-full);
+  background: var(--c-accent);
+  animation: bar-grow var(--dur-slow) var(--ease);
+  transform-origin: left center;
+}
+
+// Вложенные категории окрашены слабее: они уже посчитаны в родителе.
+.bar:not([data-level='0']) .bar__fill {
+  background: color-mix(in srgb, var(--c-accent) 45%, var(--c-surface-2));
+}
+
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.bar-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-1);
+}
+
+.bar-skeleton__label {
+  width: 40%;
+  height: 13px;
+}
+
+.bar-skeleton__bar {
+  height: 6px;
+  border-radius: var(--r-full);
+}
+
+.hint {
+  padding: 0 var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
+  text-align: center;
+}

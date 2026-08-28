@@ -1,27 +1,50 @@
-# SpendingTrackerGui
+# MoneyTrace - веб-интерфейс
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.2.1.
+Учёт личных расходов и счетов. Открывается в браузере и как Telegram Mini App;
+основной сценарий - телефон.
 
-## Development server
+Траты создаёт телеграм-бот. Интерфейс показывает их, позволяет править,
+разносить по категориям, вести счета и смотреть аналитику.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:80/`. The application will automatically reload if you change any of the source files.
+## Стек
 
-## Code scaffolding
+Angular 21 (standalone-компоненты, signals, без zone.js) и `@angular/cdk`.
+Других зависимостей во времени выполнения нет: списки, поля, чипы, листы и
+диалоги собраны на собственных стилях поверх дизайн-токенов.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+Версия зафиксирована на 21 LTS: Angular 22 требует Node `^22.22.3`.
 
-## Build
+## Запуск
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```bash
+npm install
+npm start
+```
 
-## Running unit tests
+Дев-сервер поднимается на http://localhost:4200 и ходит в API по адресу из
+`src/environments/environment.ts`.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## Сборка
 
-## Running end-to-end tests
+```bash
+npm run build
+```
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+Результат - в `dist/spending-tracker.gui`. Продакшн-конфигурация подменяет
+окружение на `src/environments/environment.prod.ts`.
 
-## Further help
+## Структура
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+```
+src/
+  app/
+    core/       авторизация, интерцепторы, Telegram, хранилище, сервисы интерфейса
+    domain/     модели, DTO, мапперы, API-сервис, сторы
+    features/   экраны: траты, счета, категории, аналитика, настройки, вход
+    shared/     переиспользуемые компоненты, пайпы, директивы
+  styles/       токены, сброс, общий словарь интерфейса
+```
+
+## Тесты
+
+Тестов в проекте нет, `npm test` не настроен.
