@@ -14,7 +14,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  padding: 0 var(--sp-4) var(--sp-3);
+  // Верхний отступ оставлен под кольцо фокуса поля поиска: заголовок экрана
+  // лежит выше по слою и с нулевым отступом срезал бы его верхнюю кромку.
+  padding: var(--sp-1) var(--sp-4) var(--sp-3);
   background: var(--c-bg);
 }
 

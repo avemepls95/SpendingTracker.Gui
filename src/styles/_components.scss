@@ -165,6 +165,28 @@
   font-variant-numeric: tabular-nums;
 }
 
+// Нативное поле даты в iOS считает ширину по своему содержимому и не
+// сжимается до контейнера - поле уезжало за край листа.
+input[type='date'].field__control {
+  min-width: 0;
+  max-width: 100%;
+}
+
+// Сброс системного вида доводит сжатие до конца, но в Chrome он заодно
+// убирает кнопку календаря, поэтому применяется только в iOS: свойство
+// -webkit-touch-callout поддерживает лишь он.
+@supports (-webkit-touch-callout: none) {
+  input[type='date'].field__control {
+    appearance: none;
+  }
+}
+
+// Там же значение выравнивается по центру поля, а не по левому краю,
+// как текст в остальных полях.
+input[type='date']::-webkit-date-and-time-value {
+  text-align: left;
+}
+
 .field__error {
   font-size: var(--fs-sm);
   color: var(--c-danger);
