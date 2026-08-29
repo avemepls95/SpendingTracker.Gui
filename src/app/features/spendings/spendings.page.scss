@@ -1,3 +1,48 @@
+// Сегментированный переключатель раздела. Отступы по краям страницы даёт
+// обёртка, потому что ширина содержимого ограничена и центрируется.
+.segments {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--sp-4) var(--sp-3);
+}
+
+.segments__track {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r-md);
+  background: var(--c-surface-2);
+}
+
+.segments__item {
+  flex: 1;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 var(--sp-2);
+  border-radius: calc(var(--r-md) - 3px);
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+  transition:
+    background-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+
+  &:active {
+    background: var(--c-pressed);
+  }
+}
+
+.segments__item--active {
+  background: var(--c-surface);
+  color: var(--c-text);
+  box-shadow: var(--sh-1);
+
+  &:active {
+    background: var(--c-surface);
+  }
+}
+
 .toolbar {
   position: sticky;
   // Прилипает под заголовком экрана, поэтому смещён на его высоту.

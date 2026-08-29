@@ -1,0 +1,63 @@
+@switch (store.status()) {
+  @case ('loading') {
+    <div class="list" aria-busy="true" aria-label="Загрузка расписаний">
+      <div class="panel panel--bordered">
+        @for (row of [1, 2, 3]; track row) {
+          <div class="panel__row skeleton-row">
+            <span class="skeleton-row__main">
+              <span class="skeleton skeleton-row__title"></span>
+              <span class="skeleton skeleton-row__caption"></span>
+            </span>
+            <span class="skeleton skeleton-row__amount"></span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @case ('error') {
+    <app-empty-state
+      icon="alert-circle"
+      title="Не удалось загрузить расписания"
+      hint="Проверьте связь и попробуйте ещё раз."
+    >
+      <button type="button" class="btn btn--primary" (click)="retry()">Повторить</button>
+    </app-empty-state>
+  }
+
+  @default {
+    @if (store.isEmpty()) {
+      <app-empty-state
+        icon="repeat"
+        title="Расписаний пока нет"
+        hint="Заведите подписку или аренду, чтобы не вносить их вручную."
+      />
+    } @else {
+      <div class="list">
+        <div class="panel">
+          @for (schedule of store.schedules(); track schedule.id) {
+            <div class="panel__row schedule">
+              <span class="schedule__main">
+                <span class="schedule__description">{{ schedule.description }}</span>
+                <span class="schedule__recurrence">{{ describe(schedule) }}</span>
+                <span
+                  class="schedule__status"
+                  [class.schedule__status--muted]="!isRunning(schedule)"
+                >
+                  {{ statusLabel(schedule) }}
+                </span>
+              </span>
+
+              <span class="schedule__amount amount">
+                {{ schedule.amount | money }}
+                <span class="schedule__currency">{{
+                  currencyCode(schedule.currencyId)
+                }}</span>
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+}
