@@ -6,54 +6,6 @@
   padding: 0 var(--sp-4) var(--sp-3);
 }
 
-.segments__track {
-  display: flex;
-  gap: 2px;
-  padding: 3px;
-  border-radius: var(--r-md);
-  background: var(--c-surface-2);
-}
-
-.segments__item {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  min-height: 38px;
-  padding: 0 var(--sp-2);
-  border-radius: calc(var(--r-md) - 3px);
-  color: var(--c-text-2);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  white-space: nowrap;
-  transition:
-    background-color var(--dur) var(--ease),
-    color var(--dur) var(--ease);
-
-  // Видимая высота сегмента ниже нормы касания, поэтому цель добирается
-  // псевдоэлементом - тем же приёмом, что у .icon-btn и нажимаемых чипов.
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 50% 0 auto 0;
-    height: var(--tap-min);
-    transform: translateY(-50%);
-  }
-
-  &:active {
-    background: var(--c-pressed);
-  }
-}
-
-.segments__item--active {
-  background: var(--c-surface);
-  color: var(--c-text);
-  box-shadow: var(--sh-1);
-
-  &:active {
-    background: var(--c-surface);
-  }
-}
-
 .toolbar {
   position: sticky;
   // Прилипает под заголовком экрана, поэтому смещён на его высоту.

@@ -1,7 +1,8 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
+import { SUPPRESS_ERROR_TOAST } from '../../core/http/error.interceptor';
 import { environment } from '../../../environments/environment';
 import {
   PreviewOccurrencesDto,
@@ -65,7 +66,9 @@ export class SpendingScheduleApiService {
 
   previewOccurrences(rule: RecurrenceInput): Observable<readonly string[]> {
     return this.http
-      .post<PreviewOccurrencesDto>(`${this.baseUrl}/preview-occurrences`, toRule(rule))
+      .post<PreviewOccurrencesDto>(`${this.baseUrl}/preview-occurrences`, toRule(rule), {
+        context: new HttpContext().set(SUPPRESS_ERROR_TOAST, true),
+      })
       .pipe(map((response) => response.occurrences ?? []));
   }
 }

@@ -153,4 +153,25 @@
       </app-empty-state>
     }
   </div>
+
+  @if (schedule()) {
+    <div class="sheet__footer">
+      <button
+        type="button"
+        class="btn btn--secondary"
+        [disabled]="isBusy()"
+        (click)="edit()"
+      >
+        Изменить
+      </button>
+      <button
+        type="button"
+        class="btn btn--primary"
+        [disabled]="isBusy()"
+        (click)="close()"
+      >
+        Готово
+      </button>
+    </div>
+  }
 </div>

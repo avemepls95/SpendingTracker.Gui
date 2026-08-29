@@ -10,17 +10,26 @@
     >
       <app-icon [name]="isSearchOpen() ? 'close' : 'search'" />
     </button>
+  } @else {
+    <button
+      type="button"
+      class="icon-btn"
+      aria-label="Новое расписание"
+      (click)="createSchedule()"
+    >
+      <app-icon name="plus" />
+    </button>
   }
 </app-page-header>
 
 <div class="segments">
   <!-- Роль group и aria-pressed, а не tablist: клавиатурную навигацию стрелками,
        которую обещает роль tab, здесь никто не реализует. -->
-  <div class="segments__track" role="group" aria-label="Раздел трат">
+  <div class="segmented" role="group" aria-label="Раздел трат">
     <button
       type="button"
-      class="segments__item"
-      [class.segments__item--active]="view() === 'spendings'"
+      class="segmented__item"
+      [class.segmented__item--active]="view() === 'spendings'"
       [attr.aria-pressed]="view() === 'spendings'"
       (click)="setView('spendings')"
     >
@@ -28,8 +37,8 @@
     </button>
     <button
       type="button"
-      class="segments__item"
-      [class.segments__item--active]="view() === 'schedules'"
+      class="segmented__item"
+      [class.segmented__item--active]="view() === 'schedules'"
       [attr.aria-pressed]="view() === 'schedules'"
       (click)="setView('schedules')"
     >

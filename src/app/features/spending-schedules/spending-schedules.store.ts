@@ -75,6 +75,18 @@ export class SpendingSchedulesStore {
     });
   }
 
+  /**
+   * Подтягивает расписание по идентификатору и вставляет его в список.
+   *
+   * Создание возвращает только идентификатор: остальные поля - разобранное
+   * правило, ближайшая дата - считает сервер.
+   */
+  addById(id: string): void {
+    this.api.getSchedule(id).subscribe({
+      next: (schedule) => this.addLocally(schedule),
+    });
+  }
+
   addLocally(schedule: SpendingSchedule): void {
     this.items.update((current) => [...current, schedule]);
   }

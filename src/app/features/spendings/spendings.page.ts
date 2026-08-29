@@ -21,6 +21,11 @@ import { IconComponent } from '../../shared/ui/icon.component';
 import { PageHeaderComponent } from '../../shared/ui/page-header.component';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { IntersectDirective } from '../../shared/util/intersect.directive';
+import {
+  SpendingScheduleEditData,
+  SpendingScheduleEditResult,
+  SpendingScheduleEditSheet,
+} from '../spending-schedules/spending-schedule-edit.sheet';
 import { SpendingSchedulesList } from '../spending-schedules/spending-schedules.list';
 import { SpendingSchedulesStore } from '../spending-schedules/spending-schedules.store';
 import {
@@ -59,6 +64,7 @@ export class SpendingsPage implements OnDestroy {
   private readonly injector = inject(Injector);
 
   protected readonly store = inject(SpendingsStore);
+  private readonly schedulesStore = inject(SpendingSchedulesStore);
   protected readonly isSearchOpen = signal(false);
   protected readonly view = signal<SpendingsView>('spendings');
 
@@ -137,6 +143,20 @@ export class SpendingsPage implements OnDestroy {
   protected onSpendingCreated(): void {
     this.spendingsOffset = 0;
     this.store.reload();
+  }
+
+  protected createSchedule(): void {
+    this.sheets
+      .openSheet<SpendingScheduleEditResult, SpendingScheduleEditData>(
+        SpendingScheduleEditSheet,
+        { schedule: null },
+        { ariaLabel: 'Новое расписание' },
+      )
+      .closed.subscribe((result) => {
+        if (result) {
+          this.schedulesStore.addById(result.id);
+        }
+      });
   }
 
   protected toggleSearch(): void {

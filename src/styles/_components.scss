@@ -248,6 +248,102 @@ button.chip {
   font-size: 11px;
 }
 
+// ---------------------------------------------------------------- сегменты
+
+// Переключатель двух-трёх равноправных разделов. Отличается от чипов тем, что
+// выбран всегда ровно один: активный лежит на подложке контейнера, а не
+// закрашивается акцентом, иначе он читался бы как включённый фильтр.
+.segmented {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r-md);
+  background: var(--c-surface-2);
+}
+
+.segmented__item {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 var(--sp-2);
+  border-radius: calc(var(--r-md) - 3px);
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+  transition:
+    background-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+
+  // Видимая высота сегмента ниже нормы касания, поэтому цель добирается
+  // псевдоэлементом - тем же приёмом, что у .icon-btn и нажимаемых чипов.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 50% 0 auto 0;
+    height: var(--tap-min);
+    transform: translateY(-50%);
+  }
+
+  &:active {
+    background: var(--c-pressed);
+  }
+}
+
+.segmented__item--active {
+  background: var(--c-surface);
+  color: var(--c-text);
+  box-shadow: var(--sh-1);
+
+  &:active {
+    background: var(--c-surface);
+  }
+}
+
+// ---------------------------------------------------------------- сумма и валюта
+
+// Пара «сумма - валюта» в формах: сумма набрана крупнее, поэтому без явной
+// высоты поле выше соседней кнопки валюты и их нижние края не совпадают.
+.amount-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-3);
+
+  .field__control {
+    height: 56px;
+    line-height: 1.2;
+  }
+}
+
+.amount-row__amount {
+  flex: 1;
+  min-width: 0;
+}
+
+.amount-row__currency {
+  flex: none;
+  width: 116px;
+}
+
+.amount-row__error {
+  margin-top: calc(var(--sp-3) * -1);
+}
+
+.currency-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  font-weight: var(--fw-semibold);
+  text-align: left;
+  --icon-size: 18px;
+
+  app-icon {
+    color: var(--c-text-2);
+  }
+}
+
 // ---------------------------------------------------------------- поверхности
 
 // Сгруппированный список. Разделители рисуются между строками, а не под

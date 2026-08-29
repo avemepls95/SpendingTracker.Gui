@@ -19,6 +19,11 @@ import { ShortDatePipe } from '../../shared/pipes/short-date.pipe';
 import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
 import { closeOnDismiss } from '../../shared/util/dismiss.util';
 import { describeRecurrence } from '../../shared/util/recurrence.util';
+import {
+  SpendingScheduleEditData,
+  SpendingScheduleEditResult,
+  SpendingScheduleEditSheet,
+} from './spending-schedule-edit.sheet';
 
 export type SpendingScheduleDetailsResult =
   | {
@@ -149,6 +154,25 @@ export class SpendingScheduleDetailsSheet {
       },
       error: () => this.isBusy.set(false),
     });
+  }
+
+  protected edit(): void {
+    const schedule = this.schedule();
+    if (!schedule || this.isBusy()) {
+      return;
+    }
+
+    this.sheets
+      .openSheet<SpendingScheduleEditResult, SpendingScheduleEditData>(
+        SpendingScheduleEditSheet,
+        { schedule },
+        { ariaLabel: 'Правка расписания' },
+      )
+      .closed.subscribe((result) => {
+        if (result) {
+          this.load();
+        }
+      });
   }
 
   protected retry(): void {

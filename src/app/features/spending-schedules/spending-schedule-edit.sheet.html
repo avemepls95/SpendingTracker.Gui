@@ -1,0 +1,251 @@
+<div class="sheet" appSwipeToClose (dismissed)="close()">
+  <div class="sheet__grabber" aria-hidden="true"></div>
+
+  <div class="sheet__header">
+    <h2 class="sheet__title">{{ isNew ? 'Новое расписание' : 'Расписание' }}</h2>
+    <button type="button" class="icon-btn" aria-label="Закрыть" (click)="close()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <div class="sheet__body">
+    <div class="field" [class.field--invalid]="touchedDescription() && descriptionError()">
+      <label class="field__label" for="schedule-description">Описание</label>
+      <input
+        id="schedule-description"
+        class="field__control"
+        type="text"
+        autocomplete="off"
+        [value]="description()"
+        (input)="onDescription($event)"
+      />
+      @if (touchedDescription() && descriptionError(); as error) {
+        <p class="field__error">{{ error }}</p>
+      }
+    </div>
+
+    <div class="amount-row">
+      <div class="field amount-row__amount" [class.field--invalid]="touchedAmount() && amountError()">
+        <label class="field__label" for="schedule-amount">Сумма</label>
+        <input
+          id="schedule-amount"
+          class="field__control field__control--amount"
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          [value]="amountText()"
+          (input)="onAmount($event)"
+        />
+      </div>
+
+      <div class="field amount-row__currency">
+        <span class="field__label" id="schedule-currency-label">Валюта</span>
+        <button
+          type="button"
+          class="field__control currency-button"
+          aria-labelledby="schedule-currency-label"
+          (click)="pickCurrency()"
+        >
+          <span>{{ currencyCode() }}</span>
+          <app-icon name="chevron-down" />
+        </button>
+      </div>
+    </div>
+
+    @if (touchedAmount() && amountError(); as error) {
+      <p class="field__error amount-row__error">{{ error }}</p>
+    }
+
+    <section class="markup">
+      <h3 class="field__label" id="schedule-category-label">Категория</h3>
+      <button
+        type="button"
+        class="panel panel--bordered category-row"
+        aria-labelledby="schedule-category-label"
+        (click)="pickCategory()"
+      >
+        <app-icon class="category-row__icon" name="folder" />
+        <span
+          class="category-row__title truncate"
+          [class.category-row__title--empty]="!category()"
+        >
+          {{ categoryLabel() }}
+        </span>
+        <app-icon class="category-row__chevron" name="chevron-right" />
+      </button>
+    </section>
+
+    <section class="markup">
+      <h3 class="field__label">Теги</h3>
+      <div class="chips">
+        @for (tag of tags(); track tag.id) {
+          <span class="chip chips__chip">
+            {{ tag.title }}
+            <button
+              type="button"
+              class="chips__remove"
+              [attr.aria-label]="'Снять тег ' + tag.title"
+              [disabled]="isMarkupBusy()"
+              (click)="removeTag(tag)"
+            >
+              <app-icon name="close" />
+            </button>
+          </span>
+        }
+
+        <button
+          type="button"
+          class="chip chips__add"
+          [disabled]="isMarkupBusy()"
+          (click)="addTag()"
+        >
+          <app-icon name="plus" />
+          Добавить
+        </button>
+      </div>
+    </section>
+
+    <section class="rule">
+      <h3 class="field__label">Периодичность</h3>
+
+      <div class="segmented" role="group" aria-label="Тип периодичности">
+        <button
+          type="button"
+          class="segmented__item"
+          [class.segmented__item--active]="recurrenceKind() === 'Once'"
+          [attr.aria-pressed]="recurrenceKind() === 'Once'"
+          (click)="setKind('Once')"
+        >
+          Однократно
+        </button>
+        <button
+          type="button"
+          class="segmented__item"
+          [class.segmented__item--active]="recurrenceKind() === 'Interval'"
+          [attr.aria-pressed]="recurrenceKind() === 'Interval'"
+          (click)="setKind('Interval')"
+        >
+          Повторять
+        </button>
+      </div>
+
+      @if (recurrenceKind() === 'Interval') {
+        <div class="interval" [class.field--invalid]="intervalError()">
+          <label class="field__label interval__label" for="schedule-interval">
+            Раз в
+          </label>
+          <input
+            id="schedule-interval"
+            class="field__control interval__value"
+            type="number"
+            inputmode="numeric"
+            min="1"
+            max="1000"
+            [value]="intervalValueText()"
+            (input)="onIntervalValue($event)"
+          />
+          <!-- Выбранный пункт отмечается на самих option: значение select
+               выставляется до того, как @for создаст их, и терялось бы. -->
+          <select
+            class="field__control interval__unit"
+            aria-label="Единица интервала"
+            (change)="onIntervalUnit($event)"
+          >
+            @for (option of unitOptions; track option.unit) {
+              <option [value]="option.unit" [selected]="option.unit === intervalUnit()">
+                {{ option.label }}
+              </option>
+            }
+          </select>
+        </div>
+
+        @if (intervalError(); as error) {
+          <p class="field__error">{{ error }}</p>
+        }
+      }
+
+      <div class="start" [class.field--invalid]="touchedStart() && startError()">
+        <div class="field start__date">
+          <label class="field__label" for="schedule-start-date">Начало</label>
+          <input
+            id="schedule-start-date"
+            class="field__control"
+            type="date"
+            [value]="startDateText()"
+            (input)="onStartDate($event)"
+          />
+        </div>
+        <div class="field start__time">
+          <label class="field__label" for="schedule-start-time">Время</label>
+          <input
+            id="schedule-start-time"
+            class="field__control"
+            type="time"
+            [value]="startTimeText()"
+            (input)="onStartTime($event)"
+          />
+        </div>
+      </div>
+
+      @if (touchedStart() && startError(); as error) {
+        <p class="field__error">{{ error }}</p>
+      }
+
+      @if (recurrenceKind() === 'Interval') {
+        <div class="field" [class.field--invalid]="endError()">
+          <label class="field__label" for="schedule-end-date">
+            Окончание <span class="rule__optional">необязательно</span>
+          </label>
+          <input
+            id="schedule-end-date"
+            class="field__control"
+            type="date"
+            [value]="endDateText()"
+            (input)="onEndDate($event)"
+          />
+          @if (endError(); as error) {
+            <p class="field__error">{{ error }}</p>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="preview">
+      <h3 class="field__label">Ближайшие срабатывания</h3>
+
+      @if (isPreviewLoading()) {
+        <div class="panel panel--bordered" aria-busy="true">
+          @for (row of [1, 2, 3]; track row) {
+            <div class="panel__row">
+              <span class="skeleton preview__skeleton"></span>
+            </div>
+          }
+        </div>
+      } @else if (!rule()) {
+        <p class="preview__empty">Заполните правило, и здесь появятся ближайшие даты.</p>
+      } @else if (preview().length === 0) {
+        <p class="preview__empty">
+          По такому правилу срабатываний не будет. Проверьте дату начала и окончания.
+        </p>
+      } @else {
+        <div class="panel panel--bordered">
+          @for (occurrence of preview(); track occurrence) {
+            <div class="panel__row preview__row">{{ occurrence }}</div>
+          }
+        </div>
+      }
+    </section>
+  </div>
+
+  <div class="sheet__footer">
+    <button type="button" class="btn btn--secondary" (click)="close()">Отмена</button>
+    <button
+      type="button"
+      class="btn btn--primary"
+      [disabled]="!canSave()"
+      (click)="save()"
+    >
+      {{ isSaving() ? 'Сохраняем…' : 'Сохранить' }}
+    </button>
+  </div>
+</div>

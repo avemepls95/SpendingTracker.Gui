@@ -1,9 +1,23 @@
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import {
+  HttpContextToken,
+  HttpErrorResponse,
+  HttpInterceptorFn,
+} from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 
 import { ToastService } from '../ui/toast.service';
 import { extractErrorMessages } from './api-error';
+
+/**
+ * Не показывать плашку об ошибке этого запроса.
+ *
+ * Нужно там, где отказ - штатная часть работы экрана: предпросмотр дат
+ * пересчитывается по мере ввода правила, и промежуточное правило сервер
+ * законно отвергает. Текст ошибки пользователь всё равно увидит - при
+ * попытке сохранить.
+ */
+export const SUPPRESS_ERROR_TOAST = new HttpContextToken(() => false);
 
 /**
  * Показывает ошибки сервера пользователю и пробрасывает их дальше.
@@ -22,8 +36,10 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
         return throwError(() => error);
       }
 
-      for (const message of describe(error, request.url)) {
-        toast.error(message);
+      if (!request.context.get(SUPPRESS_ERROR_TOAST)) {
+        for (const message of describe(error, request.url)) {
+          toast.error(message);
+        }
       }
 
       return throwError(() => error);
