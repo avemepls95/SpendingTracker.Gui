@@ -1,0 +1,154 @@
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.head__title {
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.head__amount {
+  overflow-wrap: anywhere;
+}
+
+.head__recurrence {
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+}
+
+.head__skeleton-title {
+  width: 65%;
+  height: 18px;
+}
+
+.head__skeleton-amount {
+  width: 45%;
+  height: 32px;
+}
+
+.row__skeleton {
+  width: 70%;
+  height: 14px;
+}
+
+.markup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+// ------------------------------------------------------------ факты
+
+.fact {
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.fact__label {
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+}
+
+.fact__value {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+// ------------------------------------------------------------ переключатель
+
+.toggle {
+  gap: var(--sp-4);
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.toggle__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.toggle__hint {
+  color: var(--c-text-2);
+  font-size: var(--fs-xs);
+}
+
+.switch {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 26px;
+  border-radius: var(--r-full);
+  background: var(--c-border-strong);
+  transition: background-color var(--dur) var(--ease);
+}
+
+.switch--on {
+  background: var(--c-accent);
+}
+
+.switch__knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-full);
+  background: var(--c-surface);
+  box-shadow: var(--sh-1);
+  transition: transform var(--dur) var(--ease);
+
+  .switch--on & {
+    transform: translateX(18px);
+  }
+}
+
+// ------------------------------------------------------------ история
+
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.history__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.history__count {
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.history__empty,
+.history__more {
+  color: var(--c-text-2);
+  font-size: var(--fs-xs);
+}
+
+.history__row {
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.history__date {
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.history__amount {
+  flex: none;
+}

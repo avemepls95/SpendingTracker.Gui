@@ -1,10 +1,15 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
+import { SheetService } from '../../core/ui/sheet.service';
 import { SpendingSchedule, isScheduleFinished } from '../../domain/models/models';
 import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { describeRecurrence } from '../../shared/util/recurrence.util';
+import {
+  SpendingScheduleDetailsResult,
+  SpendingScheduleDetailsSheet,
+} from './spending-schedule-details.sheet';
 import { SpendingSchedulesStore } from './spending-schedules.store';
 
 @Component({
@@ -16,11 +21,33 @@ import { SpendingSchedulesStore } from './spending-schedules.store';
 })
 export class SpendingSchedulesList {
   private readonly currencies = inject(CurrenciesStore);
+  private readonly sheets = inject(SheetService);
 
   protected readonly store = inject(SpendingSchedulesStore);
 
   constructor() {
     this.store.ensureLoaded();
+  }
+
+  protected openSchedule(schedule: SpendingSchedule): void {
+    this.sheets
+      .openSheet<SpendingScheduleDetailsResult, string>(
+        SpendingScheduleDetailsSheet,
+        schedule.id,
+        { ariaLabel: 'Расписание траты' },
+      )
+      .closed.subscribe((result) => {
+        if (!result) {
+          return;
+        }
+
+        if (result.kind === 'deleted') {
+          this.store.removeLocally(result.id);
+          return;
+        }
+
+        this.store.replaceLocally(result.schedule);
+      });
   }
 
   protected describe(schedule: SpendingSchedule): string {

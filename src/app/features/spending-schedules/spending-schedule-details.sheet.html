@@ -1,0 +1,147 @@
+<div class="sheet" appSwipeToClose (dismissed)="close()">
+  <div class="sheet__grabber" aria-hidden="true"></div>
+
+  <div class="sheet__header">
+    <h2 class="sheet__title">Расписание</h2>
+    <button
+      type="button"
+      class="icon-btn icon-btn--danger"
+      aria-label="Удалить расписание"
+      [disabled]="!schedule() || isBusy()"
+      (click)="remove()"
+    >
+      <app-icon name="trash" />
+    </button>
+    <button type="button" class="icon-btn" aria-label="Закрыть" (click)="close()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <div class="sheet__body">
+    @if (isLoading()) {
+      <div class="head" aria-busy="true">
+        <span class="skeleton head__skeleton-title"></span>
+        <span class="skeleton head__skeleton-amount"></span>
+      </div>
+      <div class="panel panel--bordered">
+        @for (row of [1, 2, 3]; track row) {
+          <div class="panel__row">
+            <span class="skeleton row__skeleton"></span>
+          </div>
+        }
+      </div>
+    } @else if (schedule(); as item) {
+      <section class="head">
+        <h3 class="head__title">{{ item.description }}</h3>
+        <p class="amount amount--display head__amount">
+          {{ item.amount | money }}&nbsp;{{ currencyCode(item.currencyId) }}
+        </p>
+        <p class="head__recurrence">{{ describe(item) }}</p>
+      </section>
+
+      @if (item.category || item.tags.length > 0) {
+        <div class="markup">
+          @if (item.category; as category) {
+            <span class="chip chip--category">{{ category.title }}</span>
+          }
+          @for (tag of item.tags; track tag.id) {
+            <span class="chip chip--tag">{{ tag.title }}</span>
+          }
+        </div>
+      }
+
+      <div class="panel panel--bordered">
+        <div class="panel__row fact">
+          <span class="fact__label">Следующее срабатывание</span>
+          <span class="fact__value">
+            @if (!item.isActive) {
+              На паузе
+            } @else if (isFinished(item)) {
+              Больше не сработает
+            } @else {
+              {{ item.nextOccurrenceDate }}
+            }
+          </span>
+        </div>
+        <div class="panel__row fact">
+          <span class="fact__label">Последнее срабатывание</span>
+          <span class="fact__value">{{ item.lastOccurrenceDate ?? 'Ещё не было' }}</span>
+        </div>
+      </div>
+
+      <div class="panel panel--bordered">
+        <!-- Роль switch, а не чекбокс: переключатель уходит на сервер сразу
+             и промежуточного состояния «выбрано, но не сохранено» у него нет. -->
+        <button
+          type="button"
+          class="panel__row toggle"
+          role="switch"
+          [attr.aria-checked]="item.isActive"
+          [disabled]="isBusy()"
+          (click)="toggleActive()"
+        >
+          <span class="toggle__main">
+            <span class="toggle__title">Активно</span>
+            <span class="toggle__hint">
+              {{
+                item.isActive
+                  ? 'Траты создаются по расписанию'
+                  : 'Расписание остановлено и трат не создаёт'
+              }}
+            </span>
+          </span>
+          <span class="switch" [class.switch--on]="item.isActive" aria-hidden="true">
+            <span class="switch__knob"></span>
+          </span>
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="btn btn--secondary btn--block"
+        [disabled]="isBusy()"
+        (click)="runNow()"
+      >
+        <app-icon name="plus" />
+        Создать трату сейчас
+      </button>
+
+      <section class="history">
+        <div class="history__head">
+          <h3 class="field__label">Созданные траты</h3>
+          <span class="history__count">{{ item.createdSpendingsCount }}</span>
+        </div>
+
+        @if (item.createdSpendings.length === 0) {
+          <p class="history__empty">Расписание ещё ни разу не сработало.</p>
+        } @else {
+          <div class="panel panel--bordered">
+            @for (spending of item.createdSpendings; track spending.id) {
+              <div class="panel__row history__row">
+                <span class="history__date">{{ spending.date | shortDate }}</span>
+                <span class="history__amount amount">
+                  {{ spending.amount | money }}&nbsp;{{ currencyCode(spending.currencyId) }}
+                </span>
+              </div>
+            }
+          </div>
+
+          @if (item.createdSpendingsCount > item.createdSpendings.length) {
+            <p class="history__more">
+              Показаны последние {{ item.createdSpendings.length }}. Остальные - во вкладке
+              «Траты».
+            </p>
+          }
+        }
+      </section>
+    } @else {
+      <app-empty-state
+        icon="alert-circle"
+        title="Не удалось загрузить расписание"
+        hint="Проверьте связь и попробуйте ещё раз."
+      >
+        <button type="button" class="btn btn--primary" (click)="retry()">Повторить</button>
+      </app-empty-state>
+    }
+  </div>
+</div>

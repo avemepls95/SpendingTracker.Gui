@@ -36,7 +36,11 @@
       <div class="list">
         <div class="panel">
           @for (schedule of store.schedules(); track schedule.id) {
-            <div class="panel__row schedule">
+            <button
+              type="button"
+              class="panel__row schedule"
+              (click)="openSchedule(schedule)"
+            >
               <span class="schedule__main">
                 <span class="schedule__description">{{ schedule.description }}</span>
                 <span class="schedule__recurrence">{{ describe(schedule) }}</span>
@@ -54,7 +58,7 @@
                   currencyCode(schedule.currencyId)
                 }}</span>
               </span>
-            </div>
+            </button>
           }
         </div>
       </div>
