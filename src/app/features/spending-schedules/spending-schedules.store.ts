@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { SpendingScheduleApiService } from '../../domain/api/spending-schedule-api.service';
 import { SpendingSchedule, isScheduleFinished } from '../../domain/models/models';
 
-export type ListStatus = 'loading' | 'ready' | 'error';
+type ListStatus = 'loading' | 'ready' | 'error';
 
 /**
  * Список расписаний.
@@ -82,6 +82,14 @@ export class SpendingSchedulesStore {
    * правило, ближайшая дата - считает сервер.
    */
   addById(id: string): void {
+    // Список в состоянии ошибки показывает пустое состояние: добавленная в
+    // него строка была бы не видна, поэтому список перечитывается целиком.
+    if (this.statusSignal() !== 'ready') {
+      this.reload();
+
+      return;
+    }
+
     this.api.getSchedule(id).subscribe({
       next: (schedule) => this.addLocally(schedule),
       // Расписание уже создано, и пользователю это сказано. Если карточка не
@@ -91,7 +99,7 @@ export class SpendingSchedulesStore {
     });
   }
 
-  addLocally(schedule: SpendingSchedule): void {
+  private addLocally(schedule: SpendingSchedule): void {
     this.items.update((current) => [...current, schedule]);
   }
 

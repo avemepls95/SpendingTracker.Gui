@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   afterNextRender,
   inject,
@@ -61,5 +62,6 @@ export class ShellPage {
     this.settings.load();
 
     afterNextRender(() => this.scroll.register(this.content().nativeElement));
+    inject(DestroyRef).onDestroy(() => this.scroll.register(null));
   }
 }

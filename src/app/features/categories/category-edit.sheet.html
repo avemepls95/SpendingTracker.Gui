@@ -68,13 +68,13 @@
           <span class="block__hint">Сохраняются сразу</span>
         </div>
 
-        <div class="chips">
+        <div class="tag-chips">
           @for (tag of tags(); track tag.id) {
-            <span class="chip chip--tag chips__chip">
+            <span class="chip chip--tag tag-chips__chip">
               {{ tag.title }}
               <button
                 type="button"
-                class="chips__remove"
+                class="tag-chips__remove"
                 [attr.aria-label]="'Снять тег ' + tag.title"
                 [disabled]="isLinkBusy()"
                 (click)="removeTag(tag)"
@@ -86,7 +86,7 @@
 
           <button
             type="button"
-            class="chip chips__add"
+            class="chip tag-chips__add"
             [disabled]="isLinkBusy()"
             (click)="addTag()"
           >

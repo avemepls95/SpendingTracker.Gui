@@ -46,7 +46,7 @@
       </section>
 
       @if (item.category || item.tags.length > 0) {
-        <div class="markup">
+        <div class="chips">
           @if (item.category; as category) {
             <span class="chip chip--category">{{ category.title }}</span>
           }
@@ -105,6 +105,8 @@
         </button>
       </div>
 
+      <!-- Доступна и для остановленного расписания: это ручное действие, и
+           сервер его выполняет независимо от паузы. -->
       <button
         type="button"
         class="btn btn--secondary btn--block"

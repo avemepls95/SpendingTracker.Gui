@@ -43,6 +43,7 @@ import {
   TagPickerSheet,
 } from '../../shared/ui/tag-picker.sheet';
 import { categoryPath } from '../../shared/util/category-tree.util';
+import { closeOnDismiss } from '../../shared/util/dismiss.util';
 import {
   formatApiDate,
   formatInputDate,
@@ -262,6 +263,10 @@ export class SpendingScheduleEditSheet implements OnDestroy {
   );
 
   constructor() {
+    // Клик мимо, Escape и системная кнопка «Назад» закрывают лист напрямую,
+    // мимо close(), а значит и мимо защиты от закрытия во время сохранения.
+    closeOnDismiss(this.dialogRef, () => this.close());
+
     this.spendingApi.getCategories().subscribe({
       next: (categories) => this.allCategories.set(categories),
     });

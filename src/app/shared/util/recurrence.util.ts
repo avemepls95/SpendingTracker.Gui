@@ -9,12 +9,12 @@ const UNIT_PLURALS: Record<IntervalUnit, readonly [string, string, string]> = {
   Year: ['год', 'года', 'лет'],
 };
 
-/** Человекочитаемая периодичность: «раз в месяц, 15-го, в 10:00, до 31.12.2026». */
 /** Подпись единицы, согласованная с числом: «неделю», «недели», «недель». */
 export function intervalUnitLabel(unit: IntervalUnit, count: number): string {
   return plural(count, UNIT_PLURALS[unit]);
 }
 
+/** Человекочитаемая периодичность: «раз в месяц, 15-го, в 10:00, до 31.12.2026». */
 export function describeRecurrence(rule: RecurrenceInput): string {
   if (rule.recurrenceKind === 'Once') {
     return `Однократно ${rule.startDate} в ${rule.startTime}`;

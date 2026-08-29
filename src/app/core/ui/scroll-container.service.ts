@@ -12,7 +12,8 @@ import { Injectable } from '@angular/core';
 export class ScrollContainerService {
   private element: HTMLElement | null = null;
 
-  register(element: HTMLElement): void {
+  /** null снимает регистрацию: ссылка на элемент уничтоженного каркаса не нужна. */
+  register(element: HTMLElement | null): void {
     this.element = element;
   }
 

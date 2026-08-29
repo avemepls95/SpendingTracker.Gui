@@ -50,19 +50,21 @@
   --icon-size: 18px;
 }
 
-.chips {
+// Собственные имена, а не общие .chips: теги категории показываются
+// метками chip--tag, а не полноразмерными чипами формы траты.
+.tag-chips {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
 }
 
-.chips__chip {
+.tag-chips__chip {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
 }
 
-.chips__remove {
+.tag-chips__remove {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -79,7 +81,7 @@
   }
 }
 
-.chips__add {
+.tag-chips__add {
   gap: var(--sp-1);
   border-style: dashed;
   --icon-size: 14px;
