@@ -7,7 +7,7 @@
 // Контейнер наложений CDK занимает всё окно, а видно из него не всё:
 // прижатый к низу лист уезжал под нижний край экрана вместе с концом списка.
 .cdk-overlay-container {
-  height: var(--app-height);
+  height: var(--app-overlay-height);
 }
 
 // Затемнение под шитом и диалогом.
@@ -31,7 +31,7 @@
   flex-direction: column;
   width: 100vw;
   max-width: var(--content-max);
-  max-height: calc(var(--app-height) * 0.92);
+  max-height: calc(var(--app-overlay-height) * 0.92);
   background: var(--c-surface);
   border-radius: var(--r-xl) var(--r-xl) 0 0;
   box-shadow: var(--sh-3);

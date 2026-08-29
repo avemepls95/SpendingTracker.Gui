@@ -82,6 +82,8 @@ export class TelegramService {
    * Без expand() Mini App открывается наполовину экрана.
    */
   initialize(): void {
+    this.trackViewport();
+
     const webApp = this.webApp;
     if (!webApp) {
       return;
@@ -95,19 +97,6 @@ export class TelegramService {
       webApp.disableVerticalSwipes?.();
     }
 
-    // Клиент знает, какая часть окна видна на самом деле: в iOS страница
-    // разворачивается на высоту больше экрана, и без этой поправки прокрутка
-    // достаётся ей, а не спискам внутри листов.
-    const syncViewport = (): void => {
-      const height = webApp.viewportStableHeight;
-      if (height > 0) {
-        this.document.documentElement.style.setProperty(
-          '--app-viewport-height',
-          `${height}px`,
-        );
-      }
-    };
-
     const syncInsets = (): void => {
       this.safeAreaSignal.set(webApp.safeAreaInset ?? NO_INSET);
       this.contentSafeAreaSignal.set(webApp.contentSafeAreaInset ?? NO_INSET);
@@ -117,13 +106,6 @@ export class TelegramService {
     webApp.onEvent('contentSafeAreaChanged', syncInsets);
 
     syncInsets();
-
-    // Вне клиента высоту брать неоткуда: там мост отдаёт размер окна один раз
-    // и об изменениях не сообщает, поэтому вёрстка остаётся на 100dvh.
-    if (this.isMiniApp) {
-      webApp.onEvent('viewportChanged', syncViewport);
-      syncViewport();
-    }
   }
 
   /** Красит шапку и фон клиента в цвет приложения, чтобы не было чужой полосы сверху. */
@@ -175,6 +157,47 @@ export class TelegramService {
       backButton.offClick(handler);
       backButton.hide();
     };
+  }
+
+  /**
+   * Держит в CSS-переменных две высоты окна.
+   *
+   * Стабильную сообщает клиент: в iOS страница разворачивается выше экрана,
+   * и 100dvh отдаёт больше, чем видно на самом деле. Про клавиатуру клиент
+   * не знает - её замечает только браузер, поэтому наложения считаются по
+   * меньшей из двух высот: иначе нижний лист уходит под клавиатуру.
+   */
+  private trackViewport(): void {
+    const style = this.document.documentElement.style;
+    const view = this.document.defaultView;
+    const visualViewport = view?.visualViewport ?? null;
+
+    const apply = (): void => {
+      // Вне клиента стабильной высоты нет: там мост отдаёт размер окна один
+      // раз и об изменениях не сообщает. Видимую высоту ниже это не трогает -
+      // её отдаёт браузер, и она нужна в любом окружении.
+      const stableHeight = this.isMiniApp ? this.webApp?.viewportStableHeight ?? 0 : 0;
+      if (stableHeight > 0) {
+        style.setProperty('--app-viewport-height', `${stableHeight}px`);
+      }
+
+      const heights = [stableHeight, visualViewport?.height ?? 0].filter(
+        (height) => height > 0,
+      );
+      if (heights.length > 0) {
+        style.setProperty('--app-visible-height', `${Math.min(...heights)}px`);
+      }
+    };
+
+    if (this.isMiniApp) {
+      this.webApp?.onEvent('viewportChanged', apply);
+    }
+
+    // Клавиатуру замечает visualViewport, поворот экрана и смену размера
+    // окна - обычный resize: по отдельности каждый из них покрывает не всё.
+    visualViewport?.addEventListener('resize', apply);
+    view?.addEventListener('resize', apply);
+    apply();
   }
 
   /**
