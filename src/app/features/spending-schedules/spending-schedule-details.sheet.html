@@ -12,14 +12,20 @@
     >
       <app-icon name="trash" />
     </button>
-    <button type="button" class="icon-btn" aria-label="Закрыть" (click)="close()">
+    <button
+      type="button"
+      class="icon-btn"
+      aria-label="Закрыть"
+      [disabled]="isBusy()"
+      (click)="close()"
+    >
       <app-icon name="close" />
     </button>
   </div>
 
-  <div class="sheet__body">
+  <div class="sheet__body" [attr.aria-busy]="isLoading()">
     @if (isLoading()) {
-      <div class="head" aria-busy="true">
+      <div class="head">
         <span class="skeleton head__skeleton-title"></span>
         <span class="skeleton head__skeleton-amount"></span>
       </div>
@@ -76,17 +82,20 @@
           type="button"
           class="panel__row toggle"
           role="switch"
+          aria-labelledby="schedule-active-label"
           [attr.aria-checked]="item.isActive"
           [disabled]="isBusy()"
           (click)="toggleActive()"
         >
           <span class="toggle__main">
-            <span class="toggle__title">Активно</span>
+            <!-- Имя кнопки берётся из подписи, а не из всего содержимого:
+                 иначе оно менялось бы вместе с состоянием переключателя. -->
+            <span id="schedule-active-label" class="toggle__title">Активно</span>
             <span class="toggle__hint">
               {{
                 item.isActive
                   ? 'Траты создаются по расписанию'
-                  : 'Расписание остановлено и трат не создаёт'
+                  : 'По расписанию траты не создаются'
               }}
             </span>
           </span>
@@ -108,7 +117,7 @@
 
       <section class="history">
         <div class="history__head">
-          <h3 class="field__label">Созданные траты</h3>
+          <h3 class="history__title">Созданные траты</h3>
           <span class="history__count">{{ item.createdSpendingsCount }}</span>
         </div>
 
@@ -128,8 +137,8 @@
 
           @if (item.createdSpendingsCount > item.createdSpendings.length) {
             <p class="history__more">
-              Показаны последние {{ item.createdSpendings.length }}. Остальные - во вкладке
-              «Траты».
+              Показаны последние {{ item.createdSpendings.length }}. Более ранние - во
+              вкладке «Траты».
             </p>
           }
         }

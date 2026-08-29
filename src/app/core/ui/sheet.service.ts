@@ -33,6 +33,21 @@ export class SheetService {
   private openCount = 0;
   private releaseBackButton: (() => void) | null = null;
 
+  /**
+   * Собственные обработчики закрытия листов.
+   *
+   * Часть листов применяет изменения до нажатия «Сохранить» и обязана вернуть
+   * их странице при любом способе закрытия. Прямой DialogRef.close() отдал бы
+   * undefined: disableClose останавливает Escape и клик мимо, но не
+   * программный вызов.
+   */
+  private readonly dismissHandlers = new WeakMap<object, () => void>();
+
+  /** Перенаправляет закрытие листа системной кнопкой на обработчик компонента. */
+  registerDismiss(ref: DialogRef<unknown>, dismiss: () => void): void {
+    this.dismissHandlers.set(ref, dismiss);
+  }
+
   /** Лист, выезжающий снизу: основная форма на телефоне. */
   openSheet<TResult, TData>(
     component: ComponentType<unknown>,
@@ -97,9 +112,20 @@ export class SheetService {
     this.openCount += 1;
 
     if (this.openCount === 1) {
-      this.releaseBackButton = this.telegram.showBackButton(() =>
-        this.dialog.openDialogs.at(-1)?.close(),
-      );
+      this.releaseBackButton = this.telegram.showBackButton(() => {
+        const top = this.dialog.openDialogs.at(-1);
+        if (!top) {
+          return;
+        }
+
+        const dismiss = this.dismissHandlers.get(top);
+        if (dismiss) {
+          dismiss();
+          return;
+        }
+
+        top.close();
+      });
     }
 
     ref.closed.subscribe(() => {

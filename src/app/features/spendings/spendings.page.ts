@@ -127,6 +127,18 @@ export class SpendingsPage implements OnDestroy {
     this.view.set(view);
   }
 
+  /**
+   * Ручной запуск расписания создал трату.
+   *
+   * Список трат живёт на этой же странице и переключение сегмента переживает,
+   * поэтому сам он о новой записи не узнает. Прежнее место в списке после
+   * перезагрузки бессмысленно: догруженные страницы сбрасываются.
+   */
+  protected onSpendingCreated(): void {
+    this.spendingsOffset = 0;
+    this.store.reload();
+  }
+
   protected toggleSearch(): void {
     const willOpen = !this.isSearchOpen();
     this.isSearchOpen.set(willOpen);

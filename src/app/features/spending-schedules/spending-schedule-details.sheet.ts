@@ -21,7 +21,12 @@ import { closeOnDismiss } from '../../shared/util/dismiss.util';
 import { describeRecurrence } from '../../shared/util/recurrence.util';
 
 export type SpendingScheduleDetailsResult =
-  | { readonly kind: 'changed'; readonly schedule: SpendingSchedule }
+  | {
+      readonly kind: 'changed';
+      readonly schedule: SpendingSchedule;
+      /** Ручной запуск создал трату - список трат устарел. */
+      readonly hasNewSpending: boolean;
+    }
   | { readonly kind: 'deleted'; readonly id: string };
 
 /**
@@ -56,6 +61,8 @@ export class SpendingScheduleDetailsSheet {
   protected readonly isLoading = signal(true);
   protected readonly isBusy = signal(false);
 
+  private hasNewSpending = false;
+
   constructor() {
     closeOnDismiss(this.dialogRef, () => this.close());
     this.load();
@@ -82,7 +89,14 @@ export class SpendingScheduleDetailsSheet {
     this.isBusy.set(true);
 
     this.api.setActive(schedule.id, !schedule.isActive).subscribe({
-      next: () => this.refresh(),
+      next: () => {
+        // Признак фиксируется сразу: перечитывание может не дойти, и тогда
+        // карточка со списком показывали бы состояние до нажатия.
+        this.schedule.update((current) =>
+          current ? { ...current, isActive: !schedule.isActive } : current,
+        );
+        this.refresh();
+      },
       error: () => this.isBusy.set(false),
     });
   }
@@ -100,6 +114,7 @@ export class SpendingScheduleDetailsSheet {
     this.api.runNow(schedule.id).subscribe({
       next: (details) => {
         this.schedule.set(details);
+        this.hasNewSpending = true;
         this.isBusy.set(false);
         this.telegram.notify('success');
         this.toast.success('Трата создана');
@@ -141,10 +156,20 @@ export class SpendingScheduleDetailsSheet {
   }
 
   protected close(): void {
+    // Закрытие поверх незавершённого удаления оставило бы в списке строку,
+    // которой на сервере уже нет: ответ придёт в уничтоженный лист.
+    if (this.isBusy()) {
+      return;
+    }
+
     const schedule = this.schedule();
 
     // Без расписания возвращать нечего: список и так показывает прежнюю строку.
-    this.dialogRef.close(schedule ? { kind: 'changed', schedule } : undefined);
+    this.dialogRef.close(
+      schedule
+        ? { kind: 'changed', schedule, hasNewSpending: this.hasNewSpending }
+        : undefined,
+    );
   }
 
   private load(): void {

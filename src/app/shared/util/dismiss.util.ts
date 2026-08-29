@@ -3,6 +3,8 @@ import { DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter, merge } from 'rxjs';
 
+import { SheetService } from '../../core/ui/sheet.service';
+
 /**
  * Переводит закрытие листа по Escape и клику мимо на обработчик компонента.
  *
@@ -19,6 +21,10 @@ export function closeOnDismiss<TResult>(
   const destroyRef = inject(DestroyRef);
 
   ref.disableClose = true;
+
+  // Системная кнопка «Назад» закрывает верхний лист напрямую, мимо
+  // disableClose, поэтому сервис должен знать про этот обработчик.
+  inject(SheetService).registerDismiss(ref as DialogRef<unknown>, close);
 
   merge(
     ref.backdropClick,

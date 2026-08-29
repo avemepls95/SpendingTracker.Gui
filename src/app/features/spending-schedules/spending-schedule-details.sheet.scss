@@ -65,6 +65,13 @@
 
   &:disabled {
     opacity: 0.5;
+    cursor: not-allowed;
+
+    @media (hover: hover) {
+      &:hover {
+        background: transparent;
+      }
+    }
   }
 }
 
@@ -87,7 +94,9 @@
   width: 44px;
   height: 26px;
   border-radius: var(--r-full);
-  background: var(--c-border-strong);
+  // Не --c-border-strong: у дорожки контраст с фоном ниже 3:1, и выключенный
+  // переключатель на ярком свете читается как пустое место.
+  background: color-mix(in srgb, var(--c-text) 50%, transparent);
   transition: background-color var(--dur) var(--ease);
 }
 
@@ -117,6 +126,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
+}
+
+.history__title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--c-text-2);
 }
 
 .history__head {

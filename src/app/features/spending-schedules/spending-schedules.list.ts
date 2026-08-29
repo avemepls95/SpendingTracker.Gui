@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 
 import { SheetService } from '../../core/ui/sheet.service';
 import { SpendingSchedule, isScheduleFinished } from '../../domain/models/models';
@@ -22,6 +22,9 @@ import { SpendingSchedulesStore } from './spending-schedules.store';
 export class SpendingSchedulesList {
   private readonly currencies = inject(CurrenciesStore);
   private readonly sheets = inject(SheetService);
+
+  /** Ручной запуск расписания создал трату: список трат устарел. */
+  readonly spendingCreated = output<void>();
 
   protected readonly store = inject(SpendingSchedulesStore);
 
@@ -47,6 +50,10 @@ export class SpendingSchedulesList {
         }
 
         this.store.replaceLocally(result.schedule);
+
+        if (result.hasNewSpending) {
+          this.spendingCreated.emit();
+        }
       });
   }
 
