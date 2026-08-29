@@ -34,6 +34,43 @@ export interface SpendingDto {
   readonly category?: CategoryDto | null;
   /** Собственные теги траты, без унаследованных от категории. */
   readonly tags?: readonly TagDto[] | null;
+  /** Расписание, породившее трату. Отсутствует у трат, заведённых вручную. */
+  readonly scheduleId?: string | null;
+}
+
+export interface SpendingScheduleDto {
+  readonly id: string;
+  readonly description: string;
+  readonly amount: number;
+  readonly currencyId: string;
+  readonly category?: CategoryDto | null;
+  readonly tags?: readonly TagDto[] | null;
+  readonly isActive: boolean;
+  readonly recurrenceKind: string;
+  /** У однократных правил приходит как None. */
+  readonly intervalUnit?: string | null;
+  readonly intervalValue: number;
+  readonly startDate: string;
+  readonly startTime: string;
+  readonly endDate?: string | null;
+  readonly nextOccurrenceDate?: string | null;
+  readonly lastOccurrenceDate?: string | null;
+}
+
+export interface ScheduleSpendingDto {
+  readonly id: string;
+  readonly date: string;
+  readonly amount: number;
+  readonly currencyId: string;
+}
+
+export interface SpendingScheduleDetailsDto extends SpendingScheduleDto {
+  readonly createdSpendingsCount: number;
+  readonly createdSpendings?: readonly ScheduleSpendingDto[] | null;
+}
+
+export interface PreviewOccurrencesDto {
+  readonly occurrences?: readonly string[] | null;
 }
 
 export interface AccountListItemDto {

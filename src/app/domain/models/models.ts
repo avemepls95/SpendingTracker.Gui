@@ -35,7 +35,74 @@ export interface Spending {
   readonly category: Category | null;
   /** Собственные теги траты, без унаследованных от категории. */
   readonly tags: readonly Tag[];
+  /** Расписание, создавшее трату. null - трата заведена вручную. */
+  readonly scheduleId: string | null;
 }
+
+export const RECURRENCE_KINDS = ['Once', 'Interval'] as const;
+export type RecurrenceKind = (typeof RECURRENCE_KINDS)[number];
+
+export const INTERVAL_UNITS = ['Hour', 'Day', 'Week', 'Month', 'Year'] as const;
+export type IntervalUnit = (typeof INTERVAL_UNITS)[number];
+
+/** Правило повторения без прикладных полей: то, что принимает предпросмотр. */
+export interface RecurrenceInput {
+  readonly recurrenceKind: RecurrenceKind;
+  readonly intervalUnit: IntervalUnit | null;
+  readonly intervalValue: number;
+  /** Локальная дата якоря, dd.MM.yyyy. */
+  readonly startDate: string;
+  /** Локальное время, HH:mm. */
+  readonly startTime: string;
+  readonly endDate: string | null;
+}
+
+export interface SpendingScheduleInput extends RecurrenceInput {
+  readonly description: string;
+  readonly amount: number;
+  readonly currencyId: string;
+  readonly categoryId: string | null;
+  readonly tagIds: readonly string[];
+}
+
+export interface SpendingSchedule extends RecurrenceInput {
+  readonly id: string;
+  readonly description: string;
+  readonly amount: number;
+  readonly currencyId: string;
+  readonly category: Category | null;
+  readonly tags: readonly Tag[];
+  readonly isActive: boolean;
+  /** Локальная строка dd.MM.yyyy HH:mm. null - будущих срабатываний нет. */
+  readonly nextOccurrenceDate: string | null;
+  readonly lastOccurrenceDate: string | null;
+}
+
+/** Трата, созданная расписанием. */
+export interface ScheduleSpending {
+  readonly id: string;
+  readonly date: string;
+  readonly amount: number;
+  readonly currencyId: string;
+}
+
+export interface SpendingScheduleDetails extends SpendingSchedule {
+  readonly createdSpendingsCount: number;
+  readonly createdSpendings: readonly ScheduleSpending[];
+}
+
+/** Расписание отработало своё: правило исчерпано, но его никто не останавливал. */
+export function isScheduleFinished(schedule: SpendingSchedule): boolean {
+  return schedule.isActive && schedule.nextOccurrenceDate === null;
+}
+
+export const INTERVAL_UNIT_LABELS: Record<IntervalUnit, string> = {
+  Hour: 'час',
+  Day: 'день',
+  Week: 'неделя',
+  Month: 'месяц',
+  Year: 'год',
+};
 
 export const ACCOUNT_TYPES = [
   'DebitCard',

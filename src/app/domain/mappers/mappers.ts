@@ -5,7 +5,10 @@ import {
   CategoryAnalyticsItemDto,
   CategoryDto,
   CurrencyDto,
+  ScheduleSpendingDto,
   SpendingDto,
+  SpendingScheduleDetailsDto,
+  SpendingScheduleDto,
   TagAnalyticsDto,
   TagAnalyticsItemDto,
   TagDto,
@@ -19,7 +22,12 @@ import {
   CategoryAnalytics,
   CategoryAnalyticsItem,
   Currency,
+  INTERVAL_UNITS,
+  IntervalUnit,
+  ScheduleSpending,
   Spending,
+  SpendingSchedule,
+  SpendingScheduleDetails,
   Tag,
   TagAnalytics,
   TagAnalyticsItem,
@@ -68,7 +76,54 @@ export function toSpending(dto: SpendingDto): Spending {
     description: dto.description,
     category: dto.category ? toCategory(dto.category) : null,
     tags: (dto.tags ?? []).map(toTag),
+    scheduleId: dto.scheduleId ?? null,
   };
+}
+
+export function toSpendingSchedule(dto: SpendingScheduleDto): SpendingSchedule {
+  return {
+    id: dto.id,
+    description: dto.description,
+    amount: dto.amount,
+    currencyId: dto.currencyId,
+    category: dto.category ? toCategory(dto.category) : null,
+    tags: (dto.tags ?? []).map(toTag),
+    isActive: dto.isActive,
+    recurrenceKind: dto.recurrenceKind === 'Once' ? 'Once' : 'Interval',
+    intervalUnit: toIntervalUnit(dto.intervalUnit),
+    intervalValue: dto.intervalValue,
+    startDate: dto.startDate,
+    startTime: dto.startTime,
+    endDate: dto.endDate ?? null,
+    nextOccurrenceDate: dto.nextOccurrenceDate ?? null,
+    lastOccurrenceDate: dto.lastOccurrenceDate ?? null,
+  };
+}
+
+export function toSpendingScheduleDetails(
+  dto: SpendingScheduleDetailsDto,
+): SpendingScheduleDetails {
+  return {
+    ...toSpendingSchedule(dto),
+    createdSpendingsCount: dto.createdSpendingsCount,
+    createdSpendings: (dto.createdSpendings ?? []).map(toScheduleSpending),
+  };
+}
+
+function toScheduleSpending(dto: ScheduleSpendingDto): ScheduleSpending {
+  return {
+    id: dto.id,
+    date: dto.date,
+    amount: dto.amount,
+    currencyId: dto.currencyId,
+  };
+}
+
+/** Сервер шлёт перечисление строкой; у однократных правил это None. */
+function toIntervalUnit(value: string | null | undefined): IntervalUnit | null {
+  const unit = INTERVAL_UNITS.find((item) => item === value);
+
+  return unit ?? null;
 }
 
 export function toAccountListItem(dto: AccountListItemDto): AccountListItem {
