@@ -1,0 +1,111 @@
+import { Injectable, computed, inject, signal } from '@angular/core';
+
+import { SpendingScheduleApiService } from '../../domain/api/spending-schedule-api.service';
+import { SpendingSchedule, isScheduleFinished } from '../../domain/models/models';
+
+export type ListStatus = 'loading' | 'ready' | 'error';
+
+/**
+ * Список расписаний.
+ *
+ * Пагинации нет - расписаний у пользователя единицы. Порядок задаёт сервер,
+ * но локальные правки не должны его ломать, поэтому сортировка повторена здесь.
+ */
+@Injectable()
+export class SpendingSchedulesStore {
+  private readonly api = inject(SpendingScheduleApiService);
+
+  private readonly items = signal<readonly SpendingSchedule[]>([]);
+  private readonly statusSignal = signal<ListStatus>('loading');
+
+  /**
+   * Номер поколения запроса: ответ на отменённую загрузку не должен
+   * перетирать актуальный список.
+   */
+  private generation = 0;
+
+  readonly status = this.statusSignal.asReadonly();
+  readonly schedules = computed(() => sortSchedules(this.items()));
+
+  readonly isEmpty = computed(
+    () => this.statusSignal() === 'ready' && this.items().length === 0,
+  );
+
+  reload(): void {
+    this.statusSignal.set('loading');
+
+    const generation = ++this.generation;
+
+    this.api.getSchedules().subscribe({
+      next: (schedules) => {
+        if (generation !== this.generation) {
+          return;
+        }
+
+        this.items.set(schedules);
+        this.statusSignal.set('ready');
+      },
+      error: () => {
+        if (generation !== this.generation) {
+          return;
+        }
+
+        this.statusSignal.set('error');
+      },
+    });
+  }
+
+  addLocally(schedule: SpendingSchedule): void {
+    this.items.update((current) => [...current, schedule]);
+  }
+
+  replaceLocally(schedule: SpendingSchedule): void {
+    this.items.update((current) =>
+      current.map((item) => (item.id === schedule.id ? schedule : item)),
+    );
+  }
+
+  removeLocally(id: string): void {
+    this.items.update((current) => current.filter((item) => item.id !== id));
+  }
+}
+
+/** Сначала работающие по ближайшей дате, затем на паузе, затем завершённые. */
+function sortSchedules(
+  schedules: readonly SpendingSchedule[],
+): readonly SpendingSchedule[] {
+  return [...schedules].sort((left, right) => {
+    const rankDiff = rank(left) - rank(right);
+    if (rankDiff !== 0) {
+      return rankDiff;
+    }
+
+    return (
+      occurrenceOrder(left.nextOccurrenceDate) -
+      occurrenceOrder(right.nextOccurrenceDate)
+    );
+  });
+}
+
+function rank(schedule: SpendingSchedule): number {
+  if (!schedule.isActive) {
+    return 1;
+  }
+
+  return isScheduleFinished(schedule) ? 2 : 0;
+}
+
+/**
+ * Дата приходит строкой dd.MM.yyyy HH:mm, поэтому сравнивать её как текст нельзя:
+ * «01.12.2026» оказалось бы раньше «02.01.2026». Переставляем части в число.
+ */
+function occurrenceOrder(value: string | null): number {
+  if (!value) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  const [date, time] = value.split(' ');
+  const [day, month, year] = date.split('.');
+
+  return Number(`${year}${month}${day}${(time ?? '00:00').replace(':', '')}`);
+}
