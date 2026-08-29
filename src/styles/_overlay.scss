@@ -31,7 +31,7 @@
   flex-direction: column;
   width: 100vw;
   max-width: var(--content-max);
-  max-height: 92dvh;
+  max-height: calc(var(--app-height) * 0.92);
   background: var(--c-surface);
   border-radius: var(--r-xl) var(--r-xl) 0 0;
   box-shadow: var(--sh-3);
