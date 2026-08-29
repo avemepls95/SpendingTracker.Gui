@@ -1,46 +1,8 @@
-.amount-row {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--sp-3);
-
-  .field__control {
-    height: 56px;
-    line-height: 1.2;
-  }
-}
-
-.amount-row__amount {
-  flex: 1;
-  min-width: 0;
-}
-
-.amount-row__currency {
-  flex: none;
-  width: 116px;
-}
-
-.amount-row__error,
+// Подсказка встаёт на место сообщения об ошибке, поэтому подтянута так же.
 .hint {
   margin-top: calc(var(--sp-3) * -1);
-}
-
-.hint {
   font-size: var(--fs-xs);
   color: var(--c-text-2);
-}
-
-.currency-button {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  font-weight: var(--fw-semibold);
-  text-align: left;
-  --icon-size: 18px;
-
-  app-icon {
-    color: var(--c-text-2);
-  }
 }
 
 // ------------------------------------------------------------ тип счёта

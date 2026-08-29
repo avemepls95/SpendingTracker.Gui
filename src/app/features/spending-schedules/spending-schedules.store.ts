@@ -84,6 +84,10 @@ export class SpendingSchedulesStore {
   addById(id: string): void {
     this.api.getSchedule(id).subscribe({
       next: (schedule) => this.addLocally(schedule),
+      // Расписание уже создано, и пользователю это сказано. Если карточка не
+      // доехала, список чинится только перечитыванием: ensureLoaded после
+      // успешной загрузки повторно ничего не запросит.
+      error: () => this.reload(),
     });
   }
 

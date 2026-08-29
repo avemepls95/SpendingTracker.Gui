@@ -170,6 +170,9 @@
   color: var(--c-danger);
 }
 
+// Ошибка на отдельном контроле: применяется там, где в строке стоит
+// несколько полей и подсвечивать нужно только виноватое.
+.field__control--invalid,
 .field--invalid .field__control {
   border-color: var(--c-danger);
 
@@ -341,6 +344,105 @@ button.chip {
 
   app-icon {
     color: var(--c-text-2);
+  }
+}
+
+// ---------------------------------------------------------------- разметка
+
+// Строка выбора категории и чипы тегов: используются формами траты и
+// расписания одинаково.
+.markup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: var(--sp-3) var(--sp-4);
+  text-align: left;
+
+  &:active {
+    background: var(--c-pressed);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.category-row__icon,
+.category-row__chevron {
+  color: var(--c-text-3);
+  --icon-size: 18px;
+}
+
+.category-row__title {
+  flex: 1;
+  min-width: 0;
+}
+
+// Не --c-text-3: это текущее значение поля, а не декор, и его контраст
+// с фоном не должен опускаться ниже нормы для текста.
+.category-row__title--empty {
+  color: var(--c-text-2);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.chips__chip {
+  padding-right: var(--sp-1);
+  background: var(--c-surface-2);
+  border-color: transparent;
+  color: var(--c-text);
+}
+
+.chips__remove {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-full);
+  color: var(--c-text-2);
+  --icon-size: 14px;
+
+  // Видимый размер оставляем чиповым, а область касания доводим до нормы -
+  // так же, как у .icon-btn и нажимаемых чипов.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: var(--tap-min);
+    height: var(--tap-min);
+    transform: translate(-50%, -50%);
+  }
+
+  &:active {
+    background: var(--c-pressed);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+  }
+}
+
+.chips__add {
+  color: var(--c-accent);
+  border-style: dashed;
+  --icon-size: 14px;
+
+  &:disabled {
+    opacity: 0.5;
   }
 }
 

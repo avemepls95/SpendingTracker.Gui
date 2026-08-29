@@ -97,15 +97,6 @@ export function isScheduleFinished(schedule: SpendingSchedule): boolean {
   return schedule.isActive && schedule.nextOccurrenceDate === null;
 }
 
-/** Подписи единиц интервала для выбора в форме. */
-export const INTERVAL_UNIT_LABELS: Record<IntervalUnit, string> = {
-  Hour: 'час',
-  Day: 'день',
-  Week: 'неделя',
-  Month: 'месяц',
-  Year: 'год',
-};
-
 export const ACCOUNT_TYPES = [
   'DebitCard',
   'CreditCard',

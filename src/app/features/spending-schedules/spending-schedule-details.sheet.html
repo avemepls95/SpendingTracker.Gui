@@ -154,24 +154,24 @@
     }
   </div>
 
-  @if (schedule()) {
-    <div class="sheet__footer">
-      <button
-        type="button"
-        class="btn btn--secondary"
-        [disabled]="isBusy()"
-        (click)="edit()"
-      >
-        Изменить
-      </button>
-      <button
-        type="button"
-        class="btn btn--primary"
-        [disabled]="isBusy()"
-        (click)="close()"
-      >
-        Готово
-      </button>
-    </div>
-  }
+  <!-- Подвал в разметке всегда: его появление после загрузки меняло бы и
+       высоту листа, и отступ тела под жест-баром. -->
+  <div class="sheet__footer">
+    <button
+      type="button"
+      class="btn btn--secondary"
+      [disabled]="!schedule() || isBusy()"
+      (click)="edit()"
+    >
+      Изменить
+    </button>
+    <button
+      type="button"
+      class="btn btn--primary"
+      [disabled]="isBusy()"
+      (click)="close()"
+    >
+      Готово
+    </button>
+  </div>
 </div>

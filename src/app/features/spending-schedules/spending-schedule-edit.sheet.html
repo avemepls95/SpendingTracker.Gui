@@ -3,7 +3,13 @@
 
   <div class="sheet__header">
     <h2 class="sheet__title">{{ isNew ? 'Новое расписание' : 'Расписание' }}</h2>
-    <button type="button" class="icon-btn" aria-label="Закрыть" (click)="close()">
+    <button
+      type="button"
+      class="icon-btn"
+      aria-label="Закрыть"
+      [disabled]="isSaving()"
+      (click)="close()"
+    >
       <app-icon name="close" />
     </button>
   </div>
@@ -16,16 +22,24 @@
         class="field__control"
         type="text"
         autocomplete="off"
+        maxlength="100"
+        [attr.aria-invalid]="touchedDescription() && descriptionError() ? true : null"
+        [attr.aria-describedby]="
+          touchedDescription() && descriptionError() ? 'schedule-description-error' : null
+        "
         [value]="description()"
         (input)="onDescription($event)"
       />
       @if (touchedDescription() && descriptionError(); as error) {
-        <p class="field__error">{{ error }}</p>
+        <p id="schedule-description-error" class="field__error">{{ error }}</p>
       }
     </div>
 
     <div class="amount-row">
-      <div class="field amount-row__amount" [class.field--invalid]="touchedAmount() && amountError()">
+      <div
+        class="field amount-row__amount"
+        [class.field--invalid]="touchedAmount() && amountError()"
+      >
         <label class="field__label" for="schedule-amount">Сумма</label>
         <input
           id="schedule-amount"
@@ -33,6 +47,10 @@
           type="text"
           inputmode="decimal"
           autocomplete="off"
+          [attr.aria-invalid]="touchedAmount() && amountError() ? true : null"
+          [attr.aria-describedby]="
+            touchedAmount() && amountError() ? 'schedule-amount-error' : null
+          "
           [value]="amountText()"
           (input)="onAmount($event)"
         />
@@ -43,6 +61,7 @@
         <button
           type="button"
           class="field__control currency-button"
+          [class.field__control--invalid]="touchedCurrency() && currencyError()"
           aria-labelledby="schedule-currency-label"
           (click)="pickCurrency()"
         >
@@ -53,6 +72,10 @@
     </div>
 
     @if (touchedAmount() && amountError(); as error) {
+      <p id="schedule-amount-error" class="field__error amount-row__error">{{ error }}</p>
+    }
+
+    @if (touchedCurrency() && currencyError(); as error) {
       <p class="field__error amount-row__error">{{ error }}</p>
     }
 
@@ -130,17 +153,21 @@
       </div>
 
       @if (recurrenceKind() === 'Interval') {
-        <div class="interval" [class.field--invalid]="intervalError()">
+        <div class="interval">
           <label class="field__label interval__label" for="schedule-interval">
             Раз в
           </label>
+          <!-- type="text", а не number: при промежуточно недопустимом вводе
+               браузер отдаёт пустое value, и привязка стирала бы набранное. -->
           <input
             id="schedule-interval"
             class="field__control interval__value"
-            type="number"
+            [class.field__control--invalid]="intervalError()"
+            type="text"
             inputmode="numeric"
-            min="1"
-            max="1000"
+            autocomplete="off"
+            [attr.aria-invalid]="intervalError() ? true : null"
+            [attr.aria-describedby]="intervalError() ? 'schedule-interval-error' : null"
             [value]="intervalValueText()"
             (input)="onIntervalValue($event)"
           />
@@ -151,7 +178,7 @@
             aria-label="Единица интервала"
             (change)="onIntervalUnit($event)"
           >
-            @for (option of unitOptions; track option.unit) {
+            @for (option of unitOptions(); track option.unit) {
               <option [value]="option.unit" [selected]="option.unit === intervalUnit()">
                 {{ option.label }}
               </option>
@@ -160,17 +187,22 @@
         </div>
 
         @if (intervalError(); as error) {
-          <p class="field__error">{{ error }}</p>
+          <p id="schedule-interval-error" class="field__error">{{ error }}</p>
         }
       }
 
-      <div class="start" [class.field--invalid]="touchedStart() && startError()">
+      <div class="start">
         <div class="field start__date">
           <label class="field__label" for="schedule-start-date">Начало</label>
           <input
             id="schedule-start-date"
             class="field__control"
+            [class.field__control--invalid]="touchedStart() && startDateError()"
             type="date"
+            [attr.aria-invalid]="touchedStart() && startDateError() ? true : null"
+            [attr.aria-describedby]="
+              touchedStart() && startError() ? 'schedule-start-error' : null
+            "
             [value]="startDateText()"
             (input)="onStartDate($event)"
           />
@@ -180,7 +212,12 @@
           <input
             id="schedule-start-time"
             class="field__control"
+            [class.field__control--invalid]="touchedStart() && startTimeError()"
             type="time"
+            [attr.aria-invalid]="touchedStart() && startTimeError() ? true : null"
+            [attr.aria-describedby]="
+              touchedStart() && startError() ? 'schedule-start-error' : null
+            "
             [value]="startTimeText()"
             (input)="onStartTime($event)"
           />
@@ -188,7 +225,7 @@
       </div>
 
       @if (touchedStart() && startError(); as error) {
-        <p class="field__error">{{ error }}</p>
+        <p id="schedule-start-error" class="field__error">{{ error }}</p>
       }
 
       @if (recurrenceKind() === 'Interval') {
@@ -200,27 +237,33 @@
             id="schedule-end-date"
             class="field__control"
             type="date"
+            [attr.aria-invalid]="endError() ? true : null"
+            [attr.aria-describedby]="endError() ? 'schedule-end-error' : null"
             [value]="endDateText()"
             (input)="onEndDate($event)"
           />
           @if (endError(); as error) {
-            <p class="field__error">{{ error }}</p>
+            <p id="schedule-end-error" class="field__error">{{ error }}</p>
           }
         </div>
       }
     </section>
 
-    <section class="preview">
+    <!-- Живая область: даты пересчитываются по мере ввода правила, и без
+         анонса их изменение остаётся незамеченным без взгляда на экран. -->
+    <section class="preview" aria-live="polite">
       <h3 class="field__label">Ближайшие срабатывания</h3>
 
       @if (isPreviewLoading()) {
         <div class="panel panel--bordered" aria-busy="true">
-          @for (row of [1, 2, 3]; track row) {
+          @for (row of [1, 2, 3, 4, 5]; track row) {
             <div class="panel__row">
               <span class="skeleton preview__skeleton"></span>
             </div>
           }
         </div>
+      } @else if (previewFailed()) {
+        <p class="preview__empty">Не удалось получить ближайшие даты. Проверьте связь.</p>
       } @else if (!rule()) {
         <p class="preview__empty">Заполните правило, и здесь появятся ближайшие даты.</p>
       } @else if (preview().length === 0) {
@@ -238,7 +281,14 @@
   </div>
 
   <div class="sheet__footer">
-    <button type="button" class="btn btn--secondary" (click)="close()">Отмена</button>
+    <button
+      type="button"
+      class="btn btn--secondary"
+      [disabled]="isSaving()"
+      (click)="close()"
+    >
+      Отмена
+    </button>
     <button
       type="button"
       class="btn btn--primary"

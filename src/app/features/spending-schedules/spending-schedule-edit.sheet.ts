@@ -18,7 +18,6 @@ import {
   Category,
   Currency,
   INTERVAL_UNITS,
-  INTERVAL_UNIT_LABELS,
   IntervalUnit,
   RecurrenceInput,
   RecurrenceKind,
@@ -27,6 +26,7 @@ import {
   Tag,
 } from '../../domain/models/models';
 import { CurrenciesStore } from '../../domain/stores/currencies.store';
+import { UserSettingsStore } from '../../domain/stores/user-settings.store';
 import {
   CategoryPickerData,
   CategoryPickerResult,
@@ -49,6 +49,7 @@ import {
   parseCalendarDate,
 } from '../../shared/util/date.util';
 import { parseAmount } from '../../shared/util/money.util';
+import { intervalUnitLabel } from '../../shared/util/recurrence.util';
 import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
 
 export interface SpendingScheduleEditData {
@@ -83,19 +84,19 @@ export class SpendingScheduleEditSheet implements OnDestroy {
   private readonly telegram = inject(TelegramService);
   private readonly toast = inject(ToastService);
   private readonly currencies = inject(CurrenciesStore);
+  private readonly settings = inject(UserSettingsStore);
 
   private readonly original = this.data.schedule;
 
   protected readonly isNew = this.original === null;
 
-  protected readonly unitOptions = INTERVAL_UNITS.map((unit) => ({
-    unit,
-    label: INTERVAL_UNIT_LABELS[unit],
-  }));
-
   protected readonly description = signal(this.original?.description ?? '');
   protected readonly amountText = signal(this.original ? String(this.original.amount) : '');
-  protected readonly currencyId = signal(this.original?.currencyId ?? '');
+  // У нового расписания подставляется валюта сводки: иначе штатный путь
+  // создания упирается в заблокированное «Сохранить» из-за пустого поля.
+  protected readonly currencyId = signal(
+    this.original?.currencyId ?? this.settings.viewCurrencyId(),
+  );
   protected readonly category = signal<Category | null>(this.original?.category ?? null);
   protected readonly tags = signal<readonly Tag[]>(this.original?.tags ?? []);
 
@@ -120,17 +121,29 @@ export class SpendingScheduleEditSheet implements OnDestroy {
   protected readonly touchedDescription = signal(false);
   protected readonly touchedAmount = signal(false);
   protected readonly touchedStart = signal(false);
+  protected readonly touchedCurrency = signal(false);
 
   protected readonly isSaving = signal(false);
   protected readonly isMarkupBusy = signal(false);
   protected readonly preview = signal<readonly string[]>([]);
   protected readonly isPreviewLoading = signal(false);
 
+  /** Предпросмотр не доехал: пустой список тут означал бы «дат не будет». */
+  protected readonly previewFailed = signal(false);
+
   /** Все категории владельца: нужны, чтобы показать путь до выбранной. */
   private readonly allCategories = signal<readonly Category[]>([]);
 
   private previewTimer: ReturnType<typeof setTimeout> | undefined;
   private previewGeneration = 0;
+
+  /** Подписи единиц согласованы с числом: «раз в 2 недели», а не «2 неделя». */
+  protected readonly unitOptions = computed(() => {
+    const value = Number(this.intervalValueText());
+    const count = Number.isInteger(value) && value > 0 ? value : 1;
+
+    return INTERVAL_UNITS.map((unit) => ({ unit, label: intervalUnitLabel(unit, count) }));
+  });
 
   protected readonly amount = computed(() => parseAmount(this.amountText()));
 
@@ -146,6 +159,10 @@ export class SpendingScheduleEditSheet implements OnDestroy {
 
   protected readonly descriptionError = computed(() =>
     this.description().trim() === '' ? 'Укажите описание' : null,
+  );
+
+  protected readonly currencyError = computed(() =>
+    this.currencyId() === '' ? 'Выберите валюту' : null,
   );
 
   protected readonly amountError = computed(() => {
@@ -169,13 +186,17 @@ export class SpendingScheduleEditSheet implements OnDestroy {
       : `Шаг - целое число от 1 до ${MAX_INTERVAL_VALUE}`;
   });
 
-  protected readonly startError = computed(() => {
-    if (!parseCalendarDate(this.startDateText())) {
-      return 'Укажите дату начала';
-    }
+  protected readonly startDateError = computed(() =>
+    parseCalendarDate(this.startDateText()) ? null : 'Укажите дату начала',
+  );
 
-    return TIME_PATTERN.test(this.startTimeText()) ? null : 'Укажите время';
-  });
+  protected readonly startTimeError = computed(() =>
+    TIME_PATTERN.test(this.startTimeText()) ? null : 'Укажите время',
+  );
+
+  protected readonly startError = computed(
+    () => this.startDateError() ?? this.startTimeError(),
+  );
 
   /**
    * Дату окончания раньше начала сервер отвергает.
@@ -184,6 +205,12 @@ export class SpendingScheduleEditSheet implements OnDestroy {
    * без этой проверки каждое промежуточное правило било бы в отказ.
    */
   protected readonly endError = computed(() => {
+    // У однократного правила поля окончания на экране нет, и его ошибка
+    // блокировала бы сохранение без единого сообщения перед глазами.
+    if (this.recurrenceKind() !== 'Interval') {
+      return null;
+    }
+
     const text = this.endDateText();
     if (!text) {
       return null;
@@ -230,7 +257,7 @@ export class SpendingScheduleEditSheet implements OnDestroy {
       !this.isSaving() &&
       this.descriptionError() === null &&
       this.amountError() === null &&
-      this.currencyId() !== '' &&
+      this.currencyError() === null &&
       this.rule() !== null,
   );
 
@@ -299,6 +326,8 @@ export class SpendingScheduleEditSheet implements OnDestroy {
         { ariaLabel: 'Выбор валюты' },
       )
       .closed.subscribe((currency) => {
+        this.touchedCurrency.set(true);
+
         if (currency) {
           this.currencyId.set(currency.id);
         }
@@ -312,8 +341,8 @@ export class SpendingScheduleEditSheet implements OnDestroy {
       .openSheet<CategoryPickerResult, CategoryPickerData>(
         CategoryPickerSheet,
         {
-          // Завести категорию отсюда нельзя: расписание уходит одним запросом,
-          // а идентификатор новой категории знает только сервер.
+          // Заводить категорию отсюда пока не умеем: кнопка «Создать» без
+          // обработчика выглядела бы как сломанная.
           allowCreate: false,
           rootOptionLabel: this.category() ? 'Убрать категорию' : undefined,
         },
@@ -381,9 +410,13 @@ export class SpendingScheduleEditSheet implements OnDestroy {
   private schedulePreview(rule: RecurrenceInput | null): void {
     clearTimeout(this.previewTimer);
 
+    // Поколение поднимается на смене правила, а не на старте запроса: иначе
+    // ответ на прежнее правило успевал бы лечь на экран как актуальный.
+    const generation = ++this.previewGeneration;
+
+    this.previewFailed.set(false);
+
     if (!rule) {
-      // Ответ на прежнее правило уже не нужен: поля успели уйти в недопустимое.
-      this.previewGeneration += 1;
       this.preview.set([]);
       this.isPreviewLoading.set(false);
 
@@ -391,12 +424,13 @@ export class SpendingScheduleEditSheet implements OnDestroy {
     }
 
     this.isPreviewLoading.set(true);
-    this.previewTimer = setTimeout(() => this.requestPreview(rule), PREVIEW_DEBOUNCE_MS);
+    this.previewTimer = setTimeout(
+      () => this.requestPreview(rule, generation),
+      PREVIEW_DEBOUNCE_MS,
+    );
   }
 
-  private requestPreview(rule: RecurrenceInput): void {
-    const generation = ++this.previewGeneration;
-
+  private requestPreview(rule: RecurrenceInput, generation: number): void {
     this.api.previewOccurrences(rule).subscribe({
       next: (occurrences) => {
         if (generation !== this.previewGeneration) {
@@ -406,15 +440,16 @@ export class SpendingScheduleEditSheet implements OnDestroy {
         this.preview.set(occurrences);
         this.isPreviewLoading.set(false);
       },
-      // Правило без будущих срабатываний сервер отвергает - показываем пусто.
-      // Плашку по этому запросу перехватчик не рисует, текст ошибки
-      // пользователь увидит при попытке сохранить.
+      // Плашку по этому запросу перехватчик не рисует: промежуточное правило
+      // сервер законно отвергает. Но отказ нельзя выдавать за «дат не будет» -
+      // сеть могла просто не дойти.
       error: () => {
         if (generation !== this.previewGeneration) {
           return;
         }
 
         this.preview.set([]);
+        this.previewFailed.set(true);
         this.isPreviewLoading.set(false);
       },
     });
@@ -458,6 +493,12 @@ export class SpendingScheduleEditSheet implements OnDestroy {
   }
 
   protected close(): void {
+    // Закрытие поверх незавершённого сохранения оставило бы расписание
+    // созданным, а список - без него: ответ придёт в уничтоженный лист.
+    if (this.isSaving()) {
+      return;
+    }
+
     this.dialogRef.close();
   }
 

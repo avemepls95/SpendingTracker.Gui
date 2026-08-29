@@ -34,9 +34,16 @@ export function parseCalendarDate(value: string | Date | null | undefined): Date
   return Number.isNaN(parsed.getTime()) ? null : startOfDay(parsed);
 }
 
-/** Формат, который ожидает сервер: dd.MM.yyyy. */
+/**
+ * Формат, который ожидает сервер: dd.MM.yyyy.
+ *
+ * Год дополняется до четырёх знаков: <input type="date"> отдаёт значение уже
+ * с однозначного года, и сервер такую строку разобрать не может.
+ */
 export function formatApiDate(date: Date): string {
-  return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}`;
+  const year = String(date.getFullYear()).padStart(4, '0');
+
+  return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${year}`;
 }
 
 /** Формат значения `<input type="date">`: yyyy-MM-dd. */
