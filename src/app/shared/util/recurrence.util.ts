@@ -1,8 +1,5 @@
-import {
-  INTERVAL_UNIT_LABELS,
-  IntervalUnit,
-  RecurrenceInput,
-} from '../../domain/models/models';
+import { IntervalUnit, RecurrenceInput } from '../../domain/models/models';
+import { parseCalendarDate } from './date.util';
 
 const UNIT_PLURALS: Record<IntervalUnit, readonly [string, string, string]> = {
   Hour: ['час', 'часа', 'часов'],
@@ -12,17 +9,15 @@ const UNIT_PLURALS: Record<IntervalUnit, readonly [string, string, string]> = {
   Year: ['год', 'года', 'лет'],
 };
 
-/**
- * Человекочитаемая периодичность: «раз в месяц, 15-го, в 10:00».
- * Без неё пользователь не может проверить, что настроил то, что хотел.
- */
+/** Человекочитаемая периодичность: «раз в месяц, 15-го, в 10:00, до 31.12.2026». */
 export function describeRecurrence(rule: RecurrenceInput): string {
   if (rule.recurrenceKind === 'Once') {
     return `Однократно ${rule.startDate} в ${rule.startTime}`;
   }
 
   const unit = rule.intervalUnit;
-  if (!unit) {
+  // Правило собирается по мере ввода, поэтому шаг может быть ещё не набран.
+  if (!unit || !Number.isInteger(rule.intervalValue) || rule.intervalValue < 1) {
     return 'Периодичность не задана';
   }
 
@@ -32,29 +27,42 @@ export function describeRecurrence(rule: RecurrenceInput): string {
       : `раз в ${rule.intervalValue} ${plural(rule.intervalValue, UNIT_PLURALS[unit])}`;
 
   // Для часового интервала время в сутках не фиксировано, показывать его нечестно.
-  if (unit === 'Hour') {
-    return period;
+  const parts =
+    unit === 'Hour' ? [period] : [period, dayPart(rule, unit), `в ${rule.startTime}`];
+
+  if (rule.endDate) {
+    parts.push(`до ${rule.endDate}`);
   }
 
-  const day = dayPart(rule, unit);
-
-  return [period, day, `в ${rule.startTime}`].filter(Boolean).join(', ');
-}
-
-export function unitLabel(unit: IntervalUnit): string {
-  return INTERVAL_UNIT_LABELS[unit];
+  return parts.filter(Boolean).join(', ');
 }
 
 function dayPart(rule: RecurrenceInput, unit: IntervalUnit): string {
+  // Дата разбирается, а не режется по позициям: в форму она попадает из
+  // <input type="date"> в формате yyyy-MM-dd, и нарезка дала бы другое число.
+  const anchor = parseCalendarDate(rule.startDate);
+  if (!anchor) {
+    return '';
+  }
+
   if (unit === 'Month') {
-    return `${Number(rule.startDate.slice(0, 2))}-го`;
+    return monthDayPart(anchor.getDate());
   }
 
   if (unit === 'Year') {
-    return rule.startDate.slice(0, 5);
+    return `${pad(anchor.getDate())}.${pad(anchor.getMonth() + 1)}`;
   }
 
   return '';
+}
+
+/** Якорь 29-31 числа сервер обрезает по длине месяца, поэтому число не обещаем. */
+function monthDayPart(day: number): string {
+  return day <= 28 ? `${day}-го` : `${day}-го или в последний день месяца`;
+}
+
+function pad(value: number): string {
+  return String(value).padStart(2, '0');
 }
 
 function plural(value: number, forms: readonly [string, string, string]): string {

@@ -84,7 +84,10 @@ function toRequest(input: SpendingScheduleInput): Record<string, unknown> {
 function toRule(rule: RecurrenceInput): Record<string, unknown> {
   return {
     recurrenceKind: rule.recurrenceKind,
-    intervalUnit: rule.intervalUnit,
+    // У однократных правил единицы нет, но на сервере поле - ненулябельное
+    // перечисление: null он принимает лишь как побочный эффект настройки
+    // сериализатора, а None разбирает по контракту.
+    intervalUnit: rule.intervalUnit ?? 'None',
     intervalValue: rule.intervalValue,
     startDate: rule.startDate,
     startTime: rule.startTime,

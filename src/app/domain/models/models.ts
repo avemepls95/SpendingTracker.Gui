@@ -81,6 +81,7 @@ export interface SpendingSchedule extends RecurrenceInput {
 /** Трата, созданная расписанием. */
 export interface ScheduleSpending {
   readonly id: string;
+  /** ISO-строка, как у Spending.date, а не локальная строка расписания. */
   readonly date: string;
   readonly amount: number;
   readonly currencyId: string;
@@ -96,6 +97,7 @@ export function isScheduleFinished(schedule: SpendingSchedule): boolean {
   return schedule.isActive && schedule.nextOccurrenceDate === null;
 }
 
+/** Подписи единиц интервала для выбора в форме. */
 export const INTERVAL_UNIT_LABELS: Record<IntervalUnit, string> = {
   Hour: 'час',
   Day: 'день',

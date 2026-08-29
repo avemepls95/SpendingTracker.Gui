@@ -34,7 +34,10 @@ export interface SpendingDto {
   readonly category?: CategoryDto | null;
   /** Собственные теги траты, без унаследованных от категории. */
   readonly tags?: readonly TagDto[] | null;
-  /** Расписание, породившее трату. Отсутствует у трат, заведённых вручную. */
+  /**
+   * Расписание, породившее трату. Отсутствует у трат, заведённых вручную,
+   * и во всех ответах, кроме list-with-categories: остальные его не отдают.
+   */
   readonly scheduleId?: string | null;
 }
 

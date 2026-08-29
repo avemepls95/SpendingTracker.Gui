@@ -24,6 +24,8 @@ import {
   Currency,
   INTERVAL_UNITS,
   IntervalUnit,
+  RECURRENCE_KINDS,
+  RecurrenceKind,
   ScheduleSpending,
   Spending,
   SpendingSchedule,
@@ -89,7 +91,7 @@ export function toSpendingSchedule(dto: SpendingScheduleDto): SpendingSchedule {
     category: dto.category ? toCategory(dto.category) : null,
     tags: (dto.tags ?? []).map(toTag),
     isActive: dto.isActive,
-    recurrenceKind: dto.recurrenceKind === 'Once' ? 'Once' : 'Interval',
+    recurrenceKind: toRecurrenceKind(dto.recurrenceKind),
     intervalUnit: toIntervalUnit(dto.intervalUnit),
     intervalValue: dto.intervalValue,
     startDate: dto.startDate,
@@ -119,7 +121,15 @@ function toScheduleSpending(dto: ScheduleSpendingDto): ScheduleSpending {
   };
 }
 
-/** Сервер шлёт перечисление строкой; у однократных правил это None. */
+/**
+ * Сервер шлёт перечисления строками, и у обоих есть значение None. Незнакомое
+ * значение приводится к интервальному правилу: оно показывается как «периодичность
+ * не задана», а не роняет список.
+ */
+function toRecurrenceKind(value: string): RecurrenceKind {
+  return RECURRENCE_KINDS.find((item) => item === value) ?? 'Interval';
+}
+
 function toIntervalUnit(value: string | null | undefined): IntervalUnit | null {
   const unit = INTERVAL_UNITS.find((item) => item === value);
 
