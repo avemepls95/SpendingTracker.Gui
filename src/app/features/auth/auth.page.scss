@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--sp-10);
-  min-height: 100dvh;
+  min-height: var(--app-height);
   padding: var(--sp-6);
   padding-top: calc(var(--sp-6) + var(--safe-top));
   padding-bottom: calc(var(--sp-6) + var(--safe-bottom));

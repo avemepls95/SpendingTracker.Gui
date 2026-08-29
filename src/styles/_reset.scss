@@ -15,7 +15,7 @@ html {
 }
 
 body {
-  min-height: 100dvh;
+  min-height: var(--app-height);
   font-family: var(--ff);
   font-size: var(--fs-body);
   line-height: var(--lh-normal);

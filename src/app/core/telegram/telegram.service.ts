@@ -95,6 +95,19 @@ export class TelegramService {
       webApp.disableVerticalSwipes?.();
     }
 
+    // Клиент знает, какая часть окна видна на самом деле: в iOS страница
+    // разворачивается на высоту больше экрана, и без этой поправки прокрутка
+    // достаётся ей, а не спискам внутри листов.
+    const syncViewport = (): void => {
+      const height = webApp.viewportStableHeight;
+      if (height > 0) {
+        this.document.documentElement.style.setProperty(
+          '--app-viewport-height',
+          `${height}px`,
+        );
+      }
+    };
+
     const syncInsets = (): void => {
       this.safeAreaSignal.set(webApp.safeAreaInset ?? NO_INSET);
       this.contentSafeAreaSignal.set(webApp.contentSafeAreaInset ?? NO_INSET);
@@ -104,6 +117,13 @@ export class TelegramService {
     webApp.onEvent('contentSafeAreaChanged', syncInsets);
 
     syncInsets();
+
+    // Вне клиента высоту брать неоткуда: там мост отдаёт размер окна один раз
+    // и об изменениях не сообщает, поэтому вёрстка остаётся на 100dvh.
+    if (this.isMiniApp) {
+      webApp.onEvent('viewportChanged', syncViewport);
+      syncViewport();
+    }
   }
 
   /** Красит шапку и фон клиента в цвет приложения, чтобы не было чужой полосы сверху. */

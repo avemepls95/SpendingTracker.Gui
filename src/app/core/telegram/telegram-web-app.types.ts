@@ -45,7 +45,10 @@ export interface TelegramHapticFeedback {
   selectionChanged(): void;
 }
 
-export type TelegramEventName = 'safeAreaChanged' | 'contentSafeAreaChanged';
+export type TelegramEventName =
+  | 'safeAreaChanged'
+  | 'contentSafeAreaChanged'
+  | 'viewportChanged';
 
 export interface TelegramWebApp {
   readonly initData: string;
