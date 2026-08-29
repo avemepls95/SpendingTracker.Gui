@@ -496,8 +496,10 @@ button.chip {
   text-align: left;
   transition: background-color var(--dur-fast) var(--ease);
 
+  // Подсветка под курсором обещает нажатие, поэтому достаётся только строкам,
+  // которые действительно нажимаются: у строки-факта она читается как сбой.
   @media (hover: hover) {
-    &:hover {
+    &:is(button, a):hover {
       background: var(--c-hover);
     }
   }
