@@ -118,13 +118,20 @@
                   <span class="spending__main">
                     <span class="spending__description">{{ spending.description }}</span>
 
-                    @if (spending.categories.length > 0) {
-                      <span class="spending__categories">
-                        @for (category of spending.categories; track category.id) {
-                          <span class="chip chip--tag">{{ category.title }}</span>
+                    <!-- Категория и теги - разные измерения, поэтому и метки
+                         разные: акцентная у категории, приглушённые у тегов. -->
+                    @if (spending.category || spending.tags.length > 0) {
+                      <span class="spending__markup">
+                        @if (spending.category; as category) {
+                          <span class="chip chip--category">{{ category.title }}</span>
+                        }
+                        @for (tag of spending.tags; track tag.id) {
+                          <span class="chip chip--tag">{{ tag.title }}</span>
                         }
                       </span>
-                    } @else {
+                    }
+
+                    @if (!spending.category) {
                       <span class="spending__uncategorized">
                         <app-icon name="plus" />
                         Без категории

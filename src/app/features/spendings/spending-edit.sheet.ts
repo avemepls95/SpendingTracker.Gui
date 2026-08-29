@@ -5,7 +5,7 @@ import { SheetService } from '../../core/ui/sheet.service';
 import { TelegramService } from '../../core/telegram/telegram.service';
 import { ToastService } from '../../core/ui/toast.service';
 import { SpendingApiService } from '../../domain/api/spending-api.service';
-import { Category, Currency, Spending } from '../../domain/models/models';
+import { Category, Currency, Spending, Tag } from '../../domain/models/models';
 import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { confirmAction } from '../../shared/ui/confirm.dialog';
 import {
@@ -20,11 +20,17 @@ import {
 } from '../../shared/util/date.util';
 import { parseAmount } from '../../shared/util/money.util';
 import { closeOnDismiss } from '../../shared/util/dismiss.util';
+import { categoryPath } from '../../shared/util/category-tree.util';
 import {
   CategoryPickerData,
   CategoryPickerResult,
   CategoryPickerSheet,
 } from '../../shared/ui/category-picker.sheet';
+import {
+  TagPickerData,
+  TagPickerResult,
+  TagPickerSheet,
+} from '../../shared/ui/tag-picker.sheet';
 
 export type SpendingEditResult =
   | { readonly kind: 'updated'; readonly spending: Spending }
@@ -51,17 +57,27 @@ export class SpendingEditSheet {
   protected readonly currencyId = signal(this.original.currencyId);
   protected readonly dateText = signal(toInputValue(this.original.date));
 
-  /** Категории меняются отдельными запросами и применяются сразу. */
-  protected readonly categories = signal<readonly Category[]>(this.original.categories);
+  /** Разметка меняется отдельными запросами и применяется сразу. */
+  protected readonly category = signal<Category | null>(this.original.category);
+  protected readonly tags = signal<readonly Tag[]>(this.original.tags);
 
   protected readonly isSaving = signal(false);
-  protected readonly isCategoryBusy = signal(false);
+  protected readonly isMarkupBusy = signal(false);
+
+  /** Все категории владельца: нужны, чтобы показать путь до выбранной. */
+  private readonly allCategories = signal<readonly Category[]>([]);
 
   protected readonly amount = computed(() => parseAmount(this.amountText()));
 
   protected readonly currencyCode = computed(
     () => this.currencies.find(this.currencyId())?.code ?? 'Выбрать',
   );
+
+  protected readonly categoryLabel = computed(() => {
+    const category = this.category();
+
+    return category ? categoryPath(category, this.allCategories()) : 'Без категории';
+  });
 
   protected readonly descriptionError = computed(() =>
     this.description().trim() === '' ? 'Укажите описание' : null,
@@ -90,9 +106,13 @@ export class SpendingEditSheet {
   );
 
   constructor() {
-    // Категории применяются сразу, поэтому лист обязан вернуть их странице
+    // Разметка применяется сразу, поэтому лист обязан вернуть её странице
     // при любом способе закрытия, включая Escape и клик мимо.
     closeOnDismiss(this.dialogRef, () => this.close());
+
+    this.api.getCategories().subscribe({
+      next: (categories) => this.allCategories.set(categories),
+    });
   }
 
   // ------------------------------------------------------------ поля
@@ -123,13 +143,16 @@ export class SpendingEditSheet {
       });
   }
 
-  // ------------------------------------------------------------ категории
+  // ------------------------------------------------------------ категория
 
-  protected addCategory(): void {
+  protected pickCategory(): void {
     this.sheets
       .openSheet<CategoryPickerResult, CategoryPickerData>(
         CategoryPickerSheet,
-        { excludedIds: this.categories().map((category) => category.id) },
+        {
+          excludedIds: this.category() ? [this.category()!.id] : [],
+          rootOptionLabel: this.category() ? 'Убрать категорию' : undefined,
+        },
         { ariaLabel: 'Выбор категории' },
       )
       .closed.subscribe((result) => {
@@ -137,43 +160,102 @@ export class SpendingEditSheet {
           return;
         }
 
-        this.isCategoryBusy.set(true);
+        this.isMarkupBusy.set(true);
 
         const request =
-          result.kind === 'existing'
-            ? this.api.linkSpendingToCategory(this.original.id, result.category.id)
-            : this.api.linkSpendingToNewCategory(this.original.id, result.title);
+          result.kind === 'new'
+            ? this.api.linkSpendingToNewCategory(this.original.id, result.title)
+            : this.api.setSpendingCategory(
+                this.original.id,
+                result.kind === 'root' ? null : result.category.id,
+              );
 
         request.subscribe({
-          next: () => this.refreshCategories(),
-          error: () => this.isCategoryBusy.set(false),
+          next: () => this.refreshMarkup(),
+          error: () => this.isMarkupBusy.set(false),
         });
       });
   }
 
-  protected removeCategory(category: Category): void {
-    this.isCategoryBusy.set(true);
+  // ------------------------------------------------------------ теги
 
-    this.api.unlinkSpendingFromCategory(this.original.id, category.id).subscribe({
-      next: () => this.refreshCategories(),
-      error: () => this.isCategoryBusy.set(false),
+  protected addTag(): void {
+    this.sheets
+      .openSheet<TagPickerResult, TagPickerData>(
+        TagPickerSheet,
+        { excludedIds: this.tags().map((tag) => tag.id) },
+        { ariaLabel: 'Выбор тега' },
+      )
+      .closed.subscribe((result) => {
+        if (!result) {
+          return;
+        }
+
+        this.isMarkupBusy.set(true);
+
+        if (result.kind === 'existing') {
+          this.api.setSpendingTag(this.original.id, result.tag.id, true).subscribe({
+            next: () => this.refreshMarkup(),
+            error: () => this.isMarkupBusy.set(false),
+          });
+
+          return;
+        }
+
+        // Идентификатор нового тега знает только сервер, поэтому связь
+        // навешивается после того, как список тегов перечитан.
+        this.api.createTag(result.title).subscribe({
+          next: () => this.attachCreatedTag(result.title),
+          error: () => this.isMarkupBusy.set(false),
+        });
+      });
+  }
+
+  protected removeTag(tag: Tag): void {
+    this.isMarkupBusy.set(true);
+
+    this.api.setSpendingTag(this.original.id, tag.id, false).subscribe({
+      next: () => this.refreshMarkup(),
+      error: () => this.isMarkupBusy.set(false),
+    });
+  }
+
+  private attachCreatedTag(title: string): void {
+    this.api.getTags().subscribe({
+      next: (tags) => {
+        const created = tags.find(
+          (tag) => tag.title.toLowerCase() === title.toLowerCase(),
+        );
+
+        if (!created) {
+          this.isMarkupBusy.set(false);
+          return;
+        }
+
+        this.api.setSpendingTag(this.original.id, created.id, true).subscribe({
+          next: () => this.refreshMarkup(),
+          error: () => this.isMarkupBusy.set(false),
+        });
+      },
+      error: () => this.isMarkupBusy.set(false),
     });
   }
 
   /**
-   * Перечитывает трату после изменения связей.
+   * Перечитывает трату после изменения разметки.
    *
-   * Список категорий приходит с сервера, а не собирается на клиенте: связь
-   * может создать новую категорию, идентификатор которой знает только сервер.
+   * Категория и теги приходят с сервера, а не собираются на клиенте: связь
+   * может создать новую сущность, идентификатор которой знает только сервер.
    */
-  private refreshCategories(): void {
+  private refreshMarkup(): void {
     this.api.getSpendingById(this.original.id).subscribe({
       next: (spending) => {
-        this.categories.set(spending.categories);
-        this.isCategoryBusy.set(false);
+        this.category.set(spending.category);
+        this.tags.set(spending.tags);
+        this.isMarkupBusy.set(false);
         this.telegram.impact('light');
       },
-      error: () => this.isCategoryBusy.set(false),
+      error: () => this.isMarkupBusy.set(false),
     });
   }
 
@@ -194,7 +276,8 @@ export class SpendingEditSheet {
       amount,
       currencyId: this.currencyId(),
       date: formatInputDate(date),
-      categories: this.categories(),
+      category: this.category(),
+      tags: this.tags(),
     };
 
     this.api
@@ -238,11 +321,11 @@ export class SpendingEditSheet {
   }
 
   protected close(): void {
-    // Категории применяются сразу, поэтому даже при отказе от правки полей
-    // список нужно вернуть обновлённым.
+    // Разметка применяется сразу, поэтому даже при отказе от правки полей
+    // трату нужно вернуть обновлённой.
     this.dialogRef.close({
       kind: 'updated',
-      spending: { ...this.original, categories: this.categories() },
+      spending: { ...this.original, category: this.category(), tags: this.tags() },
     });
   }
 }

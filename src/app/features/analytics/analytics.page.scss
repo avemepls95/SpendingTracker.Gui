@@ -16,6 +16,56 @@
   }
 }
 
+.views {
+  display: flex;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-4) var(--sp-3);
+
+  .chip {
+    --icon-size: 15px;
+  }
+}
+
+// Фильтр по тегам общий для обоих разрезов, поэтому стоит над содержимым,
+// а не внутри диаграммы.
+.filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-4) var(--sp-3);
+}
+
+.filter__chip {
+  padding-right: var(--sp-1);
+}
+
+.filter__remove {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-full);
+  color: inherit;
+  --icon-size: 12px;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: var(--tap-min);
+    height: var(--tap-min);
+    transform: translate(-50%, -50%);
+  }
+}
+
+.filter__add {
+  color: var(--c-accent);
+  border-style: dashed;
+  --icon-size: 14px;
+}
+
 .range {
   display: flex;
   gap: var(--sp-3);
@@ -210,4 +260,17 @@
   font-size: var(--fs-xs);
   color: var(--c-text-2);
   text-align: center;
+}
+
+// Группа тега подписывается прямо в строке: «Франция» и «Вредно» - разные
+// вопросы к одним и тем же тратам.
+.bar__group {
+  margin-left: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-regular);
+  color: var(--c-text-3);
+}
+
+.bar__fill--selected {
+  background: var(--c-text);
 }

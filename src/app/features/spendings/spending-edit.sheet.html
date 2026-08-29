@@ -82,22 +82,46 @@
       }
     </div>
 
-    <section class="categories">
-      <div class="categories__head">
-        <h3 class="field__label">Категории</h3>
-        <span class="categories__hint">Сохраняются сразу</span>
+    <section class="markup">
+      <div class="markup__head">
+        <h3 class="field__label">Категория</h3>
+        <span class="markup__hint">Сохраняется сразу</span>
       </div>
 
-      <div class="categories__list">
-        @for (category of categories(); track category.id) {
-          <span class="chip categories__chip">
-            {{ category.title }}
+      <button
+        type="button"
+        class="panel panel--bordered category-row"
+        [disabled]="isMarkupBusy()"
+        (click)="pickCategory()"
+      >
+        <app-icon class="category-row__icon" name="folder" />
+        <span class="category-row__title truncate" [class.category-row__title--empty]="!category()">
+          {{ categoryLabel() }}
+        </span>
+        <app-icon class="category-row__chevron" name="chevron-right" />
+      </button>
+
+      <p class="markup__about">
+        Категория отвечает на вопрос «на что потрачено» и всегда одна.
+      </p>
+    </section>
+
+    <section class="markup">
+      <div class="markup__head">
+        <h3 class="field__label">Теги</h3>
+        <span class="markup__hint">Сохраняются сразу</span>
+      </div>
+
+      <div class="chips">
+        @for (tag of tags(); track tag.id) {
+          <span class="chip chips__chip">
+            {{ tag.title }}
             <button
               type="button"
-              class="categories__remove"
-              [attr.aria-label]="'Убрать категорию ' + category.title"
-              [disabled]="isCategoryBusy()"
-              (click)="removeCategory(category)"
+              class="chips__remove"
+              [attr.aria-label]="'Снять тег ' + tag.title"
+              [disabled]="isMarkupBusy()"
+              (click)="removeTag(tag)"
             >
               <app-icon name="close" />
             </button>
@@ -106,14 +130,19 @@
 
         <button
           type="button"
-          class="chip categories__add"
-          [disabled]="isCategoryBusy()"
-          (click)="addCategory()"
+          class="chip chips__add"
+          [disabled]="isMarkupBusy()"
+          (click)="addTag()"
         >
           <app-icon name="plus" />
           Добавить
         </button>
       </div>
+
+      <p class="markup__about">
+        Теги - второе измерение: место, поездка, характер расхода. Теги
+        категории действуют и без повторной пометки.
+      </p>
     </section>
   </div>
 

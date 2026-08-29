@@ -1,0 +1,76 @@
+<div class="sheet" appSwipeToClose (dismissed)="close()">
+  <div class="sheet__grabber" aria-hidden="true"></div>
+
+  <div class="sheet__header">
+    <h2 class="sheet__title">{{ title }}</h2>
+    @if (isEdit) {
+      <button
+        type="button"
+        class="icon-btn icon-btn--danger"
+        aria-label="Удалить тег"
+        [disabled]="isSaving()"
+        (click)="remove()"
+      >
+        <app-icon name="trash" />
+      </button>
+    }
+    <button type="button" class="icon-btn" aria-label="Закрыть" (click)="close()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <div class="sheet__body">
+    <div class="field" [class.field--invalid]="nameError()">
+      <label class="field__label" for="tag-name">Название</label>
+      <input
+        id="tag-name"
+        class="field__control"
+        type="text"
+        placeholder="Например, Франция"
+        autocomplete="off"
+        [value]="name()"
+        (input)="onName($event)"
+      />
+      @if (nameError(); as error) {
+        <p class="field__error">{{ error }}</p>
+      }
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="tag-group">Группа</label>
+      <input
+        id="tag-group"
+        class="field__control"
+        type="text"
+        placeholder="Необязательно"
+        autocomplete="off"
+        [value]="group()"
+        (input)="onGroup($event)"
+      />
+      <div class="suggestions">
+        @for (suggestion of groupSuggestions; track suggestion) {
+          <button
+            type="button"
+            class="chip"
+            [class.chip--selected]="group() === suggestion"
+            [attr.aria-pressed]="group() === suggestion"
+            (click)="pickGroup(suggestion)"
+          >
+            {{ suggestion }}
+          </button>
+        }
+      </div>
+      <p class="hint">
+        Группа нужна аналитике: она разводит места, поездки и характер расхода
+        по разным разрезам.
+      </p>
+    </div>
+  </div>
+
+  <div class="sheet__footer">
+    <button type="button" class="btn btn--secondary" (click)="close()">Отмена</button>
+    <button type="button" class="btn btn--primary" [disabled]="!canSave()" (click)="save()">
+      {{ isSaving() ? 'Сохраняем…' : 'Сохранить' }}
+    </button>
+  </div>
+</div>

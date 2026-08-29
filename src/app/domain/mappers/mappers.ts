@@ -6,6 +6,9 @@ import {
   CategoryDto,
   CurrencyDto,
   SpendingDto,
+  TagAnalyticsDto,
+  TagAnalyticsItemDto,
+  TagDto,
 } from '../dto/api.dto';
 import {
   ACCOUNT_TYPES,
@@ -17,6 +20,9 @@ import {
   CategoryAnalyticsItem,
   Currency,
   Spending,
+  Tag,
+  TagAnalytics,
+  TagAnalyticsItem,
 } from '../models/models';
 
 export function toCurrency(dto: CurrencyDto): Currency {
@@ -28,12 +34,27 @@ export function toCurrency(dto: CurrencyDto): Currency {
   };
 }
 
+export function toTag(dto: TagDto): Tag {
+  return {
+    id: dto.id,
+    title: dto.title,
+    group: dto.group ?? null,
+  };
+}
+
+/**
+ * Приводит категорию.
+ *
+ * Сервер настроен не сериализовать null, поэтому `parentId` у корневых
+ * категорий в ответе просто отсутствует - это не признак ошибки.
+ */
 export function toCategory(dto: CategoryDto): Category {
   return {
     id: dto.id,
     title: dto.title,
     createDate: dto.createDate ?? null,
-    parents: (dto.parents ?? []).map(toCategory),
+    parentId: dto.parentId ?? null,
+    tags: (dto.tags ?? []).map(toTag),
   };
 }
 
@@ -45,7 +66,8 @@ export function toSpending(dto: SpendingDto): Spending {
     date: dto.date,
     createDate: dto.createDate,
     description: dto.description,
-    categories: (dto.categories ?? []).map(toCategory),
+    category: dto.category ? toCategory(dto.category) : null,
+    tags: (dto.tags ?? []).map(toTag),
   };
 }
 
@@ -68,7 +90,7 @@ export function toAccountsSummary(dto: AccountsSummaryDto): AccountsSummary {
 }
 
 /**
- * Приводит ответ аналитики.
+ * Приводит ответ аналитики по категориям.
  *
  * Список категорий сервер может прислать под одним из трёх имён - контракт
  * недоступен, а в прежнем коде ответ приводился к типу голым `as`, поэтому
@@ -80,6 +102,23 @@ export function toCategoryAnalytics(dto: CategoryAnalyticsDto): CategoryAnalytic
   return {
     totalAmount: dto.totalAmount ?? 0,
     categories: roots.map(toCategoryAnalyticsItem),
+  };
+}
+
+export function toTagAnalytics(dto: TagAnalyticsDto): TagAnalytics {
+  return {
+    totalAmount: dto.totalAmount ?? 0,
+    untaggedAmount: dto.untaggedAmount ?? 0,
+    tags: (dto.tagInfos ?? []).map(toTagAnalyticsItem),
+  };
+}
+
+function toTagAnalyticsItem(dto: TagAnalyticsItemDto): TagAnalyticsItem {
+  return {
+    tagId: dto.tagId,
+    tagTitle: dto.tagTitle,
+    group: dto.group ?? null,
+    amount: dto.amount ?? 0,
   };
 }
 

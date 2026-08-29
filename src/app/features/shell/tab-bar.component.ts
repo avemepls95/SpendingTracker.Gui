@@ -46,7 +46,7 @@ export class TabBarComponent {
     { route: '/spendings', label: 'Траты', icon: 'receipt' },
     { route: '/analytics', label: 'Аналитика', icon: 'chart' },
     { route: '/accounts', label: 'Счета', icon: 'wallet' },
-    { route: '/categories', label: 'Категории', icon: 'tag' },
+    { route: '/categories', label: 'Разметка', icon: 'folder' },
     { route: '/settings', label: 'Ещё', icon: 'sliders' },
   ];
 

@@ -10,6 +10,8 @@ import {
   CategoryDto,
   CurrencyDto,
   SpendingDto,
+  TagAnalyticsDto,
+  TagDto,
   UserSettingsDto,
 } from '../dto/api.dto';
 import {
@@ -18,6 +20,8 @@ import {
   toCategoryAnalytics,
   toCurrency,
   toSpending,
+  toTag,
+  toTagAnalytics,
 } from '../mappers/mappers';
 import {
   AccountType,
@@ -26,6 +30,8 @@ import {
   CategoryAnalytics,
   Currency,
   Spending,
+  Tag,
+  TagAnalytics,
   UserAccount,
   UserSettings,
 } from '../models/models';
@@ -119,8 +125,8 @@ export class SpendingApiService {
       .pipe(map((items) => (items ?? []).map(toCategory)));
   }
 
-  createCategory(title: string): Observable<unknown> {
-    return this.http.post(this.url('v1/category/create'), { title });
+  createCategory(title: string, parentId: string | null = null): Observable<unknown> {
+    return this.http.post(this.url('v1/category/create'), { title, parentId });
   }
 
   updateCategory(category: { id: string; title: string }): Observable<unknown> {
@@ -134,10 +140,52 @@ export class SpendingApiService {
     return this.http.post(this.url('v1/category/delete'), { id });
   }
 
-  // ------------------------------------- связи траты и категорий
+  /** Переносит категорию к другому родителю. null - в корень дерева. */
+  moveCategory(categoryId: string, newParentId: string | null): Observable<unknown> {
+    return this.http.post(this.url('v1/category/move'), { categoryId, newParentId });
+  }
 
-  linkSpendingToCategory(spendingId: string, categoryId: string): Observable<unknown> {
-    return this.http.post(this.url('v1/spending/add-to-exist-category'), {
+  // ------------------------------------------------------------ теги
+
+  getTags(): Observable<readonly Tag[]> {
+    return this.http
+      .get<readonly TagDto[]>(this.url('v1/tag/list'))
+      .pipe(map((items) => (items ?? []).map(toTag)));
+  }
+
+  createTag(title: string, group: string | null = null): Observable<unknown> {
+    return this.http.post(this.url('v1/tag/create'), { title, group });
+  }
+
+  updateTag(tag: { id: string; title: string; group: string | null }): Observable<unknown> {
+    return this.http.post(this.url('v1/tag/update'), tag);
+  }
+
+  deleteTag(id: string): Observable<unknown> {
+    return this.http.post(this.url('v1/tag/delete'), { id });
+  }
+
+  setCategoryTag(categoryId: string, tagId: string, isSet: boolean): Observable<unknown> {
+    return this.http.post(this.url('v1/tag/set-for-category'), {
+      categoryId,
+      tagId,
+      isSet,
+    });
+  }
+
+  setSpendingTag(spendingId: string, tagId: string, isSet: boolean): Observable<unknown> {
+    return this.http.post(this.url('v1/tag/set-for-spending'), {
+      spendingId,
+      tagId,
+      isSet,
+    });
+  }
+
+  // ------------------------------------- связь траты и категории
+
+  /** Проставляет трате категорию. null - снимает разметку. */
+  setSpendingCategory(spendingId: string, categoryId: string | null): Observable<unknown> {
+    return this.http.post(this.url('v1/spending/set-category'), {
       spendingId,
       categoryId,
     });
@@ -146,43 +194,11 @@ export class SpendingApiService {
   linkSpendingToNewCategory(
     spendingId: string,
     newCategoryTitle: string,
+    parentId: string | null = null,
   ): Observable<unknown> {
     return this.http.post(this.url('v1/spending/add-to-new-category'), {
       spendingId,
       newCategoryTitle,
-    });
-  }
-
-  unlinkSpendingFromCategory(
-    spendingId: string,
-    categoryId: string,
-  ): Observable<unknown> {
-    return this.http.post(this.url('v1/spending/remove-from-category'), {
-      spendingId,
-      categoryId,
-    });
-  }
-
-  linkCategoryToParent(childId: string, parentId: string): Observable<unknown> {
-    return this.http.post(this.url('v1/category/child/add-exist'), {
-      parentId,
-      childId,
-    });
-  }
-
-  linkCategoryToNewParent(
-    childId: string,
-    newParentTitle: string,
-  ): Observable<unknown> {
-    return this.http.post(this.url('v1/category/parent/add-as-new'), {
-      childId,
-      newParentTitle,
-    });
-  }
-
-  unlinkCategoryFromParent(childId: string, parentId: string): Observable<unknown> {
-    return this.http.post(this.url('v1/category/remove-child-from-parent'), {
-      childId,
       parentId,
     });
   }
@@ -246,15 +262,45 @@ export class SpendingApiService {
     dateFrom: Date,
     dateTo: Date,
     targetCurrencyId: string,
+    tagIds: readonly string[] = [],
   ): Observable<CategoryAnalytics> {
-    const params = new HttpParams()
+    return this.http
+      .get<CategoryAnalyticsDto>(this.url('v1/analytics/by-date-range'), {
+        params: this.analyticsParams(dateFrom, dateTo, targetCurrencyId, tagIds),
+      })
+      .pipe(map(toCategoryAnalytics));
+  }
+
+  getTagsAnalytics(
+    dateFrom: Date,
+    dateTo: Date,
+    targetCurrencyId: string,
+    tagIds: readonly string[] = [],
+  ): Observable<TagAnalytics> {
+    return this.http
+      .get<TagAnalyticsDto>(this.url('v1/analytics/tags-by-date-range'), {
+        params: this.analyticsParams(dateFrom, dateTo, targetCurrencyId, tagIds),
+      })
+      .pipe(map(toTagAnalytics));
+  }
+
+  /** Теги передаются повторяющимся параметром: так их принимает привязка модели. */
+  private analyticsParams(
+    dateFrom: Date,
+    dateTo: Date,
+    targetCurrencyId: string,
+    tagIds: readonly string[],
+  ): HttpParams {
+    let params = new HttpParams()
       .set('dateFrom', formatApiDate(dateFrom))
       .set('dateTo', formatApiDate(dateTo))
       .set('targetCurrencyId', targetCurrencyId);
 
-    return this.http
-      .get<CategoryAnalyticsDto>(this.url('v1/analytics/by-date-range'), { params })
-      .pipe(map(toCategoryAnalytics));
+    for (const tagId of tagIds) {
+      params = params.append('tagIds', tagId);
+    }
+
+    return params;
   }
 
   private url(path: string): string {

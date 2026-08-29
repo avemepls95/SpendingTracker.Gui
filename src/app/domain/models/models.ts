@@ -7,12 +7,21 @@ export interface Currency {
   readonly flagEmojiCode: string;
 }
 
+/** Второе измерение разметки: место, поездка, характер расхода. */
+export interface Tag {
+  readonly id: string;
+  readonly title: string;
+  readonly group: string | null;
+}
+
 export interface Category {
   readonly id: string;
   readonly title: string;
   readonly createDate: string | null;
-  /** Родительские категории. Дерево строится вверх: от траты к обобщению. */
-  readonly parents: readonly Category[];
+  /** Категория, в которую вложена текущая. null - категория в корне дерева. */
+  readonly parentId: string | null;
+  /** Теги самой категории: действуют на все её траты и на траты вложенных категорий. */
+  readonly tags: readonly Tag[];
 }
 
 export interface Spending {
@@ -22,7 +31,10 @@ export interface Spending {
   readonly date: string;
   readonly createDate: string;
   readonly description: string;
-  readonly categories: readonly Category[];
+  /** Категория траты. null - трата не разнесена. */
+  readonly category: Category | null;
+  /** Собственные теги траты, без унаследованных от категории. */
+  readonly tags: readonly Tag[];
 }
 
 export const ACCOUNT_TYPES = [
@@ -73,6 +85,20 @@ export interface CategoryAnalytics {
   readonly categories: readonly CategoryAnalyticsItem[];
 }
 
+export interface TagAnalyticsItem {
+  readonly tagId: string;
+  readonly tagTitle: string;
+  readonly group: string | null;
+  readonly amount: number;
+}
+
+export interface TagAnalytics {
+  readonly totalAmount: number;
+  /** Траты без единого тега - ни своего, ни унаследованного от категории. */
+  readonly untaggedAmount: number;
+  readonly tags: readonly TagAnalyticsItem[];
+}
+
 /** Подписи и признаки типов счетов. */
 export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   DebitCard: 'Дебетовая карта',
@@ -81,3 +107,6 @@ export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   Brokerage: 'Брокерский счёт',
   Other: 'Другое',
 };
+
+/** Группа для тегов, у которых она не задана. */
+export const UNGROUPED_TAG_LABEL = 'Без группы';

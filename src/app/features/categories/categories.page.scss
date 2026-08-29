@@ -1,3 +1,9 @@
+.modes {
+  display: flex;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-4) var(--sp-3);
+}
+
 .content {
   display: flex;
   flex-direction: column;
@@ -5,6 +11,63 @@
   max-width: var(--content-max);
   margin: 0 auto;
   padding: 0 var(--sp-4) var(--sp-6);
+}
+
+// Строка дерева: шеврон раскрывает ветку, остальная площадь открывает правку.
+.tree-row {
+  display: flex;
+  align-items: center;
+}
+
+.tree-row + .tree-row {
+  border-top: 1px solid var(--c-border);
+}
+
+// Уровень читается из data-атрибута - так же, как в диаграмме аналитики.
+.tree-row[data-level='1'] .tree-row__button {
+  padding-left: var(--sp-4);
+}
+
+.tree-row[data-level='2'] .tree-row__button {
+  padding-left: var(--sp-8);
+}
+
+.tree-row[data-level='3'] .tree-row__button {
+  padding-left: var(--sp-12);
+}
+
+.tree-row__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: var(--tap-min);
+  color: var(--c-text-2);
+  --icon-size: 16px;
+
+  &:active {
+    background: var(--c-pressed);
+  }
+}
+
+.tree-row__toggle--empty {
+  pointer-events: none;
+}
+
+.tree-row__button {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: 1;
+  min-width: 0;
+  min-height: var(--tap-min);
+  padding: var(--sp-3) var(--sp-4) var(--sp-3) 0;
+  text-align: left;
+
+  &:active {
+    background: var(--c-pressed);
+  }
 }
 
 .category {
@@ -19,18 +82,21 @@
 .category__main {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--sp-1);
   flex: 1;
   min-width: 0;
 }
 
 .category__title {
+  flex: 1;
+  min-width: 0;
   font-weight: var(--fw-medium);
 }
 
-.category__parents {
-  font-size: var(--fs-xs);
-  color: var(--c-text-2);
+.category__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
 }
 
 .category__chevron {
@@ -41,4 +107,19 @@
 .category__skeleton {
   width: 45%;
   height: 14px;
+}
+
+.tag-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.tag-group__label {
+  padding: 0 var(--sp-1);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--c-text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }

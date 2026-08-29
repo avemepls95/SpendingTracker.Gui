@@ -50,3 +50,81 @@
   width: 60%;
   height: 14px;
 }
+
+// Снятие разметки - не создание, поэтому пункт оформлен обычной строкой,
+// а не пунктирной рамкой «создать».
+.root-option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-3) var(--sp-4);
+  text-align: left;
+  color: var(--c-text-2);
+}
+
+.root-option__icon {
+  display: inline-flex;
+  --icon-size: 18px;
+}
+
+// Строка дерева: шеврон раскрывает ветку, остальная площадь выбирает категорию.
+.picker-row {
+  display: flex;
+  align-items: center;
+}
+
+.picker-row + .picker-row {
+  border-top: 1px solid var(--c-border);
+}
+
+// Уровень читается из data-атрибута: так же, как в диаграмме аналитики.
+.picker-row[data-level='1'] .picker-row__button {
+  padding-left: var(--sp-4);
+}
+
+.picker-row[data-level='2'] .picker-row__button {
+  padding-left: var(--sp-8);
+}
+
+.picker-row[data-level='3'] .picker-row__button {
+  padding-left: var(--sp-12);
+}
+
+.picker-row__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: var(--tap-min);
+  color: var(--c-text-2);
+  --icon-size: 16px;
+
+  &:active {
+    background: var(--c-pressed);
+  }
+}
+
+.picker-row__toggle--empty {
+  pointer-events: none;
+}
+
+.picker-row__button {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: 1;
+  min-width: 0;
+  padding: var(--sp-3) var(--sp-4) var(--sp-3) 0;
+  min-height: var(--tap-min);
+  text-align: left;
+
+  &:active {
+    background: var(--c-pressed);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+  }
+}

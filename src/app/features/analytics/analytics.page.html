@@ -27,6 +27,50 @@
   </div>
 }
 
+<div class="views" role="group" aria-label="Разрез отчёта">
+  <button
+    type="button"
+    class="chip"
+    [class.chip--selected]="view() === 'categories'"
+    [attr.aria-pressed]="view() === 'categories'"
+    (click)="selectView('categories')"
+  >
+    <app-icon name="folder" />
+    По категориям
+  </button>
+  <button
+    type="button"
+    class="chip"
+    [class.chip--selected]="view() === 'tags'"
+    [attr.aria-pressed]="view() === 'tags'"
+    (click)="selectView('tags')"
+  >
+    <app-icon name="tag" />
+    По тегам
+  </button>
+</div>
+
+<div class="filter">
+  @for (tag of selectedTags(); track tag.id) {
+    <span class="chip chip--selected filter__chip">
+      {{ tag.title }}
+      <button
+        type="button"
+        class="filter__remove"
+        [attr.aria-label]="'Убрать из фильтра тег ' + tag.title"
+        (click)="removeTagFilter(tag)"
+      >
+        <app-icon name="close" />
+      </button>
+    </span>
+  }
+
+  <button type="button" class="chip filter__add" (click)="addTagFilter()">
+    <app-icon name="plus" />
+    Тег
+  </button>
+</div>
+
 @switch (status()) {
   @case ('loading') {
     <div class="content" aria-busy="true">
@@ -68,7 +112,11 @@
       <app-empty-state
         icon="chart"
         title="За этот период трат нет"
-        hint="Выберите другой период или дождитесь новых чеков от бота."
+        [hint]="
+          selectedTags().length > 0
+            ? 'Ни одна трата не несёт всех выбранных тегов. Уберите часть из фильтра.'
+            : 'Выберите другой период или дождитесь новых чеков от бота.'
+        "
       />
     } @else {
       <div class="content">
@@ -79,54 +127,109 @@
           </p>
         </section>
 
-        @if (hasUncategorizedOnly()) {
-          <!-- Именно этого объяснения не хватало прежнему экрану: он показывал
-               итог и оставлял ниже немую пустоту, неотличимую от сбоя. -->
-          <app-empty-state
-            icon="tag"
-            title="Траты не разнесены по категориям"
-            hint="Итог посчитан, но разбивки нет: ни одна трата за этот период не отнесена к категории. Откройте трату на вкладке «Траты» и добавьте категорию."
-          />
+        @if (view() === 'categories') {
+          @if (hasUncategorizedOnly()) {
+            <!-- Именно этого объяснения не хватало прежнему экрану: он показывал
+                 итог и оставлял ниже немую пустоту, неотличимую от сбоя. -->
+            <app-empty-state
+              icon="folder"
+              title="Траты не разнесены по категориям"
+              hint="Итог посчитан, но разбивки нет: ни одна трата за этот период не отнесена к категории. Откройте трату на вкладке «Траты» и выберите категорию."
+            />
+          } @else {
+            <ul class="bars">
+              @for (row of rows(); track row.key) {
+                <li class="bar" [attr.data-level]="row.level">
+                  @if (row.hasChildren) {
+                    <button
+                      type="button"
+                      class="bar__toggle"
+                      [attr.aria-expanded]="row.isExpanded"
+                      [attr.aria-label]="
+                        (row.isExpanded ? 'Свернуть ' : 'Раскрыть ') + row.title
+                      "
+                      (click)="toggle(row)"
+                    >
+                      <app-icon
+                        [name]="row.isExpanded ? 'chevron-down' : 'chevron-right'"
+                      />
+                    </button>
+                  } @else {
+                    <span class="bar__toggle bar__toggle--empty" aria-hidden="true"></span>
+                  }
+
+                  <button type="button" class="bar__button" (click)="openCategory(row)">
+                    <span class="bar__head">
+                      <span class="bar__title truncate">{{ row.title }}</span>
+                      <span class="bar__share">{{ row.share }}%</span>
+                      <span class="bar__amount amount">{{ row.amount | money }}</span>
+                    </span>
+
+                    <span class="bar__track">
+                      <span class="bar__fill" [style.width.%]="row.width"></span>
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+
+            <p class="hint">
+              Нажмите категорию, чтобы посмотреть траты в ней.
+            </p>
+          }
         } @else {
-          <ul class="bars">
-            @for (row of rows(); track row.key) {
-              <li class="bar" [attr.data-level]="row.level">
-                @if (row.hasChildren) {
+          @if (hasUntaggedOnly()) {
+            <app-empty-state
+              icon="tag"
+              title="На тратах нет тегов"
+              hint="Итог посчитан, но разрез пуст: ни одна трата за этот период не помечена тегом и не лежит в категории с тегом."
+            />
+          } @else {
+            <ul class="bars">
+              @for (row of tagRows(); track row.tagId) {
+                <li class="bar">
                   <button
                     type="button"
-                    class="bar__toggle"
-                    [attr.aria-expanded]="row.isExpanded"
-                    [attr.aria-label]="
-                      (row.isExpanded ? 'Свернуть ' : 'Раскрыть ') + row.title
-                    "
-                    (click)="toggle(row)"
+                    class="bar__button"
+                    [attr.aria-pressed]="row.isSelected"
+                    (click)="toggleTagFilter(row)"
                   >
-                    <app-icon
-                      [name]="row.isExpanded ? 'chevron-down' : 'chevron-right'"
-                    />
+                    <span class="bar__head">
+                      <span class="bar__title truncate">
+                        {{ row.title }}
+                        @if (row.group; as group) {
+                          <span class="bar__group">{{ group }}</span>
+                        }
+                      </span>
+                      <span class="bar__share">{{ row.share }}%</span>
+                      <span class="bar__amount amount">{{ row.amount | money }}</span>
+                    </span>
+
+                    <span class="bar__track">
+                      <span
+                        class="bar__fill"
+                        [class.bar__fill--selected]="row.isSelected"
+                        [style.width.%]="row.width"
+                      ></span>
+                    </span>
                   </button>
-                } @else {
-                  <span class="bar__toggle bar__toggle--empty" aria-hidden="true"></span>
-                }
+                </li>
+              }
+            </ul>
 
-                <button type="button" class="bar__button" (click)="openCategory(row)">
-                  <span class="bar__head">
-                    <span class="bar__title truncate">{{ row.title }}</span>
-                    <span class="bar__share">{{ row.share }}%</span>
-                    <span class="bar__amount amount">{{ row.amount | money }}</span>
-                  </span>
-
-                  <span class="bar__track">
-                    <span class="bar__fill" [style.width.%]="row.width"></span>
-                  </span>
-                </button>
-              </li>
+            @if (untaggedAmount() > 0) {
+              <p class="hint">
+                Без тегов: {{ untaggedAmount() | money }}&nbsp;{{ currencyCode() }}.
+              </p>
             }
-          </ul>
 
-          <p class="hint">
-            Нажмите категорию, чтобы посмотреть траты в ней.
-          </p>
+            <!-- У траты может быть несколько тегов, и она попадает в каждую
+                 строку целиком: сумма строк не обязана сходиться с итогом. -->
+            <p class="hint">
+              Трата с несколькими тегами учтена в каждом из них, поэтому сумма
+              строк может превышать итог. Нажмите тег, чтобы сузить отчёт.
+            </p>
+          }
         }
       </div>
     }

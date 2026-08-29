@@ -36,28 +36,48 @@
       }
     </div>
 
+    <section class="block">
+      <div class="block__head">
+        <h3 class="field__label">Входит в категорию</h3>
+        @if (isEdit) {
+          <span class="block__hint">Сохраняется сразу</span>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="panel panel--bordered parent"
+        [disabled]="isLinkBusy()"
+        (click)="changeParent()"
+      >
+        <app-icon class="parent__icon" name="folder" />
+        <span class="parent__title truncate">{{ parentLabel() }}</span>
+        <app-icon class="parent__chevron" name="chevron-right" />
+      </button>
+
+      <p class="block__about">
+        Траты этой категории попадут и в родительскую - так в аналитике
+        получается дерево.
+      </p>
+    </section>
+
     @if (isEdit) {
-      <section class="parents">
-        <div class="parents__head">
-          <h3 class="field__label">Входит в категории</h3>
-          <span class="parents__hint">Сохраняются сразу</span>
+      <section class="block">
+        <div class="block__head">
+          <h3 class="field__label">Теги категории</h3>
+          <span class="block__hint">Сохраняются сразу</span>
         </div>
 
-        <p class="parents__about">
-          Траты этой категории попадут и в родительскую - так в аналитике
-          получается дерево.
-        </p>
-
-        <div class="parents__list">
-          @for (parent of parents(); track parent.id) {
-            <span class="chip parents__chip">
-              {{ parent.title }}
+        <div class="chips">
+          @for (tag of tags(); track tag.id) {
+            <span class="chip chip--tag chips__chip">
+              {{ tag.title }}
               <button
                 type="button"
-                class="parents__remove"
-                [attr.aria-label]="'Убрать из категории ' + parent.title"
-                [disabled]="isParentBusy()"
-                (click)="removeParent(parent)"
+                class="chips__remove"
+                [attr.aria-label]="'Снять тег ' + tag.title"
+                [disabled]="isLinkBusy()"
+                (click)="removeTag(tag)"
               >
                 <app-icon name="close" />
               </button>
@@ -66,15 +86,30 @@
 
           <button
             type="button"
-            class="chip parents__add"
-            [disabled]="isParentBusy()"
-            (click)="addParent()"
+            class="chip chips__add"
+            [disabled]="isLinkBusy()"
+            (click)="addTag()"
           >
             <app-icon name="plus" />
             Добавить
           </button>
         </div>
+
+        <p class="block__about">
+          Тег категории действует на все её траты и на траты вложенных
+          категорий: «Регулярные» достаточно поставить один раз.
+        </p>
       </section>
+
+      <button
+        type="button"
+        class="btn btn--secondary btn--block"
+        [disabled]="isLinkBusy()"
+        (click)="createChild()"
+      >
+        <app-icon name="plus" />
+        Создать подкатегорию
+      </button>
     }
   </div>
 

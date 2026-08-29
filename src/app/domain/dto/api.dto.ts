@@ -7,11 +7,20 @@ export interface CurrencyDto {
   readonly flagEmojiCode: string;
 }
 
+export interface TagDto {
+  readonly id: string;
+  readonly title: string;
+  /** Место, Поездка, Характер. Может отсутствовать. */
+  readonly group?: string | null;
+}
+
 export interface CategoryDto {
   readonly id: string;
   readonly title: string;
-  readonly createDate: string | null;
-  readonly parents: readonly CategoryDto[] | null;
+  readonly createDate?: string | null;
+  /** Родитель. Отсутствует у категорий в корне дерева. */
+  readonly parentId?: string | null;
+  readonly tags?: readonly TagDto[] | null;
 }
 
 export interface SpendingDto {
@@ -21,7 +30,10 @@ export interface SpendingDto {
   readonly date: string;
   readonly createDate: string;
   readonly description: string;
-  readonly categories: readonly CategoryDto[] | null;
+  /** Категория траты. Отсутствует у неразнесённых трат. */
+  readonly category?: CategoryDto | null;
+  /** Собственные теги траты, без унаследованных от категории. */
+  readonly tags?: readonly TagDto[] | null;
 }
 
 export interface AccountListItemDto {
@@ -43,7 +55,7 @@ export interface UserSettingsDto {
 }
 
 /**
- * Узел аналитики.
+ * Узел аналитики по категориям.
  *
  * Имя поля с детьми у сервера и клиента исторически расходилось: модель
  * объявляла `categoryInfos`, её же конструктор принимал `childs`. Оба варианта
@@ -62,4 +74,17 @@ export interface CategoryAnalyticsDto {
   readonly categoryInfos?: readonly CategoryAnalyticsItemDto[] | null;
   readonly childs?: readonly CategoryAnalyticsItemDto[] | null;
   readonly categories?: readonly CategoryAnalyticsItemDto[] | null;
+}
+
+export interface TagAnalyticsItemDto {
+  readonly tagId: string;
+  readonly tagTitle: string;
+  readonly group?: string | null;
+  readonly amount: number;
+}
+
+export interface TagAnalyticsDto {
+  readonly totalAmount: number;
+  readonly untaggedAmount?: number | null;
+  readonly tagInfos?: readonly TagAnalyticsItemDto[] | null;
 }

@@ -219,7 +219,7 @@ button.chip {
   }
 }
 
-// Неинтерактивный чип-метка: используется для категорий в строке траты.
+// Неинтерактивный чип-метка: используется для тегов в строке траты.
 .chip--tag {
   min-height: 22px;
   position: static;
@@ -227,6 +227,25 @@ button.chip {
   border-color: transparent;
   background: var(--c-surface-2);
   font-size: var(--fs-xs);
+}
+
+// Категория и теги - разные измерения разметки, поэтому и выглядят по-разному:
+// категория одна и выделена акцентом, тегов сколько угодно и они приглушены.
+.chip--category {
+  min-height: 22px;
+  position: static;
+  padding: 0 var(--sp-2);
+  border-color: transparent;
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  font-size: var(--fs-xs);
+}
+
+// Совсем мелкая метка: теги категории внутри строки дерева.
+.chip--mini {
+  min-height: 18px;
+  padding: 0 var(--sp-1);
+  font-size: 11px;
 }
 
 // ---------------------------------------------------------------- поверхности

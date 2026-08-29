@@ -1,8 +1,34 @@
-<app-page-header title="Категории">
-  <button type="button" class="icon-btn" aria-label="Создать категорию" (click)="create()">
+<app-page-header title="Разметка">
+  <button
+    type="button"
+    class="icon-btn"
+    [attr.aria-label]="mode() === 'categories' ? 'Создать категорию' : 'Создать тег'"
+    (click)="create()"
+  >
     <app-icon name="plus" />
   </button>
 </app-page-header>
+
+<div class="modes" role="group" aria-label="Вид разметки">
+  <button
+    type="button"
+    class="chip"
+    [class.chip--selected]="mode() === 'categories'"
+    [attr.aria-pressed]="mode() === 'categories'"
+    (click)="setMode('categories')"
+  >
+    Категории
+  </button>
+  <button
+    type="button"
+    class="chip"
+    [class.chip--selected]="mode() === 'tags'"
+    [attr.aria-pressed]="mode() === 'tags'"
+    (click)="setMode('tags')"
+  >
+    Теги
+  </button>
+</div>
 
 @switch (status()) {
   @case ('loading') {
@@ -20,7 +46,7 @@
   @case ('error') {
     <app-empty-state
       icon="alert-circle"
-      title="Не удалось загрузить категории"
+      title="Не удалось загрузить разметку"
       hint="Проверьте связь и попробуйте ещё раз."
     >
       <button type="button" class="btn btn--primary" (click)="load()">Повторить</button>
@@ -29,40 +55,95 @@
 
   @default {
     @if (isEmpty()) {
-      <app-empty-state
-        icon="tag"
-        title="Категорий пока нет"
-        hint="Категории помогают увидеть в аналитике, на что уходят деньги."
-      >
-        <button type="button" class="btn btn--primary" (click)="create()">
-          Создать категорию
-        </button>
-      </app-empty-state>
+      @if (mode() === 'categories') {
+        <app-empty-state
+          icon="folder"
+          title="Категорий пока нет"
+          hint="Категории отвечают на вопрос «на что потрачено» и складываются в дерево."
+        >
+          <button type="button" class="btn btn--primary" (click)="create()">
+            Создать категорию
+          </button>
+        </app-empty-state>
+      } @else {
+        <app-empty-state
+          icon="tag"
+          title="Тегов пока нет"
+          hint="Теги - второе измерение: место, поездка, характер расхода."
+        >
+          <button type="button" class="btn btn--primary" (click)="create()">
+            Создать тег
+          </button>
+        </app-empty-state>
+      }
     } @else {
       <div class="content">
-        <div class="panel">
-          @for (category of categories(); track category.id) {
-            <button type="button" class="panel__row category" (click)="edit(category)">
-              <app-icon class="category__icon" name="tag" />
-              <span class="category__main">
-                <span class="category__title truncate">{{ category.title }}</span>
-                @if (category.parents.length > 0) {
-                  <!-- Родительские категории задают дерево аналитики: без подписи
-                       непонятно, почему трата попала в чужую ветку отчёта. -->
-                  <span class="category__parents truncate">
-                    в составе: {{ parentTitles(category) }}
-                  </span>
+        @if (mode() === 'categories') {
+          <div class="panel">
+            @for (row of rows(); track row.category.id) {
+              <div class="tree-row" [attr.data-level]="row.level">
+                @if (row.hasChildren) {
+                  <button
+                    type="button"
+                    class="tree-row__toggle"
+                    [attr.aria-expanded]="row.isExpanded"
+                    [attr.aria-label]="
+                      (row.isExpanded ? 'Свернуть ' : 'Раскрыть ') + row.category.title
+                    "
+                    (click)="toggle(row)"
+                  >
+                    <app-icon [name]="row.isExpanded ? 'chevron-down' : 'chevron-right'" />
+                  </button>
+                } @else {
+                  <span class="tree-row__toggle tree-row__toggle--empty" aria-hidden="true"></span>
                 }
-              </span>
-              <app-icon class="category__chevron" name="chevron-right" />
-            </button>
-          }
-        </div>
 
-        <button type="button" class="btn btn--secondary btn--block" (click)="create()">
-          <app-icon name="plus" />
-          Создать категорию
-        </button>
+                <button type="button" class="tree-row__button" (click)="edit(row.category)">
+                  <app-icon class="category__icon" name="folder" />
+                  <span class="category__main">
+                    <span class="category__title truncate">{{ row.category.title }}</span>
+
+                    @if (row.category.tags.length > 0) {
+                      <!-- Теги категории действуют на все её траты, поэтому
+                           видны прямо в дереве. -->
+                      <span class="category__tags">
+                        @for (tag of row.category.tags; track tag.id) {
+                          <span class="chip chip--tag chip--mini">{{ tag.title }}</span>
+                        }
+                      </span>
+                    }
+                  </span>
+                  <app-icon class="category__chevron" name="chevron-right" />
+                </button>
+              </div>
+            }
+          </div>
+
+          <button type="button" class="btn btn--secondary btn--block" (click)="create()">
+            <app-icon name="plus" />
+            Создать категорию
+          </button>
+        } @else {
+          @for (group of tagGroups(); track group.label) {
+            <section class="tag-group">
+              <h2 class="tag-group__label">{{ group.label }}</h2>
+              <div class="panel">
+                @for (tag of group.tags; track tag.id) {
+                  <button type="button" class="panel__row category" (click)="editTag(tag)">
+                    <app-icon class="category__icon" name="tag" />
+                    <span class="category__title truncate">{{ tag.title }}</span>
+                    <app-icon class="category__chevron" name="chevron-right" />
+                  </button>
+                }
+              </div>
+            </section>
+          }
+
+          <button type="button" class="btn btn--secondary btn--block" (click)="create()">
+            <app-icon name="plus" />
+            Создать тег
+          </button>
+        }
       </div>
     }
   }
