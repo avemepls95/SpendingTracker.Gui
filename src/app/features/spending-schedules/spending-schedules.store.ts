@@ -31,6 +31,19 @@ export class SpendingSchedulesStore {
     () => this.statusSignal() === 'ready' && this.items().length === 0,
   );
 
+  /**
+   * Загружает список, если готовых данных ещё нет.
+   *
+   * Компонент списка живёт под @if сегмента и пересоздаётся при каждом
+   * переключении, а стор объявлен на уровне страницы и переключение переживает.
+   * Безусловная перезагрузка прятала бы загруженный список за скелетоном.
+   */
+  ensureLoaded(): void {
+    if (this.statusSignal() !== 'ready') {
+      this.reload();
+    }
+  }
+
   reload(): void {
     this.statusSignal.set('loading');
 
@@ -80,10 +93,15 @@ function sortSchedules(
       return rankDiff;
     }
 
-    return (
-      occurrenceOrder(left.nextOccurrenceDate) -
-      occurrenceOrder(right.nextOccurrenceDate)
-    );
+    const occurrenceDiff =
+      occurrenceOrder(left.nextOccurrenceDate) - occurrenceOrder(right.nextOccurrenceDate);
+    if (occurrenceDiff !== 0) {
+      return occurrenceDiff;
+    }
+
+    // Третий ключ повторяет серверный: у всех записей на паузе и у завершённых
+    // указателя нет, то есть по первым двум ключам они равны между собой.
+    return left.description.localeCompare(right.description, 'ru');
   });
 }
 
@@ -98,6 +116,9 @@ function rank(schedule: SpendingSchedule): number {
 /**
  * Дата приходит строкой dd.MM.yyyy HH:mm, поэтому сравнивать её как текст нельзя:
  * «01.12.2026» оказалось бы раньше «02.01.2026». Переставляем части в число.
+ *
+ * Результат не длиннее 12 знаков даже для 9999 года, поэтому с MAX_SAFE_INTEGER
+ * он не пересекается: сентинел остаётся строго больше любой реальной даты.
  */
 function occurrenceOrder(value: string | null): number {
   if (!value) {
@@ -106,6 +127,9 @@ function occurrenceOrder(value: string | null): number {
 
   const [date, time] = value.split(' ');
   const [day, month, year] = date.split('.');
+  const order = Number(`${year}${month}${day}${(time ?? '00:00').replace(':', '')}`);
 
-  return Number(`${year}${month}${day}${(time ?? '00:00').replace(':', '')}`);
+  // NaN в компараторе приводится к нулю и делает его нетранзитивным, то есть
+  // одна неразобранная строка перемешала бы порядок соседних записей.
+  return Number.isNaN(order) ? Number.MAX_SAFE_INTEGER : order;
 }
