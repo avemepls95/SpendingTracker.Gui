@@ -35,6 +35,15 @@ export function describeErrorCode(code: string, data: unknown): string | null {
     }
     case 'CannotCreateAccountBecauseAlreadyExist':
       return 'Такой счёт уже есть';
+    case 'SpendingScheduleDoesNotBelongsToUser':
+      return 'Расписание принадлежит другому пользователю';
+    case 'InvalidRecurrenceRule':
+      return 'По такому правилу не будет ни одного срабатывания';
+    // Сервер умел отдавать этот код и раньше - фронтенд его просто не знал.
+    case 'TagDoesNotBelongsToUser':
+      return 'Тег принадлежит другому пользователю';
+    case 'KeyNotFound':
+      return 'Запись не найдена: возможно, её уже удалили';
     default:
       return null;
   }

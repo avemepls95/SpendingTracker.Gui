@@ -153,7 +153,18 @@
                     (click)="openSpending(spending)"
                   >
                     <span class="spending__main">
-                      <span class="spending__description">{{ spending.description }}</span>
+                      <span class="spending__description">
+                        @if (spending.scheduleId) {
+                          <span
+                            class="spending__schedule-mark"
+                            role="img"
+                            aria-label="Создана по расписанию"
+                          >
+                            <app-icon name="repeat" />
+                          </span>
+                        }
+                        {{ spending.description }}
+                      </span>
 
                       <!-- Категория и теги - разные измерения, поэтому и метки
                            разные: акцентная у категории, приглушённые у тегов. -->
