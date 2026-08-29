@@ -77,6 +77,12 @@ export class SpendingApiService {
       .pipe(map((items) => (items ?? []).map(toSpending)));
   }
 
+  /**
+   * Трата по идентификатору.
+   *
+   * scheduleId в этом ответе сервер не отдаёт, поэтому он всегда null:
+   * класть результат в список трат нельзя - пометка «по расписанию» пропадёт.
+   */
   getSpendingById(id: string): Observable<Spending> {
     const params = new HttpParams().set('id', id);
 

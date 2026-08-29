@@ -39,11 +39,17 @@ export function describeErrorCode(code: string, data: unknown): string | null {
       return 'Расписание принадлежит другому пользователю';
     case 'InvalidRecurrenceRule':
       return 'По такому правилу не будет ни одного срабатывания';
-    // Сервер умел отдавать этот код и раньше - фронтенд его просто не знал.
+    // Коды ниже сервер отдавал и раньше - фронтенд их просто не знал.
     case 'TagDoesNotBelongsToUser':
       return 'Тег принадлежит другому пользователю';
+    case 'SpendingDoesNotBelongsToUser':
+      return 'Трата принадлежит другому пользователю';
+    case 'UserAlreadyHasTagWithSpecifiedName':
+      return 'Тег с таким названием уже есть';
+    // Причину не угадываем: тем же кодом отвечают счёт, категория и настройки,
+    // а дескриптор ловит вообще любой KeyNotFoundException сервера.
     case 'KeyNotFound':
-      return 'Запись не найдена: возможно, её уже удалили';
+      return 'Запись не найдена';
     default:
       return null;
   }
