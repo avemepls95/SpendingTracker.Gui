@@ -1,6 +1,14 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  afterNextRender,
+  inject,
+  viewChild,
+} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { ScrollContainerService } from '../../core/ui/scroll-container.service';
 import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { UserSettingsStore } from '../../domain/stores/user-settings.store';
 import { TabBarComponent } from './tab-bar.component';
@@ -17,7 +25,7 @@ import { TabBarComponent } from './tab-bar.component';
   imports: [RouterOutlet, TabBarComponent],
   template: `
     <div class="shell">
-      <main class="shell__content">
+      <main class="shell__content" #content>
         <router-outlet />
       </main>
       <app-tab-bar />
@@ -44,9 +52,14 @@ import { TabBarComponent } from './tab-bar.component';
 export class ShellPage {
   private readonly currencies = inject(CurrenciesStore);
   private readonly settings = inject(UserSettingsStore);
+  private readonly scroll = inject(ScrollContainerService);
+
+  private readonly content = viewChild.required<ElementRef<HTMLElement>>('content');
 
   constructor() {
     this.currencies.load();
     this.settings.load();
+
+    afterNextRender(() => this.scroll.register(this.content().nativeElement));
   }
 }

@@ -15,6 +15,7 @@
 }
 
 .segments__item {
+  position: relative;
   flex: 1;
   min-width: 0;
   min-height: 38px;
@@ -27,6 +28,16 @@
   transition:
     background-color var(--dur) var(--ease),
     color var(--dur) var(--ease);
+
+  // Видимая высота сегмента ниже нормы касания, поэтому цель добирается
+  // псевдоэлементом - тем же приёмом, что у .icon-btn и нажимаемых чипов.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 50% 0 auto 0;
+    height: var(--tap-min);
+    transform: translateY(-50%);
+  }
 
   &:active {
     background: var(--c-pressed);

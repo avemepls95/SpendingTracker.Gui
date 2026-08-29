@@ -1,7 +1,7 @@
 @switch (store.status()) {
   @case ('loading') {
     <div class="list" aria-busy="true" aria-label="Загрузка расписаний">
-      <div class="panel panel--bordered">
+      <div class="panel">
         @for (row of [1, 2, 3]; track row) {
           <div class="panel__row skeleton-row">
             <span class="skeleton-row__main">

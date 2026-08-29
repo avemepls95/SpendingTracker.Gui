@@ -24,6 +24,9 @@ export class SpendingSchedulesStore {
    */
   private generation = 0;
 
+  /** Запрос уже отправлен: повторно грузить список при возврате незачем. */
+  private requested = false;
+
   readonly status = this.statusSignal.asReadonly();
   readonly schedules = computed(() => sortSchedules(this.items()));
 
@@ -39,12 +42,13 @@ export class SpendingSchedulesStore {
    * Безусловная перезагрузка прятала бы загруженный список за скелетоном.
    */
   ensureLoaded(): void {
-    if (this.statusSignal() !== 'ready') {
+    if (!this.requested) {
       this.reload();
     }
   }
 
   reload(): void {
+    this.requested = true;
     this.statusSignal.set('loading');
 
     const generation = ++this.generation;
@@ -63,6 +67,9 @@ export class SpendingSchedulesStore {
           return;
         }
 
+        // Снимаем отметку запроса, чтобы возврат на сегмент попробовал снова,
+        // а не показывал ошибку до перезагрузки страницы.
+        this.requested = false;
         this.statusSignal.set('error');
       },
     });

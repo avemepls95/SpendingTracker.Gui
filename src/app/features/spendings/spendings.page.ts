@@ -2,8 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  Injector,
   OnDestroy,
-  effect,
+  afterNextRender,
   inject,
   signal,
   viewChild,
@@ -11,6 +12,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 
+import { ScrollContainerService } from '../../core/ui/scroll-container.service';
 import { SheetService } from '../../core/ui/sheet.service';
 import { Spending } from '../../domain/models/models';
 import { CurrenciesStore } from '../../domain/stores/currencies.store';
@@ -31,7 +33,7 @@ import { SpendingsStore } from './spendings.store';
 const SEARCH_DEBOUNCE_MS = 350;
 
 /** Разделы вкладки: собственный список трат и расписания. */
-export type SpendingsView = 'spendings' | 'schedules';
+type SpendingsView = 'spendings' | 'schedules';
 
 @Component({
   selector: 'app-spendings-page',
@@ -53,12 +55,22 @@ export class SpendingsPage implements OnDestroy {
   private readonly currencies = inject(CurrenciesStore);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly scroll = inject(ScrollContainerService);
+  private readonly injector = inject(Injector);
 
   protected readonly store = inject(SpendingsStore);
   protected readonly isSearchOpen = signal(false);
   protected readonly view = signal<SpendingsView>('spendings');
 
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
+
+  /**
+   * Место в списке трат на момент ухода на расписания.
+   *
+   * Сегмент переключает вложенные компоненты, поэтому длинный список
+   * выгружается, высота содержимого падает и браузер зажимает прокрутку.
+   */
+  private spendingsOffset = 0;
 
   private readonly searchInput =
     viewChild<ElementRef<HTMLInputElement>>('searchInput');
@@ -69,16 +81,7 @@ export class SpendingsPage implements OnDestroy {
     // Сегмент живёт в адресе, иначе системная кнопка «Назад» уводит из
     // приложения вместо возврата к списку трат.
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      this.view.set(params.get('view') === 'schedules' ? 'schedules' : 'spendings');
-    });
-
-    // Атрибут autofocus действует только на элементы, присутствующие при
-    // разборе документа; поле поиска появляется по нажатию, поэтому фокус
-    // ставится вручную, как только элемент отрисован.
-    effect(() => {
-      if (this.isSearchOpen()) {
-        this.searchInput()?.nativeElement.focus();
-      }
+      this.applyView(params.get('view') === 'schedules' ? 'schedules' : 'spendings');
     });
   }
 
@@ -89,8 +92,8 @@ export class SpendingsPage implements OnDestroy {
   /**
    * Переключает раздел через адрес.
    *
-   * Запись в историю намеренная, replaceUrl тут не годится: без неё «Назад»
-   * закрыл бы приложение вместо возврата к предыдущему разделу.
+   * Запись в историю намеренная, replaceUrl тут не годится: без такой записи
+   * «Назад» закрыл бы приложение вместо возврата к предыдущему разделу.
    */
   protected setView(view: SpendingsView): void {
     if (view === this.view()) {
@@ -104,6 +107,26 @@ export class SpendingsPage implements OnDestroy {
     });
   }
 
+  private applyView(view: SpendingsView): void {
+    if (view === this.view()) {
+      return;
+    }
+
+    if (view === 'spendings') {
+      this.view.set(view);
+      afterNextRender(() => this.scroll.restore(this.spendingsOffset), {
+        injector: this.injector,
+      });
+
+      return;
+    }
+
+    // Отложенный поиск относится к списку трат: после ухода запрашивать нечего.
+    clearTimeout(this.searchTimer);
+    this.spendingsOffset = this.scroll.offset;
+    this.view.set(view);
+  }
+
   protected toggleSearch(): void {
     const willOpen = !this.isSearchOpen();
     this.isSearchOpen.set(willOpen);
@@ -111,7 +134,16 @@ export class SpendingsPage implements OnDestroy {
     if (!willOpen) {
       clearTimeout(this.searchTimer);
       this.store.setSearch('');
+      return;
     }
+
+    // Атрибут autofocus действует только на элементы, присутствующие при
+    // разборе документа; поле поиска появляется по нажатию. Фокус ставится
+    // здесь, а не по появлению элемента: возврат с сегмента расписаний
+    // отрисовывает поле заново и поднимал бы клавиатуру без просьбы.
+    afterNextRender(() => this.searchInput()?.nativeElement.focus(), {
+      injector: this.injector,
+    });
   }
 
   protected onSearchInput(event: Event): void {
