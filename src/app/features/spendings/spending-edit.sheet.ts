@@ -41,7 +41,16 @@ import {
 } from '../../shared/ui/tag-picker.sheet';
 
 export type SpendingEditResult =
-  | { readonly kind: 'updated'; readonly spending: Spending }
+  | {
+      readonly kind: 'updated';
+      readonly spending: Spending;
+      /**
+       * Разметка менялась не только у этой траты: каскад установки категории и
+       * отказ работают по всему описанию сразу. Список в этом случае устарел
+       * целиком, и заменой одной строки его не починить.
+       */
+      readonly affectedOthers: boolean;
+    }
   | { readonly kind: 'deleted'; readonly id: string };
 
 @Component({
@@ -74,6 +83,9 @@ export class SpendingEditSheet {
 
   protected readonly isSaving = signal(false);
   protected readonly isMarkupBusy = signal(false);
+
+  /** Хотя бы одна операция за сеанс правки задела другие траты описания. */
+  private readonly affectedOthers = signal(false);
 
   /** Все категории владельца: нужны, чтобы показать путь до выбранной. */
   private readonly allCategories = signal<readonly Category[]>([]);
@@ -209,6 +221,7 @@ export class SpendingEditSheet {
             // правленую трату сервер в него не включает. При снятии категории
             // каскада нет и приходит ноль - молчать тут правильно.
             if (affected > 0) {
+              this.affectedOthers.set(true);
               this.toast.info(`Поправлено ещё ${spendingsCount(affected)}`);
             }
 
@@ -250,6 +263,13 @@ export class SpendingEditSheet {
         if (!result.wasApplied) {
           this.toast.info('Уже обработано');
         } else {
+          // Отказ считает и саму эту трату - её источник не Manual, иначе
+          // действие бы не показывалось. Значит другие траты задеты только
+          // начиная со второй.
+          if (result.affectedSpendings > 1) {
+            this.affectedOthers.set(true);
+          }
+
           this.toast.success(
             result.affectedSpendings > 0
               ? `Разметка снята с ${spendingsCount(result.affectedSpendings)}`
@@ -380,7 +400,7 @@ export class SpendingEditSheet {
         next: () => {
           this.telegram.notify('success');
           this.toast.success('Трата сохранена');
-          this.dialogRef.close({ kind: 'updated', spending: updated });
+          this.finishSave(updated);
         },
         error: () => this.isSaving.set(false),
       });
@@ -408,11 +428,57 @@ export class SpendingEditSheet {
     });
   }
 
+  /**
+   * Закрывает лист после сохранения полей.
+   *
+   * Смена описания меняет ключ словаря, а вместе с ним и разметку самой траты:
+   * у категории от словаря она снимается, и по новому ключу применяется запись,
+   * если такая есть. Поэтому при изменившемся описании разметку надо перечитать,
+   * а не отдавать странице ту, что была до запроса.
+   */
+  private finishSave(updated: Spending): void {
+    if (updated.description === this.original.description) {
+      this.dialogRef.close({
+        kind: 'updated',
+        spending: updated,
+        affectedOthers: this.affectedOthers(),
+      });
+
+      return;
+    }
+
+    this.api.getSpendingById(updated.id).subscribe({
+      next: (fresh) => {
+        // Берётся только разметка: scheduleId этот ответ не несёт, и пометка
+        // «по расписанию» из списка пропала бы.
+        this.dialogRef.close({
+          kind: 'updated',
+          affectedOthers: this.affectedOthers(),
+          spending: {
+            ...updated,
+            category: fresh.category,
+            tags: fresh.tags,
+            categorySource: fresh.categorySource,
+          },
+        });
+      },
+      // Трата уже сохранена, отменять нечего: закрываем с тем, что знаем.
+      // Про сбой сообщил перехватчик.
+      error: () =>
+        this.dialogRef.close({
+          kind: 'updated',
+          spending: updated,
+          affectedOthers: this.affectedOthers(),
+        }),
+    });
+  }
+
   protected close(): void {
     // Разметка применяется сразу, поэтому даже при отказе от правки полей
     // трату нужно вернуть обновлённой.
     this.dialogRef.close({
       kind: 'updated',
+      affectedOthers: this.affectedOthers(),
       spending: {
         ...this.original,
         category: this.category(),

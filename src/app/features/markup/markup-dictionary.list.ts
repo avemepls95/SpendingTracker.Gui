@@ -34,7 +34,6 @@ interface VerdictFilter {
 @Component({
   selector: 'app-markup-dictionary',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [MarkupDictionaryStore],
   imports: [EmptyStateComponent, IconComponent, IntersectDirective],
   templateUrl: './markup-dictionary.list.html',
   styleUrl: './markup-dictionary.list.scss',
@@ -87,10 +86,11 @@ export class MarkupDictionaryList {
   protected confirm(entry: MarkupEntry): void {
     this.run(entry, this.api.confirmMarkup(entry.id), (result) => {
       this.store.applyVerdictLocally(entry.id, 'AssignedByUser');
-      this.toast.success(
+      this.report(
+        entry,
         result.affectedSpendings > 0
-          ? `Подтверждено, обновлено ${spendingsCount(result.affectedSpendings)}`
-          : 'Подтверждено',
+          ? `подтверждено, обновлено ${spendingsCount(result.affectedSpendings)}`
+          : 'подтверждено',
       );
     });
   }
@@ -101,12 +101,19 @@ export class MarkupDictionaryList {
    * Массовая операция, поэтому с подтверждением - как и удаление.
    */
   protected async reject(entry: MarkupEntry): Promise<void> {
+    // У вердиктов «решения нет» и «модель не смогла» категории по построению
+    // нет, снимать нечего, и обещать это в подтверждении нельзя: там отказ
+    // означает ровно одно - больше не спрашивать модель.
+    const message = entry.category
+      ? `Категория снимется со всех трат с описанием «${entry.normalizedDescription}», ` +
+        'кроме размеченных вручную. Модель об этом описании больше не спросят, ' +
+        'пока вы не назначите категорию сами.'
+      : `Модель больше не спросят про «${entry.normalizedDescription}», ` +
+        'пока вы не назначите категорию сами. Теги записи останутся.';
+
     const confirmed = await confirmAction(this.sheets, this.telegram, {
       title: 'Отвергнуть разметку?',
-      message:
-        `Категория снимется со всех трат с описанием «${entry.normalizedDescription}», ` +
-        'кроме размеченных вручную. Модель об этом описании больше не спросят, ' +
-        'пока вы не назначите категорию сами.',
+      message,
       confirmLabel: 'Отвергнуть',
       destructive: true,
     });
@@ -117,10 +124,11 @@ export class MarkupDictionaryList {
 
     this.run(entry, this.api.rejectMarkup({ markupId: entry.id }), (result) => {
       this.store.applyVerdictLocally(entry.id, 'RejectedByUser');
-      this.toast.success(
+      this.report(
+        entry,
         result.affectedSpendings > 0
-          ? `Разметка снята с ${spendingsCount(result.affectedSpendings)}`
-          : 'Разметка отвергнута',
+          ? `разметка снята с ${spendingsCount(result.affectedSpendings)}`
+          : 'отвергнуто',
       );
     });
   }
@@ -148,12 +156,25 @@ export class MarkupDictionaryList {
 
     this.run(entry, this.api.deleteMarkup(entry.id), (result) => {
       this.store.removeLocally(entry.id);
-      this.toast.success(
+      this.report(
+        entry,
         result.affectedSpendings > 0
-          ? `Запись удалена, разметка снята с ${spendingsCount(result.affectedSpendings)}`
-          : 'Запись удалена',
+          ? `удалено, разметка снята с ${spendingsCount(result.affectedSpendings)}`
+          : 'удалено',
       );
     });
+  }
+
+  /**
+   * Сообщает итог операции с упоминанием описания.
+   *
+   * Описание здесь не украшение: ToastService глушит повтор одинакового текста,
+   * а записи в этом разделе обрабатывают подряд, и у второй подряд «удалено»
+   * плашка бы не появилась - вместе с числом затронутых трат, которого требует
+   * раздел 12 спеки.
+   */
+  private report(entry: MarkupEntry, outcome: string): void {
+    this.toast.success(`«${shorten(entry.normalizedDescription)}»: ${outcome}`);
   }
 
   /**
@@ -186,4 +207,9 @@ export class MarkupDictionaryList {
       error: () => this.busyId.set(null),
     });
   }
+}
+
+/** Ключ словаря бывает длинным, а плашка живёт две секунды. */
+function shorten(description: string): string {
+  return description.length > 24 ? `${description.slice(0, 24)}...` : description;
 }

@@ -14,6 +14,7 @@ import {
 } from '../../shared/util/category-tree.util';
 import { TagGroup, groupTags } from '../../shared/util/tag-group.util';
 import { MarkupDictionaryList } from '../markup/markup-dictionary.list';
+import { MarkupDictionaryStore } from '../markup/markup-dictionary.store';
 import {
   CategoryEditData,
   CategoryEditResult,
@@ -34,6 +35,10 @@ export type MarkupMode = 'categories' | 'tags' | 'dictionary';
 @Component({
   selector: 'app-categories-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // Стор словаря объявлен на странице, а не на самом списке: список стоит под
+  // @if раздела и при каждом переключении пересоздаётся. На нём стор терял бы
+  // и фильтр, и догруженные страницы при всяком заходе в «Категории».
+  providers: [MarkupDictionaryStore],
   imports: [
     PageHeaderComponent,
     EmptyStateComponent,
@@ -97,19 +102,21 @@ export class CategoriesPage {
     });
   }
 
-  /**
-   * Создаёт категорию или тег - смотря какой раздел открыт.
-   *
-   * В словаре создавать нечего: его записи заводит система, запоминая решения
-   * человека, поэтому кнопка там не показывается.
-   */
+  /** Создаёт категорию или тег - смотря какой раздел открыт. */
   protected create(): void {
-    if (this.mode() === 'categories') {
-      this.openCategorySheet({ mode: 'create' });
-      return;
+    switch (this.mode()) {
+      case 'categories':
+        this.openCategorySheet({ mode: 'create' });
+        return;
+      case 'tags':
+        this.openTagSheet({ mode: 'create' });
+        return;
+      // Записи словаря заводит система, запоминая решения человека. Кнопка в
+      // этом разделе скрыта, но полагаться на шаблон в вопросе «что создаём»
+      // нельзя: скрытая кнопка молча создавала бы тег.
+      default:
+        return;
     }
-
-    this.openTagSheet({ mode: 'create' });
   }
 
   protected edit(category: Category): void {

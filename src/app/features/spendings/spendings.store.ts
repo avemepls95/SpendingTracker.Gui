@@ -121,14 +121,43 @@ export class SpendingsStore {
    * и splice(-1, 1) удалял последнюю запись списка.
    */
   removeLocally(id: string): void {
+    const removed = this.items().find((item) => item.id === id);
+
     this.items.update((current) => current.filter((item) => item.id !== id));
+
+    if (removed && removed.category === null) {
+      this.shiftWithoutCategoryCount(-1);
+    }
   }
 
-  /** Заменяет трату по идентификатору, сохраняя позицию в списке. */
+  /**
+   * Заменяет трату по идентификатору, сохраняя позицию в списке.
+   *
+   * Заодно двигает счётчик очереди: разметка правится в карточке отдельными
+   * запросами, списка это не касается, и без поправки чип показывал бы прежнее
+   * число до следующей полной загрузки.
+   */
   replaceLocally(spending: Spending): void {
+    const previous = this.items().find((item) => item.id === spending.id);
+
     this.items.update((current) =>
       current.map((item) => (item.id === spending.id ? spending : item)),
     );
+
+    if (!previous) {
+      return;
+    }
+
+    const wasWithoutCategory = previous.category === null;
+    const isWithoutCategory = spending.category === null;
+
+    if (wasWithoutCategory !== isWithoutCategory) {
+      this.shiftWithoutCategoryCount(isWithoutCategory ? 1 : -1);
+    }
+  }
+
+  private shiftWithoutCategoryCount(delta: number): void {
+    this.withoutCategoryCountSignal.update((count) => Math.max(0, count + delta));
   }
 
   private fetch(offset: number, apply: (page: readonly Spending[]) => void): void {

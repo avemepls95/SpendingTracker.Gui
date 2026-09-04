@@ -219,6 +219,15 @@ export class SpendingsPage implements OnDestroy {
           return;
         }
 
+        // Каскад установки категории и отказ правят все траты описания сразу,
+        // а не только открытую: на экране устаревает произвольное число строк,
+        // и счётчик очереди по одной трате уже не досчитать.
+        if (result.affectedOthers) {
+          this.spendingsOffset = 0;
+          this.store.reload();
+          return;
+        }
+
         this.store.replaceLocally(result.spending);
       });
   }

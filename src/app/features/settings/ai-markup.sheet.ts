@@ -1,5 +1,5 @@
 import { DialogRef } from '@angular/cdk/dialog';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
 import { UserSettingsStore } from '../../domain/stores/user-settings.store';
 import { IconComponent } from '../../shared/ui/icon.component';
@@ -28,15 +28,11 @@ export class AiMarkupSheet {
   protected readonly isSaving = this.settings.isSaving;
 
   /**
-   * Согласие включено, но лимит нулевой - разметки не будет.
-   *
-   * Молчать об этом нельзя: человек включил бы переключатель и ждал разметки,
-   * которой не случится, а причина ему не видна - лимит правит владелец
-   * сервиса, и из интерфейса он недоступен.
+   * Молчать о нулевом лимите нельзя: человек включил бы переключатель и ждал
+   * разметки, которой не случится, а причина ему не видна - лимит правит
+   * владелец сервиса, и из интерфейса он недоступен.
    */
-  protected readonly isBlockedByLimit = computed(
-    () => this.consent() && this.monthlyLimit() === 0,
-  );
+  protected readonly isBlockedByLimit = this.settings.isAiMarkupBlocked;
 
   protected onToggle(event: Event): void {
     this.settings.setAiMarkupConsent((event.target as HTMLInputElement).checked);

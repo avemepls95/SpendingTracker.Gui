@@ -60,7 +60,9 @@
           }
         </p>
 
-        <div class="panel">
+        <!-- Подложка появляется только под записями: пустая панель осталась бы
+             висеть рамкой, пока догружается следующая страница. -->
+        <div [class.panel]="store.entries().length > 0">
           @for (entry of store.entries(); track entry.id) {
             <article class="entry" [class.entry--busy]="busyId() === entry.id">
               <header class="entry__head">

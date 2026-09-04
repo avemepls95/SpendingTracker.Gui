@@ -41,7 +41,7 @@ import {
   SpendingCategorySource,
   SpendingSchedule,
   SpendingScheduleDetails,
-  SpendingsPage,
+  SpendingsPageResult,
   Tag,
   TagAnalytics,
   TagAnalyticsItem,
@@ -101,17 +101,17 @@ export function toSpending(dto: SpendingDto): Spending {
  * Пустое тело не должно ронять список: до смены контракта сервер отдавал
  * массив, и старый образ Web API под новым фронтом ответил бы именно так.
  */
-export function toSpendingsPage(dto: SpendingsPageDto): SpendingsPage {
+export function toSpendingsPage(dto: SpendingsPageDto): SpendingsPageResult {
   return {
     items: (dto?.items ?? []).map(toSpending),
     withoutCategoryCount: dto?.withoutCategoryCount ?? 0,
   };
 }
 
-export function toMarkupEntry(dto: MarkupDto): MarkupEntry {
+function toMarkupEntry(dto: MarkupDto): MarkupEntry {
   return {
     id: dto.id,
-    normalizedDescription: dto.normalizedDescription ?? '',
+    normalizedDescription: dto.normalizedDescription,
     category: dto.category ? toCategory(dto.category) : null,
     tags: (dto.tags ?? []).map(toTag),
     verdict: toMarkupVerdict(dto.verdict),

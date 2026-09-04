@@ -52,10 +52,7 @@ export class SettingsPage {
     return currency ? flagImageUrl(currency.flagEmojiCode) : null;
   });
 
-  /** Согласие есть, но лимит нулевой: разметки не будет, и это видно из строки. */
-  protected readonly isAiMarkupBlocked = computed(
-    () => this.settings.aiMarkupUserConsent() && this.settings.aiMarkupMonthlyLimit() === 0,
-  );
+  protected readonly isAiMarkupBlocked = this.settings.isAiMarkupBlocked;
 
   protected readonly aiMarkupStatus = computed(() => {
     if (!this.settings.aiMarkupUserConsent()) {

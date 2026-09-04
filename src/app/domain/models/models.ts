@@ -54,8 +54,13 @@ export interface Spending {
   readonly categorySource: SpendingCategorySource | null;
 }
 
-/** Страница списка трат вместе с размером очереди неразнесённых. */
-export interface SpendingsPage {
+/**
+ * Страница списка трат вместе с размером очереди неразнесённых.
+ *
+ * Не `SpendingsPage`: так называется компонент экрана трат, и в сигнатуре
+ * запроса это имя читалось бы как страница интерфейса.
+ */
+export interface SpendingsPageResult {
   readonly items: readonly Spending[];
   /** Всего трат владельца без категории - независимо от фильтров страницы. */
   readonly withoutCategoryCount: number;
@@ -205,11 +210,6 @@ export interface UserSettings {
    * сервиса. При нулевом лимите включённое согласие ничего не даёт.
    */
   readonly aiMarkupMonthlyLimit: number;
-}
-
-/** Автоматическая разметка работает, только когда сошлись оба условия. */
-export function isAiMarkupActive(settings: UserSettings): boolean {
-  return settings.aiMarkupUserConsent && settings.aiMarkupMonthlyLimit > 0;
 }
 
 export interface CategoryAnalyticsItem {

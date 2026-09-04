@@ -33,11 +33,16 @@ export class MarkupDictionaryStore {
    */
   private generation = 0;
 
-  /** Запрос уже отправлен: возврат на раздел не должен прятать список скелетоном. */
+  /**
+   * Запрос уже отправлен.
+   *
+   * Работает потому, что стор объявлен на странице «Разметка», а не на самом
+   * списке: список пересоздаётся при каждом переключении раздела, и на нём флаг
+   * всякий раз начинался бы с нуля.
+   */
   private requested = false;
 
   readonly status = this.statusSignal.asReadonly();
-  readonly isLoadingMore = this.loadingMoreSignal.asReadonly();
   readonly entries = this.items.asReadonly();
   readonly verdict = this.verdictSignal.asReadonly();
 
@@ -46,8 +51,17 @@ export class MarkupDictionaryStore {
 
   readonly hasMore = computed(() => this.items().length < this.totalCountSignal());
 
+  /**
+   * Записей нет совсем, а не «загруженные кончились».
+   *
+   * Остаток на сервере учитывается потому, что разбор очереди убирает записи из
+   * списка по одной: без этой проверки список мог бы опустеть раньше, чем
+   * сработает догрузка, и показать «записей нет» при сотнях записей на сервере -
+   * причём метка догрузки живёт в той же ветке шаблона и исчезла бы вместе со
+   * списком, так что сам он уже не восстановился бы.
+   */
   readonly isEmpty = computed(
-    () => this.statusSignal() === 'ready' && this.items().length === 0,
+    () => this.statusSignal() === 'ready' && this.items().length === 0 && !this.hasMore(),
   );
 
   ensureLoaded(): void {
@@ -70,7 +84,15 @@ export class MarkupDictionaryStore {
 
     this.loadingMoreSignal.set(true);
     this.fetch(this.items().length, (page) =>
-      this.items.update((current) => [...current, ...page]),
+      // Записи отсеиваются по идентификатору, потому что смещение считается по
+      // длине списка, а сервер сортирует по дате изменения: подтверждённая
+      // запись переезжает в начало выдачи и без отсева приехала бы второй раз,
+      // столкнув два одинаковых ключа в @for.
+      this.items.update((current) => {
+        const known = new Set(current.map((entry) => entry.id));
+
+        return [...current, ...page.filter((entry) => !known.has(entry.id))];
+      }),
     );
   }
 
@@ -147,7 +169,7 @@ export class MarkupDictionaryStore {
           }
 
           // Снимаем отметку запроса, чтобы возврат на раздел попробовал снова,
-          // а не показывал ошибку до перезагрузки страницы.
+          // а не показывал ошибку до ухода с вкладки.
           if (offset === 0) {
             this.requested = false;
             this.statusSignal.set('error');

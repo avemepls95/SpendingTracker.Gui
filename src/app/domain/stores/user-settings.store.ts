@@ -47,6 +47,16 @@ export class UserSettingsStore {
    */
   readonly aiMarkupMonthlyLimit = computed(() => this.state().aiMarkupMonthlyLimit);
 
+  /**
+   * Согласие выдано, но лимит нулевой - разметки не будет.
+   *
+   * Условие живёт здесь, а не на экранах: его показывают и строка настроек, и
+   * лист согласия, и разойтись они не должны.
+   */
+  readonly isAiMarkupBlocked = computed(
+    () => this.state().aiMarkupUserConsent && this.state().aiMarkupMonthlyLimit === 0,
+  );
+
   load(): void {
     if (this.requested) {
       return;

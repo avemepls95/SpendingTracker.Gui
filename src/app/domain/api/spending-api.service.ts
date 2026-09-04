@@ -39,7 +39,7 @@ import {
   MarkupVerdict,
   MarkupsPage,
   Spending,
-  SpendingsPage,
+  SpendingsPageResult,
   Tag,
   TagAnalytics,
   UserAccount,
@@ -88,7 +88,7 @@ export class SpendingApiService {
    * Ответ - объект, а не массив: счётчик очереди считается по всем тратам
    * владельца и в элемент страницы не помещается.
    */
-  getSpendings(query: SpendingsQuery): Observable<SpendingsPage> {
+  getSpendings(query: SpendingsQuery): Observable<SpendingsPageResult> {
     const params = new HttpParams()
       .set('offset', query.offset)
       .set('count', query.count)
