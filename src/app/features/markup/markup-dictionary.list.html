@@ -83,10 +83,30 @@
                   @if (entry.category; as category) {
                     <span class="chip chip--category">{{ category.title }}</span>
                   }
+                  <!-- Словарь копит теги как есть, а отбор идёт при применении,
+                       поэтому в записи лежат и теги, которые никуда не переедут.
+                       Без пометки раздел обещал бы то, чего не будет. -->
                   @for (tag of entry.tags; track tag.id) {
-                    <span class="chip chip--tag">{{ tag.title }}</span>
+                    <span
+                      class="chip chip--tag"
+                      [class.chip--not-spread]="!tag.spreadsByDescription"
+                      [attr.title]="
+                        tag.spreadsByDescription
+                          ? null
+                          : 'Не переносится на новые траты с этим описанием'
+                      "
+                    >
+                      {{ tag.title }}
+                    </span>
                   }
                 </div>
+
+                @if (hasNotSpreadTags(entry)) {
+                  <p class="entry__tags-note">
+                    Приглушённые теги не переносятся на новые траты - включить
+                    перенос можно в редакторе тега.
+                  </p>
+                }
               }
 
               <p class="entry__hint">{{ verdictHints[entry.verdict] }}</p>

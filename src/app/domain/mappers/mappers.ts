@@ -61,6 +61,10 @@ export function toTag(dto: TagDto): Tag {
     id: dto.id,
     title: dto.title,
     group: dto.group ?? null,
+    // Умолчание «не переносить» повторяет серверное: цена ошибки несимметрична -
+    // не перенесённый тег человек навесит руками и увидит, а перенесённый зря
+    // молча исказит аналитику по тегам.
+    spreadsByDescription: dto.spreadsByDescription === true,
   };
 }
 

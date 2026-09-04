@@ -12,6 +12,8 @@ export interface TagDto {
   readonly title: string;
   /** Место, Поездка, Характер. Может отсутствовать. */
   readonly group?: string | null;
+  /** Переносится ли тег на новые траты с таким же описанием. */
+  readonly spreadsByDescription?: boolean | null;
 }
 
 export interface CategoryDto {

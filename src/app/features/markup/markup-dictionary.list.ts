@@ -69,6 +69,11 @@ export class MarkupDictionaryList {
     this.store.ensureLoaded();
   }
 
+  /** В записи есть тег, который на новые траты не переедет. */
+  protected hasNotSpreadTags(entry: MarkupEntry): boolean {
+    return entry.tags.some((tag) => !tag.spreadsByDescription);
+  }
+
   protected setVerdict(verdict: MarkupVerdict | null): void {
     this.telegram.selectionChanged();
     this.store.setVerdict(verdict);

@@ -65,6 +65,63 @@
         по разным разрезам.
       </p>
     </div>
+
+    <div class="field">
+      <span class="field__label">Перенос</span>
+
+      <label class="panel panel--bordered switch-row">
+        <span class="switch-row__main">
+          <span class="switch-row__title">
+            Переносить тег на траты с таким же описанием
+          </span>
+          <span class="switch-row__hint">
+            Тег сам появится на новых тратах с тем же описанием
+          </span>
+        </span>
+        <input
+          class="switch"
+          type="checkbox"
+          role="switch"
+          [checked]="spreads()"
+          [disabled]="isSaving()"
+          (change)="onSpreads($event)"
+        />
+      </label>
+
+      <!-- Признак неочевиден: без примеров его либо не поймут, либо включат
+           всем тегам подряд и получат ту самую порчу аналитики, от которой он
+           защищает. Текст свёрнут, потому что нужен не при каждой правке. -->
+      <button
+        type="button"
+        class="spread-help__toggle"
+        [attr.aria-expanded]="isSpreadHelpOpen()"
+        (click)="toggleSpreadHelp()"
+      >
+        <app-icon [name]="isSpreadHelpOpen() ? 'chevron-down' : 'chevron-right'" />
+        Когда это включать
+      </button>
+
+      @if (isSpreadHelpOpen()) {
+        <div class="spread-help">
+          <p>
+            <strong>Включайте, если тег описывает саму трату.</strong>
+            «Регулярные расходы» на «интернет в квартире»: интернет регулярный
+            всегда, каким бы месяц ни был.
+          </p>
+          <p>
+            <strong>Не включайте, если тег описывает обстоятельства.</strong>
+            «Израиль» на «Кофе»: кофе бывает и в поездке, и дома. С включённым
+            переносом все будущие «Кофе» окажутся помечены «Израиль» - в том числе
+            купленные в Москве.
+          </p>
+          <p>
+            Сомневаетесь - оставьте выключенным. Не перенесённый тег вы навесите
+            руками и сразу это заметите; перенесённый по ошибке будет тихо портить
+            аналитику по тегам.
+          </p>
+        </div>
+      }
+    </div>
   </div>
 
   <div class="sheet__footer">
