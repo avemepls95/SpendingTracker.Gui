@@ -1,0 +1,127 @@
+// Фильтров шесть, на узком экране они в строку не помещаются: прокручиваются
+// горизонтально, как чипы фильтров в остальных списках.
+.filters {
+  display: flex;
+  gap: var(--sp-2);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--sp-4) var(--sp-3);
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--sp-4) var(--sp-6);
+}
+
+.total {
+  padding: 0 var(--sp-1);
+  font-size: var(--fs-sm);
+}
+
+// ------------------------------------------------------------ запись
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.entry + .entry {
+  border-top: 1px solid var(--c-border);
+}
+
+// Пока идёт запрос по записи, она приглушается: кнопки уже заблокированы,
+// но без этого признака нажатие выглядит как «ничего не произошло».
+.entry--busy {
+  opacity: 0.6;
+}
+
+.entry__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.entry__description {
+  // Ключ словаря нормализован: это может быть длинная строка без пробелов,
+  // и переносить её нужно в любом месте, иначе она распирает панель.
+  overflow-wrap: anywhere;
+  font-size: var(--fs-body);
+  font-weight: var(--fw-medium);
+  line-height: 1.3;
+}
+
+.entry__verdict {
+  flex: none;
+  background: var(--c-surface-2);
+  border-color: transparent;
+}
+
+// Догадку модели надо просмотреть, поэтому её вердикт выделен акцентом -
+// тем же приёмом, что и категория от модели в списке трат.
+.entry__verdict--guess {
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+}
+
+.entry__markup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.entry__hint {
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
+  line-height: var(--lh-normal);
+}
+
+.entry__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-top: var(--sp-1);
+}
+
+.entry__action {
+  flex: 1;
+  min-height: 38px;
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-sm);
+  --icon-size: 16px;
+}
+
+// Удаление стоит особняком и подписано только значком: оно опаснее отказа -
+// описание после него снова уходит в модель.
+.entry__remove {
+  flex: none;
+}
+
+.list__sentinel {
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-2) 0 var(--sp-4);
+}
+
+.list__sentinel-bar {
+  width: 120px;
+  height: 12px;
+  border-radius: var(--r-full);
+}
+
+.entry__skeleton {
+  width: 60%;
+  height: 14px;
+}

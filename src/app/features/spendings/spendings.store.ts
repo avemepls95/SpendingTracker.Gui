@@ -36,6 +36,7 @@ export class SpendingsStore {
   private readonly statusSignal = signal<ListStatus>('loading');
   private readonly loadingMoreSignal = signal(false);
   private readonly hasMoreSignal = signal(false);
+  private readonly withoutCategoryCountSignal = signal(0);
 
   private readonly searchSignal = signal('');
   private readonly withoutCategoriesSignal = signal(false);
@@ -56,6 +57,14 @@ export class SpendingsStore {
   readonly search = this.searchSignal.asReadonly();
   readonly onlyWithoutCategories = this.withoutCategoriesSignal.asReadonly();
   readonly spendings = this.items.asReadonly();
+
+  /**
+   * Размер очереди разбора: сколько трат владельца без категории.
+   *
+   * Считается сервером по всем тратам, а не по загруженной странице и не по
+   * строке поиска, поэтому и при включённом фильтре показывает остаток целиком.
+   */
+  readonly withoutCategoryCount = this.withoutCategoryCountSignal.asReadonly();
 
   readonly isEmpty = computed(
     () => this.statusSignal() === 'ready' && this.items().length === 0,
@@ -139,9 +148,12 @@ export class SpendingsStore {
             return;
           }
 
-          apply(page);
+          apply(page.items);
           // Полная страница означает, что на сервере может быть продолжение.
-          this.hasMoreSignal.set(page.length === PAGE_SIZE);
+          this.hasMoreSignal.set(page.items.length === PAGE_SIZE);
+          // Счётчик обновляется и при догрузке: разметка могла измениться в
+          // другой вкладке или прийти от фонового процесса, пока список листали.
+          this.withoutCategoryCountSignal.set(page.withoutCategoryCount);
           this.statusSignal.set('ready');
           this.loadingMoreSignal.set(false);
         },

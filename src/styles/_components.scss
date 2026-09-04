@@ -269,6 +269,36 @@ button.chip {
   font-size: var(--fs-xs);
 }
 
+// Категория, доставшаяся трате от догадки модели. Рамка держится на самом
+// чипе, а не на метке внутри: выделять надо саму разметку, к которой вопрос,
+// а не значок рядом с ней.
+.chip--guess {
+  border-color: var(--c-accent);
+}
+
+// Счётчик внутри чипа-фильтра: размер очереди разбора. Подложка меняется
+// вместе с состоянием чипа, иначе на выбранном фильтре счётчик сливается с
+// акцентным фоном.
+.chip__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--r-full);
+  background: var(--c-surface-2);
+  color: var(--c-text-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.chip--selected .chip__count {
+  background: color-mix(in srgb, var(--c-accent-contrast) 24%, transparent);
+  color: var(--c-accent-contrast);
+}
+
 // Совсем мелкая метка: теги категории внутри строки дерева.
 .chip--mini {
   min-height: 18px;

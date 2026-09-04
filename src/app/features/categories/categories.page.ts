@@ -13,6 +13,7 @@ import {
   parentCategoryIds,
 } from '../../shared/util/category-tree.util';
 import { TagGroup, groupTags } from '../../shared/util/tag-group.util';
+import { MarkupDictionaryList } from '../markup/markup-dictionary.list';
 import {
   CategoryEditData,
   CategoryEditResult,
@@ -22,13 +23,23 @@ import { TagEditData, TagEditResult, TagEditSheet } from './tag-edit.sheet';
 
 type Status = 'loading' | 'ready' | 'error';
 
-/** Два измерения разметки живут на одном экране, но не смешиваются в списке. */
-export type MarkupMode = 'categories' | 'tags';
+/**
+ * Разделы вкладки.
+ *
+ * Категории и теги - два измерения разметки, словарь - то, что система про
+ * разметку запомнила. Они не смешиваются в одном списке.
+ */
+export type MarkupMode = 'categories' | 'tags' | 'dictionary';
 
 @Component({
   selector: 'app-categories-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PageHeaderComponent, EmptyStateComponent, IconComponent],
+  imports: [
+    PageHeaderComponent,
+    EmptyStateComponent,
+    IconComponent,
+    MarkupDictionaryList,
+  ],
   templateUrl: './categories.page.html',
   styleUrl: './categories.page.scss',
 })
@@ -51,14 +62,20 @@ export class CategoriesPage {
     groupTags(this.tags()),
   );
 
+  /** Словарь грузится сам и о состоянии этой страницы ничего не знает. */
   protected readonly isEmpty = computed(() => {
     if (this.status() !== 'ready') {
       return false;
     }
 
-    return this.mode() === 'categories'
-      ? this.categories().length === 0
-      : this.tags().length === 0;
+    switch (this.mode()) {
+      case 'categories':
+        return this.categories().length === 0;
+      case 'tags':
+        return this.tags().length === 0;
+      default:
+        return false;
+    }
   });
 
   constructor() {
@@ -80,6 +97,12 @@ export class CategoriesPage {
     });
   }
 
+  /**
+   * Создаёт категорию или тег - смотря какой раздел открыт.
+   *
+   * В словаре создавать нечего: его записи заводит система, запоминая решения
+   * человека, поэтому кнопка там не показывается.
+   */
   protected create(): void {
     if (this.mode() === 'categories') {
       this.openCategorySheet({ mode: 'create' });

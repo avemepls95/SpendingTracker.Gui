@@ -18,6 +18,7 @@ import { Spending } from '../../domain/models/models';
 import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { IconComponent } from '../../shared/ui/icon.component';
+import { MarkupSourceMarkComponent } from '../../shared/ui/markup-source-mark.component';
 import { PageHeaderComponent } from '../../shared/ui/page-header.component';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { IntersectDirective } from '../../shared/util/intersect.directive';
@@ -49,6 +50,7 @@ type SpendingsView = 'spendings' | 'schedules';
     EmptyStateComponent,
     IconComponent,
     IntersectDirective,
+    MarkupSourceMarkComponent,
     MoneyPipe,
     SpendingSchedulesList,
   ],

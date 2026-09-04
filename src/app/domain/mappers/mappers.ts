@@ -5,8 +5,12 @@ import {
   CategoryAnalyticsItemDto,
   CategoryDto,
   CurrencyDto,
+  MarkupDto,
+  MarkupOperationResultDto,
+  MarkupsPageDto,
   ScheduleSpendingDto,
   SpendingDto,
+  SpendingsPageDto,
   SpendingScheduleDetailsDto,
   SpendingScheduleDto,
   TagAnalyticsDto,
@@ -24,12 +28,20 @@ import {
   Currency,
   INTERVAL_UNITS,
   IntervalUnit,
+  MARKUP_VERDICTS,
+  MarkupEntry,
+  MarkupOperationResult,
+  MarkupVerdict,
+  MarkupsPage,
   RECURRENCE_KINDS,
   RecurrenceKind,
+  SPENDING_CATEGORY_SOURCES,
   ScheduleSpending,
   Spending,
+  SpendingCategorySource,
   SpendingSchedule,
   SpendingScheduleDetails,
+  SpendingsPage,
   Tag,
   TagAnalytics,
   TagAnalyticsItem,
@@ -79,7 +91,73 @@ export function toSpending(dto: SpendingDto): Spending {
     category: dto.category ? toCategory(dto.category) : null,
     tags: (dto.tags ?? []).map(toTag),
     scheduleId: dto.scheduleId ?? null,
+    categorySource: toCategorySource(dto.categorySource),
   };
+}
+
+/**
+ * Приводит страницу трат.
+ *
+ * Пустое тело не должно ронять список: до смены контракта сервер отдавал
+ * массив, и старый образ Web API под новым фронтом ответил бы именно так.
+ */
+export function toSpendingsPage(dto: SpendingsPageDto): SpendingsPage {
+  return {
+    items: (dto?.items ?? []).map(toSpending),
+    withoutCategoryCount: dto?.withoutCategoryCount ?? 0,
+  };
+}
+
+export function toMarkupEntry(dto: MarkupDto): MarkupEntry {
+  return {
+    id: dto.id,
+    normalizedDescription: dto.normalizedDescription ?? '',
+    category: dto.category ? toCategory(dto.category) : null,
+    tags: (dto.tags ?? []).map(toTag),
+    verdict: toMarkupVerdict(dto.verdict),
+  };
+}
+
+export function toMarkupsPage(dto: MarkupsPageDto): MarkupsPage {
+  return {
+    items: (dto?.items ?? []).map(toMarkupEntry),
+    totalCount: dto?.totalCount ?? 0,
+  };
+}
+
+/**
+ * Приводит итог операции над словарной записью.
+ *
+ * wasApplied по умолчанию false: неразобранный ответ безопаснее показать как
+ * «уже обработано», чем отрапортовать об изменении, которого не было.
+ */
+export function toMarkupOperationResult(
+  dto: MarkupOperationResultDto,
+): MarkupOperationResult {
+  return {
+    wasApplied: dto?.wasApplied === true,
+    affectedSpendings: dto?.affectedSpendings ?? 0,
+  };
+}
+
+/**
+ * Сервер шлёт перечисления строками. Незнакомое значение приводится к null:
+ * значок источника - подсказка, и неизвестный источник лучше не рисовать
+ * вовсе, чем выдать чужую догадку за проверенную разметку.
+ */
+function toCategorySource(
+  value: string | null | undefined,
+): SpendingCategorySource | null {
+  return SPENDING_CATEGORY_SOURCES.find((item) => item === value) ?? null;
+}
+
+/**
+ * Незнакомый вердикт приводится к «решения нет»: это единственное состояние,
+ * которое ничего не обещает пользователю - ни назначенной категории, ни
+ * запрета на обращение к модели.
+ */
+function toMarkupVerdict(value: string | null | undefined): MarkupVerdict {
+  return MARKUP_VERDICTS.find((item) => item === value) ?? 'None';
 }
 
 export function toSpendingSchedule(dto: SpendingScheduleDto): SpendingSchedule {

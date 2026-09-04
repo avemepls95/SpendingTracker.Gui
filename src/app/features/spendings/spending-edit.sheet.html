@@ -91,6 +91,7 @@
       <button
         type="button"
         class="panel panel--bordered category-row"
+        [class.category-row--guess]="categorySource() === 'Model'"
         [disabled]="isMarkupBusy()"
         (click)="pickCategory()"
       >
@@ -98,12 +99,30 @@
         <span class="category-row__title truncate" [class.category-row__title--empty]="!category()">
           {{ categoryLabel() }}
         </span>
+        <app-markup-source-mark [source]="categorySource()" />
         <app-icon class="category-row__chevron" name="chevron-right" />
       </button>
 
       <p class="markup__about">
         Категория отвечает на вопрос «на что потрачено» и всегда одна.
       </p>
+
+      @if (canReject()) {
+        <!-- Отказ - массовая операция и живёт отдельно от выбора категории:
+             сменить категорию можно строкой выше, и это действие локальное. -->
+        <button
+          type="button"
+          class="btn btn--secondary btn--block reject"
+          [disabled]="isMarkupBusy()"
+          (click)="reject()"
+        >
+          Отвергнуть разметку
+        </button>
+        <p class="markup__about">
+          Затрагивает все траты с этим описанием, кроме размеченных вручную.
+          {{ rejectHint() }}
+        </p>
+      }
     </section>
 
     <section class="markup">

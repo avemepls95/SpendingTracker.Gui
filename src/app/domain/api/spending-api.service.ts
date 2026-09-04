@@ -9,7 +9,10 @@ import {
   CategoryAnalyticsDto,
   CategoryDto,
   CurrencyDto,
+  MarkupOperationResultDto,
+  MarkupsPageDto,
   SpendingDto,
+  SpendingsPageDto,
   TagAnalyticsDto,
   TagDto,
   UserSettingsDto,
@@ -19,7 +22,10 @@ import {
   toCategory,
   toCategoryAnalytics,
   toCurrency,
+  toMarkupOperationResult,
+  toMarkupsPage,
   toSpending,
+  toSpendingsPage,
   toTag,
   toTagAnalytics,
 } from '../mappers/mappers';
@@ -29,7 +35,11 @@ import {
   Category,
   CategoryAnalytics,
   Currency,
+  MarkupOperationResult,
+  MarkupVerdict,
+  MarkupsPage,
   Spending,
+  SpendingsPage,
   Tag,
   TagAnalytics,
   UserAccount,
@@ -41,6 +51,13 @@ export interface SpendingsQuery {
   readonly count: number;
   readonly searchString: string;
   readonly onlyWithoutCategories: boolean;
+}
+
+export interface MarkupsQuery {
+  readonly offset: number;
+  readonly count: number;
+  /** null - записи со всеми вердиктами. */
+  readonly verdict: MarkupVerdict | null;
 }
 
 export interface FilteredSpendingsQuery {
@@ -65,7 +82,13 @@ export class SpendingApiService {
 
   // ------------------------------------------------------------ траты
 
-  getSpendings(query: SpendingsQuery): Observable<readonly Spending[]> {
+  /**
+   * Страница трат вместе с размером очереди неразнесённых.
+   *
+   * Ответ - объект, а не массив: счётчик очереди считается по всем тратам
+   * владельца и в элемент страницы не помещается.
+   */
+  getSpendings(query: SpendingsQuery): Observable<SpendingsPage> {
     const params = new HttpParams()
       .set('offset', query.offset)
       .set('count', query.count)
@@ -73,8 +96,8 @@ export class SpendingApiService {
       .set('onlyWithoutCategories', query.onlyWithoutCategories);
 
     return this.http
-      .get<readonly SpendingDto[]>(this.url('v1/spending/list-with-categories'), { params })
-      .pipe(map((items) => (items ?? []).map(toSpending)));
+      .get<SpendingsPageDto>(this.url('v1/spending/list-with-categories'), { params })
+      .pipe(map(toSpendingsPage));
   }
 
   /**
@@ -82,6 +105,7 @@ export class SpendingApiService {
    *
    * scheduleId в этом ответе сервер не отдаёт, поэтому он всегда null:
    * класть результат в список трат нельзя - пометка «по расписанию» пропадёт.
+   * categorySource, в отличие от него, приходит: карточка траты питает отказ.
    */
   getSpendingById(id: string): Observable<Spending> {
     const params = new HttpParams().set('id', id);
@@ -189,24 +213,81 @@ export class SpendingApiService {
 
   // ------------------------------------- связь траты и категории
 
-  /** Проставляет трате категорию. null - снимает разметку. */
-  setSpendingCategory(spendingId: string, categoryId: string | null): Observable<unknown> {
-    return this.http.post(this.url('v1/spending/set-category'), {
-      spendingId,
-      categoryId,
-    });
+  /**
+   * Проставляет трате категорию. null - снимает разметку.
+   *
+   * Возвращает число трат с тем же описанием, которые каскад поправил заодно,
+   * не считая исходной. Снятие категории - локальное действие: словарь и
+   * другие траты оно не трогает, поэтому в ответе ноль.
+   */
+  setSpendingCategory(spendingId: string, categoryId: string | null): Observable<number> {
+    return this.http
+      .post<number>(this.url('v1/spending/set-category'), { spendingId, categoryId })
+      .pipe(map(toAffectedCount));
   }
 
+  /** Возвращает то же число затронутых каскадом трат, что и set-category. */
   linkSpendingToNewCategory(
     spendingId: string,
     newCategoryTitle: string,
     parentId: string | null = null,
-  ): Observable<unknown> {
-    return this.http.post(this.url('v1/spending/add-to-new-category'), {
-      spendingId,
-      newCategoryTitle,
-      parentId,
-    });
+  ): Observable<number> {
+    return this.http
+      .post<number>(this.url('v1/spending/add-to-new-category'), {
+        spendingId,
+        newCategoryTitle,
+        parentId,
+      })
+      .pipe(map(toAffectedCount));
+  }
+
+  // ------------------------------------------------------------ словарь разметки
+
+  /** Страница словаря под фильтром по вердикту. */
+  getMarkups(query: MarkupsQuery): Observable<MarkupsPage> {
+    let params = new HttpParams()
+      .set('offset', query.offset)
+      .set('count', query.count);
+
+    // Отсутствующий параметр означает «все вердикты»; пустая строка привязку
+    // модели не устроит - она разбирает значение как имя перечисления.
+    if (query.verdict) {
+      params = params.set('verdict', query.verdict);
+    }
+
+    return this.http
+      .get<MarkupsPageDto>(this.url('v1/markup/dictionary'), { params })
+      .pipe(map(toMarkupsPage));
+  }
+
+  /** Переводит догадку модели в решение человека. */
+  confirmMarkup(markupId: string): Observable<MarkupOperationResult> {
+    return this.http
+      .post<MarkupOperationResultDto>(this.url('v1/markup/confirm'), { markupId })
+      .pipe(map(toMarkupOperationResult));
+  }
+
+  /**
+   * Отвергает разметку описания: по записи словаря либо по трате.
+   *
+   * Второй вариант нужен карточке траты, где словарной записи может ещё не
+   * быть - отказ по трате её создаст.
+   */
+  rejectMarkup(
+    target: { readonly markupId: string } | { readonly spendingId: string },
+  ): Observable<MarkupOperationResult> {
+    return this.http
+      .post<MarkupOperationResultDto>(this.url('v1/markup/reject'), target)
+      .pipe(map(toMarkupOperationResult));
+  }
+
+  /** Стирает и знание, и запрет: описание снова доступно модели. */
+  deleteMarkup(markupId: string): Observable<MarkupOperationResult> {
+    return this.http
+      .post<MarkupOperationResultDto>(this.url('v1/markup/dictionary/delete'), {
+        markupId,
+      })
+      .pipe(map(toMarkupOperationResult));
   }
 
   // ------------------------------------------------------------ счета
@@ -251,15 +332,34 @@ export class SpendingApiService {
   }
 
   getUserSettings(): Observable<UserSettings> {
-    return this.http
-      .get<UserSettingsDto>(this.url('v1/user-settings/list'))
-      .pipe(map((dto) => ({ viewCurrencyId: dto?.viewCurrencyId ?? '' })));
+    return this.http.get<UserSettingsDto>(this.url('v1/user-settings/list')).pipe(
+      map((dto) => ({
+        viewCurrencyId: dto?.viewCurrencyId ?? '',
+        aiMarkupUserConsent: dto?.aiMarkupUserConsent === true,
+        aiMarkupMonthlyLimit: dto?.aiMarkupMonthlyLimit ?? 0,
+      })),
+    );
   }
 
-  updateUserSettings(settings: UserSettings): Observable<unknown> {
-    return this.http.post(this.url('v1/user-settings/update'), {
-      ViewCurrencyId: settings.viewCurrencyId,
-    });
+  /**
+   * Сохраняет настройки пользователя.
+   *
+   * Согласие уходит только когда его действительно меняли: у булева поля
+   * пропуск неотличим от осознанного false, поэтому сервер трактует
+   * отсутствие поля как «не трогать», а присланный false - как отзыв.
+   * Валюта сводки обязательна в любом запросе.
+   */
+  updateUserSettings(settings: {
+    readonly viewCurrencyId: string;
+    readonly aiMarkupUserConsent?: boolean;
+  }): Observable<unknown> {
+    const body: Record<string, unknown> = { viewCurrencyId: settings.viewCurrencyId };
+
+    if (settings.aiMarkupUserConsent !== undefined) {
+      body['aiMarkupUserConsent'] = settings.aiMarkupUserConsent;
+    }
+
+    return this.http.post(this.url('v1/user-settings/update'), body);
   }
 
   // ------------------------------------------------------------ аналитика
@@ -312,4 +412,15 @@ export class SpendingApiService {
   private url(path: string): string {
     return this.baseUrl + path;
   }
+}
+
+/**
+ * Число затронутых каскадом трат из ответа.
+ *
+ * До появления каскада оба эндпоинта отвечали пустым телом, и старый образ
+ * Web API под новым фронтом ответил бы так же. Пустое тело - это «сведений
+ * нет», то есть ноль, а не повод показать «Поправлено ещё NaN трат».
+ */
+function toAffectedCount(value: number | null | undefined): number {
+  return Number.isFinite(value) ? Number(value) : 0;
 }

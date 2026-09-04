@@ -75,6 +75,8 @@
       >
         Все
       </button>
+      <!-- Счётчик - это размер очереди разбора целиком, а не число записей на
+           экране, поэтому он одинаков при любом состоянии фильтра. -->
       <button
         type="button"
         class="chip"
@@ -83,6 +85,9 @@
         (click)="setOnlyWithoutCategories(true)"
       >
         Без категорий
+        @if (store.withoutCategoryCount() > 0) {
+          <span class="chip__count">{{ store.withoutCategoryCount() }}</span>
+        }
       </button>
     </div>
   </div>
@@ -171,7 +176,16 @@
                       @if (spending.category || spending.tags.length > 0) {
                         <span class="spending__markup">
                           @if (spending.category; as category) {
-                            <span class="chip chip--category">{{ category.title }}</span>
+                            <!-- Догадка модели обведена акцентной рамкой, прошлое
+                                 решение - только приглушённой искрой: заметное
+                                 выделение означает «посмотри на это». -->
+                            <span
+                              class="chip chip--category"
+                              [class.chip--guess]="spending.categorySource === 'Model'"
+                            >
+                              <app-markup-source-mark [source]="spending.categorySource" />
+                              {{ category.title }}
+                            </span>
                           }
                           @for (tag of spending.tags; track tag.id) {
                             <span class="chip chip--tag">{{ tag.title }}</span>

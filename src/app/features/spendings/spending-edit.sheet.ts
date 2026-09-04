@@ -5,9 +5,17 @@ import { SheetService } from '../../core/ui/sheet.service';
 import { TelegramService } from '../../core/telegram/telegram.service';
 import { ToastService } from '../../core/ui/toast.service';
 import { SpendingApiService } from '../../domain/api/spending-api.service';
-import { Category, Currency, Spending, Tag } from '../../domain/models/models';
+import {
+  Category,
+  Currency,
+  Spending,
+  SpendingCategorySource,
+  Tag,
+} from '../../domain/models/models';
 import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { confirmAction } from '../../shared/ui/confirm.dialog';
+import { MarkupSourceMarkComponent } from '../../shared/ui/markup-source-mark.component';
+import { spendingsCount } from '../../shared/util/plural.util';
 import {
   CurrencyPickerData,
   CurrencyPickerSheet,
@@ -39,7 +47,7 @@ export type SpendingEditResult =
 @Component({
   selector: 'app-spending-edit',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, SwipeToCloseDirective],
+  imports: [IconComponent, MarkupSourceMarkComponent, SwipeToCloseDirective],
   templateUrl: './spending-edit.sheet.html',
   styleUrl: './spending-edit.sheet.scss',
 })
@@ -60,6 +68,9 @@ export class SpendingEditSheet {
   /** Разметка меняется отдельными запросами и применяется сразу. */
   protected readonly category = signal<Category | null>(this.original.category);
   protected readonly tags = signal<readonly Tag[]>(this.original.tags);
+  protected readonly categorySource = signal<SpendingCategorySource | null>(
+    this.original.categorySource,
+  );
 
   protected readonly isSaving = signal(false);
   protected readonly isMarkupBusy = signal(false);
@@ -94,6 +105,27 @@ export class SpendingEditSheet {
 
   protected readonly dateError = computed(() =>
     parseCalendarDate(this.dateText()) ? null : 'Укажите дату',
+  );
+
+  /**
+   * Отказ предлагается, только когда категорию поставил словарь.
+   *
+   * При источнике Manual действие было бы обманом: отказ снимает категорию со
+   * всех трат описания, кроме размеченных вручную, то есть именно на этой
+   * трате ничего бы не изменилось. Пустой источник - трата из очереди, ей
+   * отказывать не от чего.
+   */
+  protected readonly canReject = computed(() => {
+    const source = this.categorySource();
+
+    return source === 'Model' || source === 'History';
+  });
+
+  /** Пояснение к отказу зависит от того, чьё решение отвергают. */
+  protected readonly rejectHint = computed(() =>
+    this.categorySource() === 'Model'
+      ? 'Модель об этом описании больше не спросят, пока вы не назначите категорию сами.'
+      : 'Прошлое решение по этому описанию перестанет применяться к новым тратам.',
   );
 
   protected readonly canSave = computed(
@@ -171,10 +203,64 @@ export class SpendingEditSheet {
               );
 
         request.subscribe({
-          next: () => this.refreshMarkup(),
+          next: (affected) => {
+            // Каскад назначает категорию и тем тратам, у которых её не было,
+            // поэтому число сообщается всегда, когда оно ненулевое. Саму
+            // правленую трату сервер в него не включает. При снятии категории
+            // каскада нет и приходит ноль - молчать тут правильно.
+            if (affected > 0) {
+              this.toast.info(`Поправлено ещё ${spendingsCount(affected)}`);
+            }
+
+            this.refreshMarkup();
+          },
           error: () => this.isMarkupBusy.set(false),
         });
       });
+  }
+
+  /**
+   * Отказ от разметки описания.
+   *
+   * Массовая операция, поэтому с подтверждением: она снимает категорию со всех
+   * трат владельца с этим описанием, кроме размеченных вручную. Отправляется
+   * по трате, а не по записи словаря: карточка знает трату, а записи по её
+   * описанию может уже не быть - тогда отказ её создаст.
+   */
+  protected async reject(): Promise<void> {
+    const confirmed = await confirmAction(this.sheets, this.telegram, {
+      title: 'Отвергнуть разметку?',
+      message:
+        `Категория снимется со всех трат с описанием «${this.original.description}», ` +
+        `кроме размеченных вручную. ${this.rejectHint()}`,
+      confirmLabel: 'Отвергнуть',
+      destructive: true,
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.isMarkupBusy.set(true);
+
+    this.api.rejectMarkup({ spendingId: this.original.id }).subscribe({
+      next: (result) => {
+        // wasApplied: false - «уже обработано», а не сбой: описание успели
+        // отвергнуть из другой вкладки или кнопкой в телеграме.
+        if (!result.wasApplied) {
+          this.toast.info('Уже обработано');
+        } else {
+          this.toast.success(
+            result.affectedSpendings > 0
+              ? `Разметка снята с ${spendingsCount(result.affectedSpendings)}`
+              : 'Разметка отвергнута',
+          );
+        }
+
+        this.refreshMarkup();
+      },
+      error: () => this.isMarkupBusy.set(false),
+    });
   }
 
   // ------------------------------------------------------------ теги
@@ -252,6 +338,7 @@ export class SpendingEditSheet {
       next: (spending) => {
         this.category.set(spending.category);
         this.tags.set(spending.tags);
+        this.categorySource.set(spending.categorySource);
         this.isMarkupBusy.set(false);
         this.telegram.impact('light');
       },
@@ -278,6 +365,7 @@ export class SpendingEditSheet {
       date: formatInputDate(date),
       category: this.category(),
       tags: this.tags(),
+      categorySource: this.categorySource(),
     };
 
     this.api
@@ -325,7 +413,12 @@ export class SpendingEditSheet {
     // трату нужно вернуть обновлённой.
     this.dialogRef.close({
       kind: 'updated',
-      spending: { ...this.original, category: this.category(), tags: this.tags() },
+      spending: {
+        ...this.original,
+        category: this.category(),
+        tags: this.tags(),
+        categorySource: this.categorySource(),
+      },
     });
   }
 }

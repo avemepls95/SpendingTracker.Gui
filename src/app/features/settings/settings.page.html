@@ -55,6 +55,26 @@
     </div>
   </section>
 
+  <section>
+    <h2 class="section-title">Разметка</h2>
+    <div class="panel">
+      <button type="button" class="panel__row" (click)="openAiMarkup()">
+        <app-icon class="row__icon" name="sparkle" />
+        <span class="row__main">
+          <span class="row__title">Автоматическая разметка</span>
+          <span class="row__hint">
+            Незнакомые описания трат размечает языковая модель
+          </span>
+        </span>
+
+        <span class="row__value" [class.row__value--warning]="isAiMarkupBlocked()">
+          {{ aiMarkupStatus() }}
+        </span>
+        <app-icon class="row__chevron" name="chevron-right" />
+      </button>
+    </div>
+  </section>
+
   @if (canSignOut) {
     <section>
       <div class="panel">

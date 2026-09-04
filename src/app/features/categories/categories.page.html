@@ -1,12 +1,15 @@
 <app-page-header title="Разметка">
-  <button
-    type="button"
-    class="icon-btn"
-    [attr.aria-label]="mode() === 'categories' ? 'Создать категорию' : 'Создать тег'"
-    (click)="create()"
-  >
-    <app-icon name="plus" />
-  </button>
+  <!-- Записи словаря заводит система, вручную создавать их нечем. -->
+  @if (mode() !== 'dictionary') {
+    <button
+      type="button"
+      class="icon-btn"
+      [attr.aria-label]="mode() === 'categories' ? 'Создать категорию' : 'Создать тег'"
+      (click)="create()"
+    >
+      <app-icon name="plus" />
+    </button>
+  }
 </app-page-header>
 
 <div class="modes" role="group" aria-label="Вид разметки">
@@ -28,7 +31,22 @@
   >
     Теги
   </button>
+  <button
+    type="button"
+    class="chip"
+    [class.chip--selected]="mode() === 'dictionary'"
+    [attr.aria-pressed]="mode() === 'dictionary'"
+    (click)="setMode('dictionary')"
+  >
+    Словарь
+  </button>
 </div>
+
+@if (mode() === 'dictionary') {
+  <!-- Словарь грузится сам: держать его под общим статусом страницы нельзя,
+       у него своя постраничная загрузка и свой фильтр. -->
+  <app-markup-dictionary />
+} @else {
 
 @switch (status()) {
   @case ('loading') {
@@ -147,4 +165,6 @@
       </div>
     }
   }
+}
+
 }
