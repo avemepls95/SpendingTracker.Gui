@@ -299,11 +299,97 @@ button.chip {
   color: var(--c-accent-contrast);
 }
 
+// Тег словарной записи, который на новые траты не переносится. Приглушён и
+// обведён пунктиром: он в записи есть, но ничего не делает, и сплошная заливка
+// обещала бы обратное.
+.chip--not-spread {
+  border: 1px dashed var(--c-border-strong);
+  background: transparent;
+  color: var(--c-text-3);
+}
+
 // Совсем мелкая метка: теги категории внутри строки дерева.
 .chip--mini {
   min-height: 18px;
   padding: 0 var(--sp-1);
   font-size: 11px;
+}
+
+// ---------------------------------------------------------------- переключатель
+
+// Ползунок нарисован на самом флажке: appearance: none снимает системный вид,
+// но оставляет элементу разметку формы - фокус с клавиатуры, роль switch и
+// чтение состояния скринридером работают без собственной реализации.
+.switch {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 26px;
+  margin: 0;
+  border-radius: var(--r-full);
+  background: var(--c-border-strong);
+  transition: background-color var(--dur) var(--ease);
+  cursor: pointer;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: var(--r-full);
+    background: var(--c-surface);
+    box-shadow: var(--sh-1);
+    transition: transform var(--dur) var(--ease);
+  }
+
+  &:checked {
+    background: var(--c-accent);
+  }
+
+  &:checked::after {
+    transform: translateX(18px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+// Строка с переключателем: подпись слева, ползунок справа. В label целиком,
+// поэтому нажатие по подписи срабатывает так же, как по ползунку.
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-height: var(--tap-min);
+  padding: var(--sp-3) var(--sp-4);
+  cursor: pointer;
+}
+
+.switch-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.switch-row__title {
+  font-weight: var(--fw-medium);
+}
+
+.switch-row__hint {
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
 }
 
 // ---------------------------------------------------------------- сегменты

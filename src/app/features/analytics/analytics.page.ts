@@ -82,6 +82,16 @@ export interface TagRow {
   readonly isSelected: boolean;
 }
 
+/**
+ * Тег в фильтре отчёта.
+ *
+ * Уже полного тега намеренно: фильтр набирается и из выбора тегов, и нажатием
+ * по строке отчёта, а у строки отчёта есть только идентификатор с подписью.
+ * Остальные поля тега здесь не нужны, и подставлять им умолчания - значит
+ * выдавать выдумку за состояние тега.
+ */
+type TagFilterItem = Pick<Tag, 'id' | 'title'>;
+
 /** Суммы ниже копейки в отчёте - шум округления, а не траты. */
 const MIN_VISIBLE_AMOUNT = 0.01;
 
@@ -108,7 +118,7 @@ export class AnalyticsPage implements OnDestroy {
   protected readonly tagAnalytics = signal<TagAnalytics | null>(null);
 
   /** Фильтр по тегам: учитываются траты, несущие все выбранные теги. */
-  protected readonly selectedTags = signal<readonly Tag[]>([]);
+  protected readonly selectedTags = signal<readonly TagFilterItem[]>([]);
 
   private readonly customFrom = signal(formatInputDate(addDays(new Date(), -30)));
   private readonly customTo = signal(formatInputDate(new Date()));
@@ -314,7 +324,7 @@ export class AnalyticsPage implements OnDestroy {
       });
   }
 
-  protected removeTagFilter(tag: Tag): void {
+  protected removeTagFilter(tag: TagFilterItem): void {
     this.selectedTags.update((current) =>
       current.filter((item) => item.id !== tag.id),
     );
@@ -332,7 +342,7 @@ export class AnalyticsPage implements OnDestroy {
 
     this.selectedTags.update((current) => [
       ...current,
-      { id: row.tagId, title: row.title, group: row.group },
+      { id: row.tagId, title: row.title },
     ]);
   }
 

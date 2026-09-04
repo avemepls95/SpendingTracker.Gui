@@ -44,6 +44,12 @@ export class TagEditSheet {
   protected readonly group = signal(this.existing?.group ?? '');
   protected readonly isSaving = signal(false);
 
+  /** Новый тег заводится без переноса: цена ошибочного переноса выше. */
+  protected readonly spreads = signal(this.existing?.spreadsByDescription ?? false);
+
+  /** Объяснение признака развёрнуто: оно длинное и нужно не каждый раз. */
+  protected readonly isSpreadHelpOpen = signal(false);
+
   protected readonly nameError = computed(() =>
     this.name().trim() === '' ? 'Укажите название' : null,
   );
@@ -58,6 +64,14 @@ export class TagEditSheet {
 
   protected onGroup(event: Event): void {
     this.group.set((event.target as HTMLInputElement).value);
+  }
+
+  protected onSpreads(event: Event): void {
+    this.spreads.set((event.target as HTMLInputElement).checked);
+  }
+
+  protected toggleSpreadHelp(): void {
+    this.isSpreadHelpOpen.update((open) => !open);
   }
 
   protected pickGroup(value: string): void {
@@ -76,9 +90,11 @@ export class TagEditSheet {
     const title = this.name().trim();
     const group = this.group().trim() || null;
 
+    const spreadsByDescription = this.spreads();
+
     const request = this.existing
-      ? this.api.updateTag({ id: this.existing.id, title, group })
-      : this.api.createTag(title, group);
+      ? this.api.updateTag({ id: this.existing.id, title, group, spreadsByDescription })
+      : this.api.createTag(title, group, spreadsByDescription);
 
     request.subscribe({
       next: () => {

@@ -183,11 +183,37 @@ export class SpendingApiService {
       .pipe(map((items) => (items ?? []).map(toTag)));
   }
 
-  createTag(title: string, group: string | null = null): Observable<unknown> {
-    return this.http.post(this.url('v1/tag/create'), { title, group });
+  /**
+   * Заводит тег. Признак переноса по умолчанию выключен - как и на сервере.
+   *
+   * Быстрое создание тега прямо из выбора (в карточке траты, категории,
+   * расписании) признак не спрашивает: там человек занят другим, а включить
+   * перенос можно потом в редакторе тега.
+   */
+  createTag(
+    title: string,
+    group: string | null = null,
+    spreadsByDescription = false,
+  ): Observable<unknown> {
+    return this.http.post(this.url('v1/tag/create'), {
+      title,
+      group,
+      spreadsByDescription,
+    });
   }
 
-  updateTag(tag: { id: string; title: string; group: string | null }): Observable<unknown> {
+  /**
+   * Сохраняет тег целиком.
+   *
+   * Признак переноса объявлен обязательным намеренно: команда пишет его как
+   * есть, и запрос без поля выключил бы перенос там, где он был включён.
+   */
+  updateTag(tag: {
+    id: string;
+    title: string;
+    group: string | null;
+    spreadsByDescription: boolean;
+  }): Observable<unknown> {
     return this.http.post(this.url('v1/tag/update'), tag);
   }
 

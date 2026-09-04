@@ -10,3 +10,36 @@
   font-size: var(--fs-xs);
   color: var(--c-text-2);
 }
+
+// Раскрытие объяснения: ссылка, а не кнопка формы - оно ничего не меняет,
+// а лишь показывает текст.
+.spread-help__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  align-self: flex-start;
+  min-height: var(--tap-min);
+  padding: 0;
+  background: none;
+  color: var(--c-accent);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  --icon-size: 16px;
+}
+
+.spread-help {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--c-surface-2);
+  font-size: var(--fs-sm);
+  color: var(--c-text-2);
+  line-height: var(--lh-normal);
+
+  strong {
+    color: var(--c-text);
+    font-weight: var(--fw-semibold);
+  }
+}
