@@ -16,6 +16,7 @@ import {
 import { IconComponent } from '../../shared/ui/icon.component';
 import { PageHeaderComponent } from '../../shared/ui/page-header.component';
 import { HideOnErrorDirective } from '../../shared/util/hide-on-error.directive';
+import { AiMarkupSheet } from './ai-markup.sheet';
 
 @Component({
   selector: 'app-settings-page',
@@ -51,6 +52,16 @@ export class SettingsPage {
     return currency ? flagImageUrl(currency.flagEmojiCode) : null;
   });
 
+  protected readonly isAiMarkupBlocked = this.settings.isAiMarkupBlocked;
+
+  protected readonly aiMarkupStatus = computed(() => {
+    if (!this.settings.aiMarkupUserConsent()) {
+      return 'Выключена';
+    }
+
+    return this.isAiMarkupBlocked() ? 'Нет лимита' : 'Включена';
+  });
+
   protected pickCurrency(): void {
     this.sheets
       .openSheet<Currency, CurrencyPickerData>(
@@ -62,9 +73,15 @@ export class SettingsPage {
         if (currency && currency.id !== this.settings.viewCurrencyId()) {
           // Сохраняется сразу: отдельная кнопка «Сохранить» ради одного
           // поля заставляла возвращаться к экрану вторым действием.
-          this.settings.save({ viewCurrencyId: currency.id });
+          this.settings.setViewCurrency(currency.id);
         }
       });
+  }
+
+  protected openAiMarkup(): void {
+    this.sheets.openSheet<void, undefined>(AiMarkupSheet, undefined, {
+      ariaLabel: 'Автоматическая разметка',
+    });
   }
 
   protected async signOut(): Promise<void> {

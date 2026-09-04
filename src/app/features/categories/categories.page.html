@@ -1,12 +1,15 @@
 <app-page-header title="Разметка">
-  <button
-    type="button"
-    class="icon-btn"
-    [attr.aria-label]="mode() === 'categories' ? 'Создать категорию' : 'Создать тег'"
-    (click)="create()"
-  >
-    <app-icon name="plus" />
-  </button>
+  <!-- Записи словаря заводит система, вручную создавать их нечем. -->
+  @if (mode() !== 'dictionary') {
+    <button
+      type="button"
+      class="icon-btn"
+      [attr.aria-label]="mode() === 'categories' ? 'Создать категорию' : 'Создать тег'"
+      (click)="create()"
+    >
+      <app-icon name="plus" />
+    </button>
+  }
 </app-page-header>
 
 <div class="modes" role="group" aria-label="Вид разметки">
@@ -28,9 +31,24 @@
   >
     Теги
   </button>
+  <button
+    type="button"
+    class="chip"
+    [class.chip--selected]="mode() === 'dictionary'"
+    [attr.aria-pressed]="mode() === 'dictionary'"
+    (click)="setMode('dictionary')"
+  >
+    Словарь
+  </button>
 </div>
 
-@switch (status()) {
+<!-- Словарь в той же развилке, но отдельной веткой: статус страницы описывает
+     загрузку категорий и тегов, а словарь грузится сам, своими страницами. -->
+@switch (mode() === 'dictionary' ? 'dictionary' : status()) {
+  @case ('dictionary') {
+    <app-markup-dictionary />
+  }
+
   @case ('loading') {
     <div class="content" aria-busy="true">
       <div class="panel">

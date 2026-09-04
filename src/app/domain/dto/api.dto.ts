@@ -39,6 +39,45 @@ export interface SpendingDto {
    * и во всех ответах, кроме list-with-categories: остальные его не отдают.
    */
   readonly scheduleId?: string | null;
+  /**
+   * Кто проставил категорию. Отсутствует, когда категории нет, и в ответе
+   * filtered-list: тот контракт категорию не несёт вовсе.
+   */
+  readonly categorySource?: string | null;
+}
+
+/**
+ * Страница списка трат.
+ *
+ * Эндпоинт list-with-categories отдавал голый массив и сменил тело на объект:
+ * счётчик очереди некуда было положить. Счётчик считается по всем тратам
+ * владельца, а не по странице и не по строке поиска.
+ */
+export interface SpendingsPageDto {
+  readonly items?: readonly SpendingDto[] | null;
+  readonly withoutCategoryCount?: number | null;
+}
+
+/** Запись словаря разметки: нормализованное описание и что оно означает. */
+export interface MarkupDto {
+  readonly id: string;
+  readonly normalizedDescription: string;
+  /** Отсутствует у вердиктов, которые категорию не назначают. */
+  readonly category?: CategoryDto | null;
+  readonly tags?: readonly TagDto[] | null;
+  readonly verdict: string;
+}
+
+export interface MarkupsPageDto {
+  readonly items?: readonly MarkupDto[] | null;
+  /** Число записей под тем же фильтром, а не на текущей странице. */
+  readonly totalCount?: number | null;
+}
+
+/** Итог операции над словарной записью: применилась ли и сколько трат затронула. */
+export interface MarkupOperationResultDto {
+  readonly wasApplied?: boolean | null;
+  readonly affectedSpendings?: number | null;
 }
 
 export interface SpendingScheduleDto {
@@ -92,6 +131,13 @@ export interface AccountsSummaryDto {
 
 export interface UserSettingsDto {
   readonly viewCurrencyId: string | null;
+  /** Разрешение отправлять описания трат в языковую модель. */
+  readonly aiMarkupUserConsent?: boolean | null;
+  /**
+   * Месячный лимит обращений к модели. Только для чтения: его правит владелец
+   * сервиса прямо в базе, отдельного механизма для этого в системе нет.
+   */
+  readonly aiMarkupMonthlyLimit?: number | null;
 }
 
 /**

@@ -50,6 +50,11 @@ export function describeErrorCode(code: string, data: unknown): string | null {
     // а дескриптор ловит вообще любой KeyNotFoundException сервера.
     case 'KeyNotFound':
       return 'Запись не найдена';
+    // Текст намеренно совпадает с KeyNotFound: чужая запись словаря и
+    // несуществующая обязаны выглядеть одинаково, иначе разные сообщения
+    // подтверждали бы существование чужих данных.
+    case 'MarkupDoesNotBelongsToUser':
+      return 'Запись не найдена';
     default:
       return null;
   }

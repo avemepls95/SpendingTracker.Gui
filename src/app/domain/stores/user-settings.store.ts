@@ -19,7 +19,12 @@ export class UserSettingsStore {
   private readonly api = inject(SpendingApiService);
   private readonly toast = inject(ToastService);
 
-  private readonly state = signal<UserSettings>({ viewCurrencyId: '' });
+  private readonly state = signal<UserSettings>({
+    viewCurrencyId: '',
+    aiMarkupUserConsent: false,
+    aiMarkupMonthlyLimit: 0,
+  });
+
   private readonly loaded = signal(false);
   private readonly saving = signal(false);
   private requested = false;
@@ -32,6 +37,25 @@ export class UserSettingsStore {
 
   /** Валюта, в которой сводятся суммы. Пустая строка - валюта не выбрана. */
   readonly viewCurrencyId = computed(() => this.state().viewCurrencyId);
+
+  /** Разрешение отправлять описания трат в языковую модель. */
+  readonly aiMarkupUserConsent = computed(() => this.state().aiMarkupUserConsent);
+
+  /**
+   * Месячный лимит обращений к модели. Правится владельцем сервиса в базе,
+   * отсюда только читается.
+   */
+  readonly aiMarkupMonthlyLimit = computed(() => this.state().aiMarkupMonthlyLimit);
+
+  /**
+   * Согласие выдано, но лимит нулевой - разметки не будет.
+   *
+   * Условие живёт здесь, а не на экранах: его показывают и строка настроек, и
+   * лист согласия, и разойтись они не должны.
+   */
+  readonly isAiMarkupBlocked = computed(
+    () => this.state().aiMarkupUserConsent && this.state().aiMarkupMonthlyLimit === 0,
+  );
 
   load(): void {
     if (this.requested) {
@@ -56,7 +80,22 @@ export class UserSettingsStore {
     });
   }
 
-  save(settings: UserSettings): void {
+  /** Валюта, в которой сводятся суммы на экранах счетов и аналитики. */
+  setViewCurrency(currencyId: string): void {
+    this.save({ ...this.state(), viewCurrencyId: currencyId }, { withConsent: false });
+  }
+
+  /**
+   * Разрешение отправлять описания трат в языковую модель.
+   *
+   * Согласие уходит на сервер только этим путём: в остальных запросах поле
+   * опущено, и уже выданное согласие они не отзывают.
+   */
+  setAiMarkupConsent(value: boolean): void {
+    this.save({ ...this.state(), aiMarkupUserConsent: value }, { withConsent: true });
+  }
+
+  private save(settings: UserSettings, options: { withConsent: boolean }): void {
     const previous = this.state();
 
     // Новое значение показывается сразу, но при отказе сервера откатывается:
@@ -66,7 +105,12 @@ export class UserSettingsStore {
     this.saving.set(true);
 
     this.api
-      .updateUserSettings(settings)
+      .updateUserSettings({
+        viewCurrencyId: settings.viewCurrencyId,
+        aiMarkupUserConsent: options.withConsent
+          ? settings.aiMarkupUserConsent
+          : undefined,
+      })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => this.toast.success('Сохранено'),

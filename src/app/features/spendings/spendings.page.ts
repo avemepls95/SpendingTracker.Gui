@@ -18,6 +18,7 @@ import { Spending } from '../../domain/models/models';
 import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { IconComponent } from '../../shared/ui/icon.component';
+import { MarkupSourceMarkComponent } from '../../shared/ui/markup-source-mark.component';
 import { PageHeaderComponent } from '../../shared/ui/page-header.component';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { IntersectDirective } from '../../shared/util/intersect.directive';
@@ -49,6 +50,7 @@ type SpendingsView = 'spendings' | 'schedules';
     EmptyStateComponent,
     IconComponent,
     IntersectDirective,
+    MarkupSourceMarkComponent,
     MoneyPipe,
     SpendingSchedulesList,
   ],
@@ -214,6 +216,15 @@ export class SpendingsPage implements OnDestroy {
 
         if (result.kind === 'deleted') {
           this.store.removeLocally(result.id);
+          return;
+        }
+
+        // Каскад установки категории и отказ правят все траты описания сразу,
+        // а не только открытую: на экране устаревает произвольное число строк,
+        // и счётчик очереди по одной трате уже не досчитать.
+        if (result.affectedOthers) {
+          this.spendingsOffset = 0;
+          this.store.reload();
           return;
         }
 

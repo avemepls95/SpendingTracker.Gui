@@ -1,0 +1,65 @@
+<div class="sheet" appSwipeToClose (dismissed)="close()">
+  <div class="sheet__grabber" aria-hidden="true"></div>
+
+  <div class="sheet__header">
+    <h2 class="sheet__title">Автоматическая разметка</h2>
+    <button type="button" class="icon-btn" aria-label="Закрыть" (click)="close()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <div class="sheet__body">
+    <p class="intro">
+      Незнакомое описание траты система отправляет в языковую модель и
+      предлагает категорию, которую вы подтверждаете или отвергаете. Знакомые
+      описания размечаются по вашим прошлым решениям и наружу не уходят.
+    </p>
+
+    <!-- Переключатель в label: попадание по подписи включает его так же, как
+         по самому ползунку, а на телефоне подпись - основная цель пальца. -->
+    <label class="panel panel--bordered toggle">
+      <span class="toggle__main">
+        <span class="toggle__title">Отправлять описания в модель</span>
+        <span class="toggle__hint">По умолчанию выключено</span>
+      </span>
+      <input
+        class="switch"
+        type="checkbox"
+        role="switch"
+        [checked]="consent()"
+        [disabled]="isSaving()"
+        (change)="onToggle($event)"
+      />
+    </label>
+
+    <section class="limit" [class.limit--blocked]="isBlockedByLimit()">
+      <app-icon
+        class="limit__icon"
+        [name]="isBlockedByLimit() ? 'alert-circle' : 'info'"
+      />
+      <span class="limit__text">
+        @if (monthlyLimit() === 0) {
+          Месячный лимит обращений к модели - нулевой, поэтому разметки не
+          будет даже с включённым согласием. Лимит задаёт владелец сервиса.
+        } @else {
+          Месячный лимит обращений к модели: {{ monthlyLimit() }}. Лимит задаёт
+          владелец сервиса, изменить его отсюда нельзя.
+        }
+      </span>
+    </section>
+
+    <section class="disclosure">
+      <h3 class="section-title">Что уходит наружу</h3>
+      <ul class="disclosure__list">
+        <li>описания трат;</li>
+        <li>суммы и коды валют;</li>
+        <li>полное дерево названий ваших категорий;</li>
+        <li>до тридцати примеров вашей разметки - описание и его категория.</li>
+      </ul>
+      <p class="disclosure__note">
+        Согласие можно отозвать в любой момент - переключателем выше. Уже
+        сделанная разметка при этом остаётся: она хранится у нас, а не в модели.
+      </p>
+    </section>
+  </div>
+</div>
