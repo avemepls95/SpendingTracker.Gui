@@ -133,8 +133,8 @@ export class SpendingEditSheet {
     return source === 'Model' || source === 'History';
   });
 
-  /** Пояснение к отказу зависит от того, чьё решение отвергают. */
-  protected readonly rejectHint = computed(() =>
+  /** Пояснение к отказу в диалоге подтверждения: чьё решение отвергают. */
+  private readonly rejectHint = computed(() =>
     this.categorySource() === 'Model'
       ? 'Модель об этом описании больше не спросят, пока вы не назначите категорию сами.'
       : 'Прошлое решение по этому описанию перестанет применяться к новым тратам.',
