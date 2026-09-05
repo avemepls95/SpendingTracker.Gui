@@ -181,3 +181,9 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+.tag-group__empty {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--c-text-2);
+}

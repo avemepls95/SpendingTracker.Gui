@@ -140,8 +140,18 @@ export class TagGroupsSheet {
     () => this.newTitle().trim() !== '' && this.newTitleError() === null,
   );
 
+  /**
+   * Незанятое название в поле «Новая группа» сохранению не мешает - оно уедет
+   * вместе с остальным. А вот занятое или слишком длинное держит сохранение:
+   * иначе набранное название пропало бы вместе с листом, а человек не увидел
+   * бы, почему.
+   */
   protected readonly canSave = computed(
-    () => !this.isSaving() && this.status() === 'ready' && this.errors().size === 0,
+    () =>
+      !this.isSaving() &&
+      this.status() === 'ready' &&
+      this.errors().size === 0 &&
+      this.newTitleError() === null,
   );
 
   constructor() {
@@ -199,6 +209,21 @@ export class TagGroupsSheet {
       return;
     }
 
+    this.commitNewTitle();
+    this.telegram.impact('light');
+  }
+
+  /**
+   * Переносит название из поля «Новая группа» в список строк.
+   *
+   * Отдельно от add: то же самое делает сохранение, но без отклика - там оно
+   * часть общего действия, а не самостоятельного нажатия.
+   */
+  private commitNewTitle(): void {
+    if (!this.canAdd()) {
+      return;
+    }
+
     const title = this.newTitle().trim();
 
     this.rows.update((rows) => [
@@ -206,7 +231,6 @@ export class TagGroupsSheet {
       { key: this.nextKey++, savedTitle: null, title, tagCount: 0, isRemoved: false },
     ]);
     this.newTitle.set('');
-    this.telegram.impact('light');
   }
 
   /**
@@ -241,6 +265,11 @@ export class TagGroupsSheet {
     if (!this.canSave()) {
       return;
     }
+
+    // Набранное, но не добавленное кнопкой название - тоже правка листа.
+    // Человек, который ввёл название группы и нажал «Сохранить», ждёт, что
+    // группа заведётся, а не что текст исчезнет вместе с листом.
+    this.commitNewTitle();
 
     const requests = this.buildRequests();
 

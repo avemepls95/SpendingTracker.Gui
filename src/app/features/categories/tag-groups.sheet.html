@@ -114,6 +114,7 @@
               [value]="newTitle()"
               [disabled]="isSaving()"
               (input)="onNewTitle($event)"
+              (keydown.enter)="add()"
             />
             <button
               type="button"

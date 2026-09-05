@@ -181,6 +181,16 @@
             <section class="tag-group">
               <h2 class="tag-group__label">{{ group.label }}</h2>
               <div class="panel">
+                <!-- Группу заводят и пустой, чтобы наполнить потом. Без строки
+                     о пустоте она была бы видна только в листе «Группы», и
+                     завести её заранее было бы незачем. -->
+                @if (group.tags.length === 0) {
+                  <p class="panel__row tag-group__empty">
+                    Тегов пока нет. Группа появится у тега, если выбрать её при
+                    его правке.
+                  </p>
+                }
+
                 @for (tag of group.tags; track tag.id) {
                   <button type="button" class="panel__row category" (click)="editTag(tag)">
                     <app-icon class="category__icon" name="tag" />

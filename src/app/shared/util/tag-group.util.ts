@@ -26,9 +26,28 @@ export function normalizeGroupTitle(title: string): string {
  * наименьшее написание в кодовом порядке, то есть при прочих равных то, что с
  * заглавной буквы: выбор не зависит от порядка тегов, а значит, заголовок не
  * скачет от того, какой тег завели раньше.
+ *
+ * declaredTitles - названия групп, заведённых явно. Из них получаются пустые
+ * секции: группу, заведённую заранее, надо где-то видеть, иначе непонятно,
+ * завелась ли она. Список нужен отдельно, потому что по одним тегам пустую
+ * группу не восстановить. Там, где пустая секция не нужна (выбор тега), список
+ * не передаётся.
  */
-export function groupTags(tags: readonly Tag[]): readonly TagGroup[] {
+export function groupTags(
+  tags: readonly Tag[],
+  declaredTitles: readonly string[] = [],
+): readonly TagGroup[] {
   const byGroup = new Map<string, { label: string; tags: Tag[] }>();
+
+  for (const title of declaredTitles) {
+    const label = title.trim();
+
+    if (label === '') {
+      continue;
+    }
+
+    byGroup.set(normalizeGroupTitle(label), { label, tags: [] });
+  }
 
   for (const tag of tags) {
     const label = tag.group?.trim() || UNGROUPED_TAG_LABEL;

@@ -61,6 +61,14 @@ export class CategoriesPage {
   private readonly categories = signal<readonly Category[]>([]);
   private readonly tags = signal<readonly Tag[]>([]);
 
+  /**
+   * Названия групп, заведённых явно.
+   *
+   * Отдельно от тегов: группа без тегов существует только записью на сервере, и
+   * по списку тегов её не восстановить.
+   */
+  private readonly groupTitles = signal<readonly string[]>([]);
+
   /** Дерево раскрывает сам человек: по умолчанию видны только корни. */
   private readonly expanded = signal<ReadonlySet<string>>(new Set());
 
@@ -89,7 +97,7 @@ export class CategoriesPage {
   );
 
   protected readonly tagGroups = computed<readonly TagGroup[]>(() =>
-    groupTags(this.tags()),
+    groupTags(this.tags(), this.groupTitles()),
   );
 
   /** Словарь грузится сам и о состоянии этой страницы ничего не знает. */
@@ -101,8 +109,10 @@ export class CategoriesPage {
     switch (this.mode()) {
       case 'categories':
         return this.categories().length === 0;
+      // Заведённая заранее группа - уже разметка: пустой список тегов с
+      // единственной пустой группой показывает её, а не заглушку «тегов нет».
       case 'tags':
-        return this.tags().length === 0;
+        return this.tags().length === 0 && this.groupTitles().length === 0;
       default:
         return false;
     }
@@ -184,7 +194,7 @@ export class CategoriesPage {
   }
 
   /**
-   * Загружает оба измерения разметки разом.
+   * Загружает оба измерения разметки разом - вместе со списком групп.
    *
    * Запросы объединены: по отдельности успешно загруженное дерево категорий
    * пряталось бы под полноэкранной ошибкой, если бы список тегов ответил
@@ -196,13 +206,15 @@ export class CategoriesPage {
     forkJoin({
       categories: this.api.getCategories(),
       tags: this.api.getTags(),
+      groups: this.api.getTagGroups(),
     }).subscribe({
-      next: ({ categories, tags }) => {
+      next: ({ categories, tags, groups }) => {
         const known = new Set(this.categories().map((category) => category.id));
         const isReload = this.isLoaded;
 
         this.categories.set(categories);
         this.tags.set(tags);
+        this.groupTitles.set(groups.map((group) => group.title));
 
         // Раскрытие намеренно не сбрасывается: перезагрузка после правки не
         // должна схлопывать дерево и терять место, где человек работал.
