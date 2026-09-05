@@ -23,6 +23,7 @@ import {
   CategoryEditSheet,
 } from './category-edit.sheet';
 import { TagEditData, TagEditResult, TagEditSheet } from './tag-edit.sheet';
+import { TagGroupsResult, TagGroupsSheet } from './tag-groups.sheet';
 
 type Status = 'loading' | 'ready' | 'error';
 
@@ -164,6 +165,22 @@ export class CategoriesPage {
 
   protected editTag(tag: Tag): void {
     this.openTagSheet({ mode: 'edit', tag });
+  }
+
+  /**
+   * Правка самих групп: список тегов показывает их заголовками, но
+   * переименовать, удалить или завести пустую группу оттуда нечем.
+   */
+  protected editGroups(): void {
+    this.sheets
+      .openSheet<TagGroupsResult, undefined>(TagGroupsSheet, undefined, {
+        ariaLabel: 'Группы тегов',
+      })
+      .closed.subscribe((result) => {
+        if (result?.kind === 'changed') {
+          this.load();
+        }
+      });
   }
 
   /**

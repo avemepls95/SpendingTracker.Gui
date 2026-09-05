@@ -23,6 +23,19 @@ export interface Tag {
   readonly spreadsByDescription: boolean;
 }
 
+/**
+ * Группа тегов владельца.
+ *
+ * Отдельная от TagGroup из tag-group.util: та описывает готовую к показу секцию
+ * списка тегов, а эта - саму группу как объект управления, в том числе пустую,
+ * у которой показывать нечего.
+ */
+export interface TagGroupInfo {
+  readonly title: string;
+  /** Сколько тегов в группе: столько останется без группы, если её удалить. */
+  readonly tagCount: number;
+}
+
 export interface Category {
   readonly id: string;
   readonly title: string;

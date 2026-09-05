@@ -47,19 +47,21 @@
         [value]="group()"
         (input)="onGroup($event)"
       />
-      <div class="suggestions">
-        @for (suggestion of groupSuggestions; track suggestion) {
-          <button
-            type="button"
-            class="chip"
-            [class.chip--selected]="group() === suggestion"
-            [attr.aria-pressed]="group() === suggestion"
-            (click)="pickGroup(suggestion)"
-          >
-            {{ suggestion }}
-          </button>
-        }
-      </div>
+      @if (groupSuggestions().length > 0) {
+        <div class="suggestions">
+          @for (suggestion of groupSuggestions(); track suggestion) {
+            <button
+              type="button"
+              class="chip"
+              [class.chip--selected]="isGroupPicked(suggestion)"
+              [attr.aria-pressed]="isGroupPicked(suggestion)"
+              (click)="pickGroup(suggestion)"
+            >
+              {{ suggestion }}
+            </button>
+          }
+        </div>
+      }
       <p class="hint">
         Группа нужна аналитике: она разводит места, поездки и характер расхода
         по разным разрезам.

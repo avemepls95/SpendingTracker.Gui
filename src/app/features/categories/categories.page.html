@@ -101,6 +101,11 @@
           <button type="button" class="btn btn--primary" (click)="create()">
             Создать тег
           </button>
+          <!-- Группы бывают и без тегов, поэтому править их можно и на пустом
+               списке: иначе к заведённой заранее группе было бы не вернуться. -->
+          <button type="button" class="btn btn--secondary" (click)="editGroups()">
+            Группы
+          </button>
         </app-empty-state>
       }
     } @else {
@@ -165,6 +170,13 @@
             Создать категорию
           </button>
         } @else {
+          <div class="list-tools">
+            <button type="button" class="list-tools__button" (click)="editGroups()">
+              <app-icon name="sliders" />
+              Группы
+            </button>
+          </div>
+
           @for (group of tagGroups(); track group.label) {
             <section class="tag-group">
               <h2 class="tag-group__label">{{ group.label }}</h2>

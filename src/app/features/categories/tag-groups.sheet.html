@@ -1,0 +1,144 @@
+<div class="sheet" appSwipeToClose (dismissed)="close()">
+  <div class="sheet__grabber" aria-hidden="true"></div>
+
+  <div class="sheet__header">
+    <h2 class="sheet__title">Группы тегов</h2>
+    <button type="button" class="icon-btn" aria-label="Закрыть" (click)="close()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <div class="sheet__body">
+    @switch (status()) {
+      @case ('loading') {
+        <div class="panel" aria-busy="true">
+          @for (row of [1, 2, 3]; track row) {
+            <div class="panel__row">
+              <span class="skeleton skeleton__row"></span>
+            </div>
+          }
+        </div>
+      }
+
+      @case ('error') {
+        <p class="hint">Не удалось загрузить группы.</p>
+        <button type="button" class="btn btn--secondary btn--block" (click)="load()">
+          Повторить
+        </button>
+      }
+
+      @default {
+        @if (visibleRows().length > 0) {
+          <div class="field">
+            <span class="field__label">Группы</span>
+            <div class="panel">
+              @for (row of visibleRows(); track row.key) {
+                <div class="group-row" [class.field--invalid]="errors().has(row.key)">
+                  <span class="group-row__main">
+                    <input
+                      class="field__control"
+                      type="text"
+                      autocomplete="off"
+                      [attr.aria-label]="'Название группы'"
+                      [attr.maxlength]="maxTitleLength"
+                      [value]="row.title"
+                      [disabled]="isSaving()"
+                      (input)="onTitle(row, $event)"
+                    />
+                    @if (errors().get(row.key); as error) {
+                      <span class="field__error">{{ error }}</span>
+                    } @else {
+                      <span class="group-row__hint">{{ tagCountLabel(row.tagCount) }}</span>
+                    }
+                  </span>
+
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn--danger"
+                    [attr.aria-label]="'Удалить группу ' + row.title"
+                    [disabled]="isSaving()"
+                    (click)="remove(row)"
+                  >
+                    <app-icon name="trash" />
+                  </button>
+                </div>
+              }
+            </div>
+            <p class="hint">
+              Переименование меняет группу у всех её тегов. Удаление оставляет теги
+              без группы - сами теги и разметка трат не пропадают.
+            </p>
+          </div>
+        } @else {
+          <p class="hint">
+            Групп пока нет. Группа - разрез аналитики: она разводит места,
+            поездки и характер расхода.
+          </p>
+        }
+
+        @if (removedRows().length > 0) {
+          <div class="field">
+            <span class="field__label">Будут удалены</span>
+            <div class="panel">
+              @for (row of removedRows(); track row.key) {
+                <div class="group-row">
+                  <span class="group-row__main">
+                    <span class="group-row__removed truncate">{{ row.savedTitle }}</span>
+                    <span class="group-row__hint">{{ removalHint(row.tagCount) }}</span>
+                  </span>
+
+                  <button
+                    type="button"
+                    class="group-row__restore"
+                    [disabled]="isSaving()"
+                    (click)="restore(row)"
+                  >
+                    Вернуть
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="field" [class.field--invalid]="newTitleError()">
+          <label class="field__label" for="new-tag-group">Новая группа</label>
+          <div class="add">
+            <input
+              id="new-tag-group"
+              class="field__control"
+              type="text"
+              placeholder="Например, Проект"
+              autocomplete="off"
+              [attr.maxlength]="maxTitleLength"
+              [value]="newTitle()"
+              [disabled]="isSaving()"
+              (input)="onNewTitle($event)"
+            />
+            <button
+              type="button"
+              class="btn btn--secondary"
+              [disabled]="!canAdd() || isSaving()"
+              (click)="add()"
+            >
+              <app-icon name="plus" />
+              Добавить
+            </button>
+          </div>
+          @if (newTitleError(); as error) {
+            <p class="field__error">{{ error }}</p>
+          } @else {
+            <p class="hint">Пустую группу можно завести заранее и наполнить тегами потом.</p>
+          }
+        </div>
+      }
+    }
+  </div>
+
+  <div class="sheet__footer">
+    <button type="button" class="btn btn--secondary" (click)="close()">Отмена</button>
+    <button type="button" class="btn btn--primary" [disabled]="!canSave()" (click)="save()">
+      {{ isSaving() ? 'Сохраняем…' : 'Сохранить' }}
+    </button>
+  </div>
+</div>

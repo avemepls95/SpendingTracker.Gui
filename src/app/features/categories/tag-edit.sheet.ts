@@ -17,9 +17,6 @@ export type TagEditData =
 
 export type TagEditResult = { readonly kind: 'changed' };
 
-/** Названия групп, которые предлагаются подсказкой: остальные вводятся руками. */
-const GROUP_SUGGESTIONS = ['Место', 'Поездка', 'Характер'] as const;
-
 @Component({
   selector: 'app-tag-edit',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,7 +36,14 @@ export class TagEditSheet {
 
   protected readonly isEdit = this.existing !== null;
   protected readonly title = this.isEdit ? 'Тег' : 'Новый тег';
-  protected readonly groupSuggestions = GROUP_SUGGESTIONS;
+
+  /**
+   * Все группы владельца, а не заранее известный набор.
+   *
+   * Список приходит с сервера: захардкоженные подсказки не знали ни о группах,
+   * заведённых свободным вводом в этом же поле, ни о заведённых пустыми.
+   */
+  protected readonly groupSuggestions = signal<readonly string[]>([]);
 
   protected readonly name = signal(this.existing?.title ?? '');
   protected readonly group = signal(this.existing?.group ?? '');
@@ -58,6 +62,20 @@ export class TagEditSheet {
   protected readonly canSave = computed(
     () => !this.isSaving() && this.nameError() === null,
   );
+
+  constructor() {
+    this.loadGroups();
+  }
+
+  /**
+   * Подсвечивает выбранную подсказку.
+   *
+   * Регистр не учитывается: группу можно ввести и руками, и написание «место»
+   * рядом с чипом «Место» - та же самая группа, а не отсутствие выбора.
+   */
+  protected isGroupPicked(value: string): boolean {
+    return this.group().trim().toLowerCase() === value.toLowerCase();
+  }
 
   protected onName(event: Event): void {
     this.name.set((event.target as HTMLInputElement).value);
@@ -86,7 +104,19 @@ export class TagEditSheet {
   protected pickGroup(value: string): void {
     // Повторное нажатие снимает группу: иначе выбранную подсказку пришлось бы
     // стирать вручную из поля.
-    this.group.update((current) => (current === value ? '' : value));
+    this.group.set(this.isGroupPicked(value) ? '' : value);
+  }
+
+  /**
+   * Загружает список групп для подсказок.
+   *
+   * Ошибка гасится: подсказки - удобство, и без них группу всё ещё можно
+   * ввести руками, а полем правки тега это не повод рушить весь лист.
+   */
+  private loadGroups(): void {
+    this.api.getTagGroups().subscribe({
+      next: (groups) => this.groupSuggestions.set(groups.map((group) => group.title)),
+    });
   }
 
   protected save(): void {

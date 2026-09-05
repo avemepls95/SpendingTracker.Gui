@@ -15,6 +15,7 @@ import {
   SpendingsPageDto,
   TagAnalyticsDto,
   TagDto,
+  TagGroupDto,
   UserSettingsDto,
 } from '../dto/api.dto';
 import {
@@ -27,6 +28,7 @@ import {
   toSpending,
   toSpendingsPage,
   toTag,
+  toTagGroupInfo,
   toTagAnalytics,
 } from '../mappers/mappers';
 import {
@@ -42,6 +44,7 @@ import {
   SpendingsPageResult,
   Tag,
   TagAnalytics,
+  TagGroupInfo,
   UserAccount,
   UserSettings,
 } from '../models/models';
@@ -219,6 +222,34 @@ export class SpendingApiService {
 
   deleteTag(id: string): Observable<unknown> {
     return this.http.post(this.url('v1/tag/delete'), { id });
+  }
+
+  // ------------------------------------------------------------ группы тегов
+
+  /**
+   * Все группы владельца.
+   *
+   * Список собирает сервер: группа существует и как название в самих тегах, и
+   * как заведённая пустой запись, и по одному списку тегов её не восстановить.
+   */
+  getTagGroups(): Observable<readonly TagGroupInfo[]> {
+    return this.http
+      .get<readonly TagGroupDto[]>(this.url('v1/tag-group/list'))
+      .pipe(map((items) => (items ?? []).map(toTagGroupInfo)));
+  }
+
+  createTagGroup(title: string): Observable<unknown> {
+    return this.http.post(this.url('v1/tag-group/create'), { title });
+  }
+
+  /** Переименовывает группу вместе со всеми её тегами. */
+  renameTagGroup(title: string, newTitle: string): Observable<unknown> {
+    return this.http.post(this.url('v1/tag-group/rename'), { title, newTitle });
+  }
+
+  /** Удаляет группу. Теги остаются, но выходят из неё. */
+  deleteTagGroup(title: string): Observable<unknown> {
+    return this.http.post(this.url('v1/tag-group/delete'), { title });
   }
 
   setCategoryTag(categoryId: string, tagId: string, isSet: boolean): Observable<unknown> {

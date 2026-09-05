@@ -26,13 +26,17 @@
   gap: var(--sp-2);
 }
 
-.tree__tools {
+// Панель действий над списком: у дерева категорий это «свернуть всё», у тегов -
+// переход к правке групп.
+.tree__tools,
+.list-tools {
   display: flex;
   justify-content: flex-end;
   padding: 0 var(--sp-1);
 }
 
-.tree__toggle {
+.tree__toggle,
+.list-tools__button {
   position: relative;
   display: inline-flex;
   align-items: center;

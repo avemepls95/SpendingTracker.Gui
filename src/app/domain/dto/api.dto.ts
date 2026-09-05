@@ -16,6 +16,12 @@ export interface TagDto {
   readonly spreadsByDescription?: boolean | null;
 }
 
+/** Группа тегов владельца: и заполненная, и заведённая пустой. */
+export interface TagGroupDto {
+  readonly title: string;
+  readonly tagCount?: number | null;
+}
+
 export interface CategoryDto {
   readonly id: string;
   readonly title: string;

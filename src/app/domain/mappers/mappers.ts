@@ -16,6 +16,7 @@ import {
   TagAnalyticsDto,
   TagAnalyticsItemDto,
   TagDto,
+  TagGroupDto,
 } from '../dto/api.dto';
 import {
   ACCOUNT_TYPES,
@@ -45,6 +46,7 @@ import {
   Tag,
   TagAnalytics,
   TagAnalyticsItem,
+  TagGroupInfo,
 } from '../models/models';
 
 export function toCurrency(dto: CurrencyDto): Currency {
@@ -53,6 +55,13 @@ export function toCurrency(dto: CurrencyDto): Currency {
     code: dto.code,
     title: dto.title,
     flagEmojiCode: dto.flagEmojiCode,
+  };
+}
+
+export function toTagGroupInfo(dto: TagGroupDto): TagGroupInfo {
+  return {
+    title: dto.title,
+    tagCount: dto.tagCount ?? 0,
   };
 }
 

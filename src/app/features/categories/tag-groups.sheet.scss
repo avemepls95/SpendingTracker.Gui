@@ -1,0 +1,62 @@
+.group-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.group-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.group-row__hint {
+  font-size: var(--fs-xs);
+  color: var(--c-text-3);
+}
+
+.group-row__removed {
+  padding: 0 var(--sp-1);
+  color: var(--c-text-3);
+  text-decoration: line-through;
+}
+
+.group-row__restore {
+  flex: none;
+  min-height: var(--tap-min);
+  padding: 0 var(--sp-2);
+  background: none;
+  color: var(--c-accent);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+}
+
+.add {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+
+  .field__control {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .btn {
+    flex: none;
+  }
+}
+
+.hint {
+  padding-top: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
+}
+
+.skeleton__row {
+  width: 60%;
+  height: 14px;
+}
