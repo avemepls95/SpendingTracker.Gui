@@ -165,29 +165,72 @@
   font-variant-numeric: tabular-nums;
 }
 
-// Нативные поля даты и времени в iOS считают ширину по своему содержимому
-// и не сжимаются до контейнера - поля уезжали за край листа.
-input[type='date'].field__control,
-input[type='time'].field__control {
-  min-width: 0;
-  max-width: 100%;
+// Поле с маской и системным выбором под кнопкой: дата и время устроены
+// одинаково, поэтому и вид у них общий.
+.picker-field {
+  position: relative;
+  display: block;
 }
 
-// Сброс системного вида доводит сжатие до конца, но в Chrome он заодно
-// убирает кнопку календаря, поэтому применяется только в iOS: свойство
-// -webkit-touch-callout поддерживает лишь он.
-@supports (-webkit-touch-callout: none) {
-  input[type='date'].field__control,
-  input[type='time'].field__control {
-    appearance: none;
+.picker-field__control {
+  // Место справа под кнопку: без него значение уходит под неё.
+  padding-right: var(--tap-min);
+  font-variant-numeric: tabular-nums;
+}
+
+.picker-field__button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min);
+  height: 100%;
+  min-height: var(--tap-min);
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--c-text-3);
+  transition: color var(--dur) var(--ease);
+  --icon-size: 20px;
+
+  &:active {
+    color: var(--c-accent);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 
-// WebKit выравнивает значение внутри поля по центру, тогда как текст
-// остальных полей формы начинается от левого края.
-input[type='date']::-webkit-date-and-time-value,
-input[type='time']::-webkit-date-and-time-value {
-  text-align: left;
+// Нажатие достаётся слою, а не кнопке под ним, поэтому отклик кнопки
+// приходится вести по его состоянию.
+.picker-field:has(.picker-field__native:active) .picker-field__button {
+  color: var(--c-accent);
+}
+
+.picker-field__native {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--tap-min);
+  height: 100%;
+  min-height: var(--tap-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  // Полем пользуются вслепую - видно только кнопку под ним.
+  opacity: 0;
+  cursor: pointer;
+  appearance: none;
+  // Меньше 16px iOS считает поводом приблизить страницу при фокусе.
+  font-size: 16px;
+
+  &:disabled {
+    pointer-events: none;
+  }
 }
 
 .field__error {
@@ -320,6 +363,9 @@ button.chip {
 // Ползунок нарисован на самом флажке: appearance: none снимает системный вид,
 // но оставляет элементу разметку формы - фокус с клавиатуры, роль switch и
 // чтение состояния скринридером работают без собственной реализации.
+//
+// Тот же ползунок нужен и там, где состояние хранит не флажок, а строка-кнопка
+// с role="switch": для неё включённое состояние помечается модификатором.
 .switch {
   appearance: none;
   position: relative;
@@ -328,7 +374,9 @@ button.chip {
   height: 26px;
   margin: 0;
   border-radius: var(--r-full);
-  background: var(--c-border-strong);
+  // Не --c-border-strong: у дорожки контраст с фоном ниже 3:1, и выключенный
+  // переключатель на ярком свете читается как пустое место.
+  background: color-mix(in srgb, var(--c-text) 50%, transparent);
   transition: background-color var(--dur) var(--ease);
   cursor: pointer;
 
@@ -345,11 +393,13 @@ button.chip {
     transition: transform var(--dur) var(--ease);
   }
 
-  &:checked {
+  &:checked,
+  &.switch--on {
     background: var(--c-accent);
   }
 
-  &:checked::after {
+  &:checked::after,
+  &.switch--on::after {
     transform: translateX(18px);
   }
 

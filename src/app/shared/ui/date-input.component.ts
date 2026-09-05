@@ -15,28 +15,18 @@ import {
   parseApiDate,
   parseCalendarDate,
 } from '../util/date.util';
+import { MaskFormat, editMasked, skipSeparator } from '../util/mask-input.util';
 import { IconComponent } from './icon.component';
 
 /** Порядок частей даты в поле - он же подсказка внутри пустого поля. */
 export const DATE_INPUT_FORMAT = 'дд.мм.гггг';
 
-/** Разделитель, который маска расставляет сама. */
-const SEPARATOR = '.';
-
-/**
- * Места цифр в тексте дд.мм.гггг.
- *
- * Маска держит восемь неподвижных мест: день, месяц и год стоят каждый на
- * своём, и правка одного места не двигает остальные.
- */
-const SLOTS = [0, 1, 3, 4, 6, 7, 8, 9];
-
-/** Последние места дня и месяца: за ними маска сразу дописывает разделитель. */
-const DAY_END = 1;
-const MONTH_END = 3;
-
-/** Знак незанятого места внутри даты: 06.__.2026. */
-const BLANK = '_';
+/** Маска дд.мм.гггг: день, месяц и год стоят каждый на своих местах. */
+const DATE_MASK: MaskFormat = {
+  slots: [0, 1, 3, 4, 6, 7, 8, 9],
+  separator: '.',
+  segmentEnds: [1, 3],
+};
 
 /**
  * Ошибка поля даты или null, если текст читается как дата.
@@ -67,12 +57,13 @@ export function dateFieldError(text: string, emptyMessage = 'Укажите да
 @Component({
   selector: 'app-date-input',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'picker-field' },
   imports: [IconComponent],
   template: `
     <input
       #control
       [id]="inputId()"
-      class="field__control date-input__control"
+      class="field__control picker-field__control"
       [class.field__control--invalid]="invalid()"
       type="text"
       inputmode="numeric"
@@ -88,7 +79,7 @@ export function dateFieldError(text: string, emptyMessage = 'Укажите да
 
     <button
       type="button"
-      class="date-input__picker"
+      class="picker-field__button"
       [attr.aria-label]="pickerLabel()"
       [disabled]="disabled()"
       (click)="openPicker()"
@@ -103,7 +94,7 @@ export function dateFieldError(text: string, emptyMessage = 'Укажите да
          раскрывает, тот же обработчик зовёт showPicker(). -->
     <input
       #native
-      class="date-input__native"
+      class="picker-field__native"
       type="date"
       tabindex="-1"
       aria-hidden="true"
@@ -112,73 +103,6 @@ export function dateFieldError(text: string, emptyMessage = 'Укажите да
       (click)="onNativeClick()"
       (change)="onNativePick($event)"
     />
-  `,
-  styles: `
-    :host {
-      position: relative;
-      display: block;
-    }
-
-    .date-input__control {
-      // Место справа под кнопку календаря: без него дата уходит под неё.
-      padding-right: var(--tap-min);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .date-input__picker {
-      position: absolute;
-      top: 0;
-      right: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: var(--tap-min);
-      height: 100%;
-      min-height: var(--tap-min);
-      border: 0;
-      border-radius: var(--r-md);
-      background: transparent;
-      color: var(--c-text-3);
-      transition: color var(--dur) var(--ease);
-      --icon-size: 20px;
-
-      &:active {
-        color: var(--c-accent);
-      }
-
-      &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-    }
-
-    // Нажатие достаётся слою, а не кнопке под ним, поэтому отклик кнопки
-    // приходится вести по его состоянию.
-    :host:has(.date-input__native:active) .date-input__picker {
-      color: var(--c-accent);
-    }
-
-    .date-input__native {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: var(--tap-min);
-      height: 100%;
-      min-height: var(--tap-min);
-      padding: 0;
-      border: 0;
-      background: transparent;
-      // Полем пользуются вслепую - видно только кнопку под ним.
-      opacity: 0;
-      cursor: pointer;
-      appearance: none;
-      // Меньше 16px iOS считает поводом приблизить страницу при фокусе.
-      font-size: 16px;
-
-      &:disabled {
-        pointer-events: none;
-      }
-    }
   `,
 })
 export class DateInputComponent {
@@ -238,33 +162,13 @@ export class DateInputComponent {
   protected onInput(event: Event): void {
     const element = event.target as HTMLInputElement;
     const caret = element.selectionStart ?? element.value.length;
-    const edited = editDate(this.text, element.value, caret);
+    const edited = editMasked(DATE_MASK, this.text, element.value, caret);
 
     this.apply(edited.text, edited.caret);
   }
 
-  /**
-   * Стирание разделителя.
-   *
-   * Точку ставит маска, и удаление вернуло бы её на место - каретка застряла
-   * бы перед ней. Вместо разделителя стирается цифра за ним.
-   */
   protected onKeydown(event: KeyboardEvent): void {
-    const element = event.target as HTMLInputElement;
-    const start = element.selectionStart ?? 0;
-
-    if (start !== element.selectionEnd) {
-      return;
-    }
-
-    if (event.key === 'Backspace' && start >= 2 && element.value[start - 1] === SEPARATOR) {
-      element.setSelectionRange(start - 1, start - 1);
-      return;
-    }
-
-    if (event.key === 'Delete' && element.value[start] === SEPARATOR) {
-      element.setSelectionRange(start + 1, start + 1);
-    }
+    skipSeparator(event.target as HTMLInputElement, event.key, DATE_MASK.separator);
   }
 
   /**
@@ -341,100 +245,6 @@ export class DateInputComponent {
 }
 
 /**
- * Правка даты по неподвижным местам сегментов.
- *
- * Браузер сообщает только итоговое содержимое поля, поэтому правка сначала
- * вычитается из него: `caret` стоит за вставленным, а совпадающий хвост
- * остался от прежнего текста. Набранная цифра занимает место под кареткой, а
- * не раздвигает соседние: иначе одна цифра, вписанная в середину заполненной
- * даты, сдвигала бы весь остаток и превращала 06.07.2026 в 01.60.7202.
- * Стёртое место остаётся пустым (06.__.2026) по той же причине - затянуть
- * дыру хвостом значит сдвинуть год в месяц.
- */
-function editDate(previous: string, raw: string, caret: number): { text: string; caret: number } {
-  const start = commonPrefix(previous, raw, caret);
-  const inserted = raw.slice(start, caret);
-  // Хвост правее каретки достался от прежнего текста - отсюда и правая
-  // граница стёртого куска.
-  const removedEnd = Math.max(start, previous.length - (raw.length - caret));
-
-  const slots: (string | null)[] = SLOTS.map((position) => {
-    const char = previous[position];
-    const kept = char !== undefined && isDigit(char) ? char : null;
-
-    return position >= start && position < removedEnd ? null : kept;
-  });
-
-  let slot = slotAt(start);
-
-  for (const char of inserted) {
-    if (!isDigit(char)) {
-      continue;
-    }
-
-    if (slot >= SLOTS.length) {
-      break;
-    }
-
-    slots[slot++] = char;
-  }
-
-  const text = renderDate(slots);
-
-  return {
-    text,
-    caret: Math.min(slot < SLOTS.length ? SLOTS[slot] : text.length, text.length),
-  };
-}
-
-/** Собирает текст поля по занятым местам, обрывая его на последней цифре. */
-function renderDate(slots: (string | null)[]): string {
-  let last = -1;
-
-  for (let index = 0; index < slots.length; index++) {
-    if (slots[index] !== null) {
-      last = index;
-    }
-  }
-
-  if (last < 0) {
-    return '';
-  }
-
-  let text = '';
-
-  for (let index = 0; index <= last; index++) {
-    if (index === DAY_END + 1 || index === MONTH_END + 1) {
-      text += SEPARATOR;
-    }
-
-    text += slots[index] ?? BLANK;
-  }
-
-  // Разделитель за готовым сегментом дописывается сразу: следующая цифра
-  // должна набираться уже за ним, а не перед.
-  return last === DAY_END || last === MONTH_END ? text + SEPARATOR : text;
-}
-
-/** Место, на которое попадёт цифра, набранная в позиции `caret`. */
-function slotAt(caret: number): number {
-  const slot = SLOTS.findIndex((position) => position >= caret);
-
-  return slot === -1 ? SLOTS.length : slot;
-}
-
-/** Длина общего начала строк, но не длиннее `limit`. */
-function commonPrefix(previous: string, raw: string, limit: number): number {
-  let index = 0;
-
-  while (index < limit && index < previous.length && previous[index] === raw[index]) {
-    index++;
-  }
-
-  return index;
-}
-
-/**
  * Разбор даты из буфера.
  *
  * Время у ISO-момента отбрасывается: копируют обычно дату целиком
@@ -447,8 +257,4 @@ function parsePastedDate(text: string): Date | null {
   return iso
     ? parseApiDate(`${iso[3]}.${iso[2]}.${iso[1]}`)
     : parseApiDate(trimmed);
-}
-
-function isDigit(char: string): boolean {
-  return char >= '0' && char <= '9';
 }

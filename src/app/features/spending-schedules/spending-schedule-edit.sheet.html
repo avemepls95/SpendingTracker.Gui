@@ -208,17 +208,15 @@
         </div>
         <div class="field start__time">
           <label class="field__label" for="schedule-start-time">Время</label>
-          <input
-            id="schedule-start-time"
-            class="field__control"
-            [class.field__control--invalid]="touchedStart() && startTimeError()"
-            type="time"
-            [attr.aria-invalid]="touchedStart() && startTimeError() ? true : null"
-            [attr.aria-describedby]="
+          <app-time-input
+            inputId="schedule-start-time"
+            label="Время срабатывания"
+            [value]="startTimeText()"
+            [invalid]="touchedStart() && startTimeError() !== null"
+            [describedBy]="
               touchedStart() && startError() ? 'schedule-start-error' : null
             "
-            [value]="startTimeText()"
-            (input)="onStartTime($event)"
+            (valueChange)="onStartTime($event)"
           />
         </div>
       </div>

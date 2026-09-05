@@ -82,38 +82,6 @@
   font-size: var(--fs-xs);
 }
 
-.switch {
-  position: relative;
-  flex: none;
-  width: 44px;
-  height: 26px;
-  border-radius: var(--r-full);
-  // Не --c-border-strong: у дорожки контраст с фоном ниже 3:1, и выключенный
-  // переключатель на ярком свете читается как пустое место.
-  background: color-mix(in srgb, var(--c-text) 50%, transparent);
-  transition: background-color var(--dur) var(--ease);
-}
-
-.switch--on {
-  background: var(--c-accent);
-}
-
-.switch__knob {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 20px;
-  height: 20px;
-  border-radius: var(--r-full);
-  background: var(--c-surface);
-  box-shadow: var(--sh-1);
-  transition: transform var(--dur) var(--ease);
-
-  .switch--on & {
-    transform: translateX(18px);
-  }
-}
-
 // ------------------------------------------------------------ история
 
 .history {

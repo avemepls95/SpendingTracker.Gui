@@ -44,6 +44,7 @@ import {
   TagPickerResult,
   TagPickerSheet,
 } from '../../shared/ui/tag-picker.sheet';
+import { TimeInputComponent, timeFieldError } from '../../shared/ui/time-input.component';
 import { categoryPath } from '../../shared/util/category-tree.util';
 import { closeOnDismiss } from '../../shared/util/dismiss.util';
 import {
@@ -70,7 +71,6 @@ export interface SpendingScheduleEditResult {
 const PREVIEW_DEBOUNCE_MS = 350;
 
 const MAX_INTERVAL_VALUE = 1000;
-const TIME_PATTERN = /^\d{2}:\d{2}$/;
 
 /**
  * Правка расписания: поля, разметка и правило.
@@ -81,7 +81,7 @@ const TIME_PATTERN = /^\d{2}:\d{2}$/;
 @Component({
   selector: 'app-spending-schedule-edit',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DateInputComponent, IconComponent, SwipeToCloseDirective],
+  imports: [DateInputComponent, IconComponent, SwipeToCloseDirective, TimeInputComponent],
   templateUrl: './spending-schedule-edit.sheet.html',
   styleUrl: './spending-schedule-edit.sheet.scss',
 })
@@ -201,9 +201,7 @@ export class SpendingScheduleEditSheet implements OnDestroy {
     dateFieldError(this.startDateText(), 'Укажите дату начала'),
   );
 
-  protected readonly startTimeError = computed(() =>
-    TIME_PATTERN.test(this.startTimeText()) ? null : 'Укажите время',
-  );
+  protected readonly startTimeError = computed(() => timeFieldError(this.startTimeText()));
 
   protected readonly startError = computed(
     () => this.startDateError() ?? this.startTimeError(),
@@ -320,9 +318,9 @@ export class SpendingScheduleEditSheet implements OnDestroy {
     this.startDateText.set(value);
   }
 
-  protected onStartTime(event: Event): void {
+  protected onStartTime(value: string): void {
     this.touchedStart.set(true);
-    this.startTimeText.set((event.target as HTMLInputElement).value);
+    this.startTimeText.set(value);
   }
 
   protected onEndDate(value: string): void {
