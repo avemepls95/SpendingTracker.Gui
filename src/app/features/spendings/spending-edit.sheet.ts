@@ -1,5 +1,7 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Observable, concat, tap } from 'rxjs';
 
 import { SheetService } from '../../core/ui/sheet.service';
 import { TelegramService } from '../../core/telegram/telegram.service';
@@ -29,6 +31,7 @@ import {
 import { parseAmount } from '../../shared/util/money.util';
 import { closeOnDismiss } from '../../shared/util/dismiss.util';
 import { categoryPath } from '../../shared/util/category-tree.util';
+import { DraftTag, DraftTags, draftTagKey } from '../../shared/util/tag-draft.util';
 import {
   CategoryPickerData,
   CategoryPickerResult,
@@ -58,6 +61,24 @@ export type SpendingEditResult =
     }
   | { readonly kind: 'deleted'; readonly id: string };
 
+/**
+ * Выбор категории в листе.
+ *
+ * Категории, заведённой прямо из выбора, на сервере ещё нет: её создаст
+ * сохранение, а до него о ней известно только название.
+ */
+type CategoryChoice =
+  | { readonly kind: 'none' }
+  | { readonly kind: 'existing'; readonly category: Category }
+  | { readonly kind: 'new'; readonly title: string };
+
+/**
+ * Правка траты: поля и разметка.
+ *
+ * Всё, что человек меняет в листе, копится в его состоянии и уходит на сервер
+ * пачкой запросов по кнопке «Сохранить». Закрытие листа не применяет ничего,
+ * кроме уже подтверждённого отдельно отказа от разметки.
+ */
 @Component({
   selector: 'app-spending-edit',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -79,15 +100,26 @@ export class SpendingEditSheet {
   protected readonly currencyId = signal(this.original.currencyId);
   protected readonly dateText = signal(toInputValue(this.original.date));
 
-  /** Разметка меняется отдельными запросами и применяется сразу. */
-  protected readonly category = signal<Category | null>(this.original.category);
-  protected readonly tags = signal<readonly Tag[]>(this.original.tags);
-  protected readonly categorySource = signal<SpendingCategorySource | null>(
+  protected readonly choice = signal<CategoryChoice>(toChoice(this.original.category));
+  protected readonly tags = new DraftTags(this.original.tags);
+
+  /**
+   * Разметка, известная серверу.
+   *
+   * С ней сравнивается выбор в листе: на сервер уходит только разница. Меняется
+   * от отказа и от сохранения - в том числе от пачки, оборвавшейся посередине.
+   */
+  private readonly savedChoice = signal<CategoryChoice>(toChoice(this.original.category));
+  private readonly savedTags = signal<readonly Tag[]>(this.original.tags);
+  private readonly savedSource = signal<SpendingCategorySource | null>(
     this.original.categorySource,
   );
 
   protected readonly isSaving = signal(false);
   protected readonly isMarkupBusy = signal(false);
+
+  /** Хотя бы один запрос листа уже применился на сервере. */
+  private hasAppliedChanges = false;
 
   /** Хотя бы одна операция за сеанс правки задела другие траты описания. */
   private readonly affectedOthers = signal(false);
@@ -95,17 +127,44 @@ export class SpendingEditSheet {
   /** Все категории владельца: нужны, чтобы показать путь до выбранной. */
   private readonly allCategories = signal<readonly Category[]>([]);
 
+  protected readonly tagKey = draftTagKey;
+
   protected readonly amount = computed(() => parseAmount(this.amountText()));
+
+  protected readonly isBusy = computed(() => this.isSaving() || this.isMarkupBusy());
 
   protected readonly currencyCode = computed(
     () => this.currencies.find(this.currencyId())?.code ?? 'Выбрать',
   );
 
-  protected readonly categoryLabel = computed(() => {
-    const category = this.category();
+  protected readonly hasCategory = computed(() => this.choice().kind !== 'none');
 
-    return category ? categoryPath(category, this.allCategories()) : 'Без категории';
+  protected readonly categoryLabel = computed(() => {
+    const choice = this.choice();
+
+    switch (choice.kind) {
+      case 'existing':
+        return categoryPath(choice.category, this.allCategories());
+      case 'new':
+        return choice.title;
+      default:
+        return 'Без категории';
+    }
   });
+
+  private readonly isCategoryChanged = computed(
+    () => !isSameChoice(this.choice(), this.savedChoice()),
+  );
+
+  /**
+   * Источник категории, показанный в карточке.
+   *
+   * Он относится к разметке на сервере, поэтому у выбранной, но ещё не
+   * сохранённой категории источника нет.
+   */
+  protected readonly categorySource = computed(() =>
+    this.isCategoryChanged() ? null : this.savedSource(),
+  );
 
   protected readonly descriptionError = computed(() =>
     this.description().trim() === '' ? 'Укажите описание' : null,
@@ -140,14 +199,14 @@ export class SpendingEditSheet {
 
   /** Пояснение к отказу в диалоге подтверждения: чьё решение отвергают. */
   private readonly rejectHint = computed(() =>
-    this.categorySource() === 'Model'
+    this.savedSource() === 'Model'
       ? 'Модель об этом описании больше не спросят, пока вы не назначите категорию сами.'
       : 'Прошлое решение по этому описанию перестанет применяться к новым тратам.',
   );
 
   protected readonly canSave = computed(
     () =>
-      !this.isSaving() &&
+      !this.isBusy() &&
       this.descriptionError() === null &&
       this.amountError() === null &&
       this.dateError() === null &&
@@ -155,8 +214,8 @@ export class SpendingEditSheet {
   );
 
   constructor() {
-    // Разметка применяется сразу, поэтому лист обязан вернуть её странице
-    // при любом способе закрытия, включая Escape и клик мимо.
+    // Отказ от разметки применяется сразу, и его результат надо донести до
+    // страницы при любом способе закрытия, включая Escape и клик мимо.
     closeOnDismiss(this.dialogRef, () => this.close());
 
     this.api.getCategories().subscribe({
@@ -209,12 +268,14 @@ export class SpendingEditSheet {
   // ------------------------------------------------------------ категория
 
   protected pickCategory(): void {
+    const choice = this.choice();
+
     this.sheets
       .openSheet<CategoryPickerResult, CategoryPickerData>(
         CategoryPickerSheet,
         {
-          excludedIds: this.category() ? [this.category()!.id] : [],
-          rootOptionLabel: this.category() ? 'Убрать категорию' : undefined,
+          excludedIds: choice.kind === 'existing' ? [choice.category.id] : [],
+          rootOptionLabel: choice.kind === 'none' ? undefined : 'Убрать категорию',
         },
         { ariaLabel: 'Выбор категории' },
       )
@@ -223,39 +284,17 @@ export class SpendingEditSheet {
           return;
         }
 
-        this.isMarkupBusy.set(true);
-
-        const request =
-          result.kind === 'new'
-            ? this.api.linkSpendingToNewCategory(this.original.id, result.title)
-            : this.api.setSpendingCategory(
-                this.original.id,
-                result.kind === 'root' ? null : result.category.id,
-              );
-
-        request.subscribe({
-          next: (affected) => {
-            // Каскад назначает категорию и тем тратам, у которых её не было,
-            // поэтому число сообщается всегда, когда оно ненулевое. Саму
-            // правленую трату сервер в него не включает. При снятии категории
-            // каскада нет и приходит ноль - молчать тут правильно.
-            if (affected > 0) {
-              this.affectedOthers.set(true);
-              this.toast.info(`Поправлено ещё ${spendingsCount(affected)}`);
-            }
-
-            this.refreshMarkup();
-          },
-          error: () => this.isMarkupBusy.set(false),
-        });
+        this.choice.set(toChoiceFromPicker(result));
+        this.telegram.impact('light');
       });
   }
 
   /**
    * Отказ от разметки описания.
    *
-   * Массовая операция, поэтому с подтверждением: она снимает категорию со всех
-   * трат владельца с этим описанием, кроме размеченных вручную. Отправляется
+   * Массовая операция, поэтому с подтверждением - и единственное действие
+   * листа, которое применяется сразу: откладывать до «Сохранить» подтверждённую
+   * правку чужих трат значило бы обманывать текст подтверждения. Отправляется
    * по трате, а не по записи словаря: карточка знает трату, а записи по её
    * описанию может уже не быть - тогда отказ её создаст.
    */
@@ -282,6 +321,8 @@ export class SpendingEditSheet {
         if (!result.wasApplied) {
           this.toast.info('Уже обработано');
         } else {
+          this.hasAppliedChanges = true;
+
           // Отказ считает и саму эту трату - её источник не Manual, иначе
           // действие бы не показывалось. Значит другие траты задеты только
           // начиная со второй.
@@ -308,7 +349,7 @@ export class SpendingEditSheet {
     this.sheets
       .openSheet<TagPickerResult, TagPickerData>(
         TagPickerSheet,
-        { excludedIds: this.tags().map((tag) => tag.id) },
+        { excludedIds: this.tags.selectedIds() },
         { ariaLabel: 'Выбор тега' },
       )
       .closed.subscribe((result) => {
@@ -316,68 +357,34 @@ export class SpendingEditSheet {
           return;
         }
 
-        this.isMarkupBusy.set(true);
-
         if (result.kind === 'existing') {
-          this.api.setSpendingTag(this.original.id, result.tag.id, true).subscribe({
-            next: () => this.refreshMarkup(),
-            error: () => this.isMarkupBusy.set(false),
-          });
-
-          return;
+          this.tags.addExisting(result.tag);
+        } else {
+          this.tags.addNew(result.title);
         }
 
-        // Идентификатор нового тега знает только сервер, поэтому связь
-        // навешивается после того, как список тегов перечитан.
-        this.api.createTag(result.title).subscribe({
-          next: () => this.attachCreatedTag(result.title),
-          error: () => this.isMarkupBusy.set(false),
-        });
+        this.telegram.impact('light');
       });
   }
 
-  protected removeTag(tag: Tag): void {
-    this.isMarkupBusy.set(true);
-
-    this.api.setSpendingTag(this.original.id, tag.id, false).subscribe({
-      next: () => this.refreshMarkup(),
-      error: () => this.isMarkupBusy.set(false),
-    });
-  }
-
-  private attachCreatedTag(title: string): void {
-    this.api.getTags().subscribe({
-      next: (tags) => {
-        const created = tags.find(
-          (tag) => tag.title.toLowerCase() === title.toLowerCase(),
-        );
-
-        if (!created) {
-          this.isMarkupBusy.set(false);
-          return;
-        }
-
-        this.api.setSpendingTag(this.original.id, created.id, true).subscribe({
-          next: () => this.refreshMarkup(),
-          error: () => this.isMarkupBusy.set(false),
-        });
-      },
-      error: () => this.isMarkupBusy.set(false),
-    });
+  protected removeTag(tag: DraftTag): void {
+    this.tags.remove(tag);
+    this.telegram.impact('light');
   }
 
   /**
-   * Перечитывает трату после изменения разметки.
+   * Перечитывает разметку траты после отказа.
    *
-   * Категория и теги приходят с сервера, а не собираются на клиенте: связь
-   * может создать новую сущность, идентификатор которой знает только сервер.
+   * Теги отказ не трогает, поэтому выбор в листе остаётся как был: сравнивать
+   * его по-прежнему не с чем, кроме серверных тегов.
    */
   private refreshMarkup(): void {
     this.api.getSpendingById(this.original.id).subscribe({
       next: (spending) => {
-        this.category.set(spending.category);
-        this.tags.set(spending.tags);
-        this.categorySource.set(spending.categorySource);
+        this.savedChoice.set(toChoice(spending.category));
+        this.savedTags.set(spending.tags);
+        this.savedSource.set(spending.categorySource);
+        this.choice.set(toChoice(spending.category));
         this.isMarkupBusy.set(false);
         this.telegram.impact('light');
       },
@@ -402,27 +409,50 @@ export class SpendingEditSheet {
       amount,
       currencyId: this.currencyId(),
       date: formatInputDate(date),
-      category: this.category(),
-      tags: this.tags(),
-      categorySource: this.categorySource(),
+      category: savedCategory(this.savedChoice()),
+      tags: this.savedTags(),
+      categorySource: this.savedSource(),
     };
 
-    this.api
-      .updateSpending({
-        id: updated.id,
-        amount: updated.amount,
-        currencyId: updated.currencyId,
-        date,
-        description: updated.description,
-      })
-      .subscribe({
-        next: () => {
-          this.telegram.notify('success');
-          this.toast.success('Трата сохранена');
-          this.finishSave(updated);
-        },
-        error: () => this.isSaving.set(false),
-      });
+    const requests: Observable<unknown>[] = [];
+
+    // Поля идут первыми: смена описания меняет ключ словаря, а с ним и разметку
+    // самой траты, поэтому выбранная категория должна применяться после неё.
+    if (isFieldsChanged(updated, this.original)) {
+      requests.push(
+        this.api.updateSpending({
+          id: updated.id,
+          amount: updated.amount,
+          currencyId: updated.currencyId,
+          date,
+          description: updated.description,
+        }),
+      );
+    }
+
+    const categoryRequest = this.categoryRequest();
+    if (categoryRequest) {
+      requests.push(categoryRequest);
+    }
+
+    const tagRequests = this.tags.requests(this.api, (tagId, isSet) =>
+      this.api.setSpendingTag(this.original.id, tagId, isSet),
+    );
+    requests.push(...tagRequests);
+
+    const markupChanged = categoryRequest !== null || tagRequests.length > 0;
+
+    if (requests.length === 0) {
+      // Менять нечего: сообщать о сохранении, которого не было, незачем.
+      this.closeWithResult();
+      return;
+    }
+
+    concat(...requests).subscribe({
+      next: () => (this.hasAppliedChanges = true),
+      complete: () => this.finishSave(updated, markupChanged),
+      error: (error: unknown) => this.failSave(error),
+    });
   }
 
   protected async remove(): Promise<void> {
@@ -447,16 +477,53 @@ export class SpendingEditSheet {
     });
   }
 
+  /** Запрос, приводящий категорию траты к выбору в листе. */
+  private categoryRequest(): Observable<unknown> | null {
+    const choice = this.choice();
+    if (!this.isCategoryChanged()) {
+      return null;
+    }
+
+    const request =
+      choice.kind === 'new'
+        ? this.api.linkSpendingToNewCategory(this.original.id, choice.title)
+        : this.api.setSpendingCategory(
+            this.original.id,
+            choice.kind === 'existing' ? choice.category.id : null,
+          );
+
+    return request.pipe(
+      tap((affected) => {
+        // Каскад назначает категорию и тем тратам, у которых её не было,
+        // поэтому число сообщается всегда, когда оно ненулевое. Саму
+        // правленую трату сервер в него не включает. При снятии категории
+        // каскада нет и приходит ноль - молчать тут правильно.
+        if (affected > 0) {
+          this.affectedOthers.set(true);
+          this.toast.info(`Поправлено ещё ${spendingsCount(affected)}`);
+        }
+
+        // Выбор ушёл на сервер: повтор после сбоя посреди пачки не заведёт
+        // вторую категорию с тем же названием. Источник теперь известен
+        // только серверу - его принесёт перечитывание.
+        this.savedChoice.set(choice);
+        this.savedSource.set(null);
+      }),
+    );
+  }
+
   /**
-   * Закрывает лист после сохранения полей.
+   * Закрывает лист после сохранения.
    *
-   * Смена описания меняет ключ словаря, а вместе с ним и разметку самой траты:
-   * у категории от словаря она снимается, и по новому ключу применяется запись,
-   * если такая есть. Поэтому при изменившемся описании разметку надо перечитать,
-   * а не отдавать странице ту, что была до запроса.
+   * Разметку приходится перечитывать: идентификаторы созданных категории и
+   * тегов знает только сервер, а смена описания меняет ключ словаря и вместе с
+   * ним разметку самой траты.
    */
-  private finishSave(updated: Spending): void {
-    if (updated.description === this.original.description) {
+  private finishSave(updated: Spending, markupChanged: boolean): void {
+    this.telegram.notify('success');
+    this.toast.success('Трата сохранена');
+
+    if (!markupChanged && updated.description === this.original.description) {
       this.dialogRef.close({
         kind: 'updated',
         spending: updated,
@@ -492,20 +559,100 @@ export class SpendingEditSheet {
     });
   }
 
+  /**
+   * Оставляет лист открытым после сбоя.
+   *
+   * Состояние не теряется, повторное сохранение доотправит только то, что не
+   * успело примениться. Об отказе сервера сообщает перехватчик, плашка нужна
+   * только собственным ошибкам сохранения.
+   */
+  private failSave(error: unknown): void {
+    this.isSaving.set(false);
+
+    if (!(error instanceof HttpErrorResponse)) {
+      this.toast.error('Не удалось сохранить изменения');
+    }
+
+    // Пачка оборвалась посередине: что именно осталось в базе, лист уже не
+    // знает, и страница должна перечитать список целиком.
+    if (this.hasAppliedChanges) {
+      this.affectedOthers.set(true);
+    }
+  }
+
   protected close(): void {
-    // Разметка применяется сразу, поэтому даже при отказе от правки полей
-    // трату нужно вернуть обновлённой.
+    // Закрытие поверх незавершённого запроса отдало бы результат до первого
+    // успешного ответа: страница не узнала бы про изменения, а запросы всё
+    // равно дошли бы до сервера.
+    if (this.isBusy()) {
+      return;
+    }
+
+    this.closeWithResult();
+  }
+
+  private closeWithResult(): void {
+    if (!this.hasAppliedChanges) {
+      this.dialogRef.close();
+      return;
+    }
+
     this.dialogRef.close({
       kind: 'updated',
       affectedOthers: this.affectedOthers(),
       spending: {
         ...this.original,
-        category: this.category(),
-        tags: this.tags(),
-        categorySource: this.categorySource(),
+        category: savedCategory(this.savedChoice()),
+        tags: this.savedTags(),
+        categorySource: this.savedSource(),
       },
     });
   }
+}
+
+function toChoice(category: Category | null): CategoryChoice {
+  return category ? { kind: 'existing', category } : { kind: 'none' };
+}
+
+function toChoiceFromPicker(result: CategoryPickerResult): CategoryChoice {
+  switch (result.kind) {
+    case 'existing':
+      return { kind: 'existing', category: result.category };
+    case 'new':
+      return { kind: 'new', title: result.title };
+    default:
+      return { kind: 'none' };
+  }
+}
+
+/** Категория выбора, известная как сущность: у новой её ещё нет. */
+function savedCategory(choice: CategoryChoice): Category | null {
+  return choice.kind === 'existing' ? choice.category : null;
+}
+
+function isSameChoice(left: CategoryChoice, right: CategoryChoice): boolean {
+  if (left.kind !== right.kind) {
+    return false;
+  }
+
+  if (left.kind === 'existing' && right.kind === 'existing') {
+    return left.category.id === right.category.id;
+  }
+
+  if (left.kind === 'new' && right.kind === 'new') {
+    return left.title === right.title;
+  }
+
+  return true;
+}
+
+function isFieldsChanged(updated: Spending, original: Spending): boolean {
+  return (
+    updated.description !== original.description ||
+    updated.amount !== original.amount ||
+    updated.currencyId !== original.currencyId ||
+    updated.date !== toInputValue(original.date)
+  );
 }
 
 function toInputValue(value: string): string {

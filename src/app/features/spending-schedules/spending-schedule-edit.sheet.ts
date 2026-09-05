@@ -1,4 +1,5 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,6 +9,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { map, switchMap } from 'rxjs';
 
 import { SheetService } from '../../core/ui/sheet.service';
 import { TelegramService } from '../../core/telegram/telegram.service';
@@ -23,7 +25,6 @@ import {
   RecurrenceKind,
   SpendingScheduleDetails,
   SpendingScheduleInput,
-  Tag,
 } from '../../domain/models/models';
 import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { UserSettingsStore } from '../../domain/stores/user-settings.store';
@@ -52,6 +53,7 @@ import {
 import { parseAmount } from '../../shared/util/money.util';
 import { intervalUnitLabel } from '../../shared/util/recurrence.util';
 import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
+import { DraftTag, DraftTags, draftTagKey } from '../../shared/util/tag-draft.util';
 
 export interface SpendingScheduleEditData {
   /** null - создание нового расписания. */
@@ -69,6 +71,12 @@ const PREVIEW_DEBOUNCE_MS = 350;
 const MAX_INTERVAL_VALUE = 1000;
 const TIME_PATTERN = /^\d{2}:\d{2}$/;
 
+/**
+ * Правка расписания: поля, разметка и правило.
+ *
+ * Всё, что человек меняет в листе, копится в его состоянии и уходит на сервер
+ * по кнопке «Сохранить». Закрытие листа не применяет ничего.
+ */
 @Component({
   selector: 'app-spending-schedule-edit',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -99,7 +107,9 @@ export class SpendingScheduleEditSheet implements OnDestroy {
     this.original?.currencyId ?? this.settings.viewCurrencyId(),
   );
   protected readonly category = signal<Category | null>(this.original?.category ?? null);
-  protected readonly tags = signal<readonly Tag[]>(this.original?.tags ?? []);
+  protected readonly tags = new DraftTags(this.original?.tags ?? []);
+
+  protected readonly tagKey = draftTagKey;
 
   protected readonly recurrenceKind = signal<RecurrenceKind>(
     this.original?.recurrenceKind ?? 'Interval',
@@ -125,7 +135,6 @@ export class SpendingScheduleEditSheet implements OnDestroy {
   protected readonly touchedCurrency = signal(false);
 
   protected readonly isSaving = signal(false);
-  protected readonly isMarkupBusy = signal(false);
   protected readonly preview = signal<readonly string[]>([]);
   protected readonly isPreviewLoading = signal(false);
 
@@ -366,7 +375,7 @@ export class SpendingScheduleEditSheet implements OnDestroy {
     this.sheets
       .openSheet<TagPickerResult, TagPickerData>(
         TagPickerSheet,
-        { excludedIds: this.tags().map((tag) => tag.id) },
+        { excludedIds: this.tags.selectedIds() },
         { ariaLabel: 'Выбор тега' },
       )
       .closed.subscribe((result) => {
@@ -375,39 +384,18 @@ export class SpendingScheduleEditSheet implements OnDestroy {
         }
 
         if (result.kind === 'existing') {
-          this.tags.update((current) => [...current, result.tag]);
-          return;
+          this.tags.addExisting(result.tag);
+        } else {
+          this.tags.addNew(result.title);
         }
 
-        // Идентификатор нового тега знает только сервер, а createTag его не
-        // возвращает, поэтому список перечитывается и тег ищется по названию.
-        this.isMarkupBusy.set(true);
-        this.spendingApi.createTag(result.title).subscribe({
-          next: () => this.attachCreatedTag(result.title),
-          error: () => this.isMarkupBusy.set(false),
-        });
+        this.telegram.impact('light');
       });
   }
 
-  protected removeTag(tag: Tag): void {
-    this.tags.update((current) => current.filter((item) => item.id !== tag.id));
-  }
-
-  private attachCreatedTag(title: string): void {
-    this.spendingApi.getTags().subscribe({
-      next: (tags) => {
-        const created = tags.find(
-          (tag) => tag.title.toLowerCase() === title.toLowerCase(),
-        );
-
-        if (created) {
-          this.tags.update((current) => [...current, created]);
-        }
-
-        this.isMarkupBusy.set(false);
-      },
-      error: () => this.isMarkupBusy.set(false),
-    });
+  protected removeTag(tag: DraftTag): void {
+    this.tags.remove(tag);
+    this.telegram.impact('light');
   }
 
   // ------------------------------------------------------------ предпросмотр
@@ -471,30 +459,48 @@ export class SpendingScheduleEditSheet implements OnDestroy {
 
     this.isSaving.set(true);
 
-    const input: SpendingScheduleInput = {
-      ...rule,
-      description: this.description().trim(),
-      amount,
-      currencyId: this.currencyId(),
-      categoryId: this.category()?.id ?? null,
-      tagIds: this.tags().map((tag) => tag.id),
-    };
-
     const original = this.original;
 
-    if (original) {
-      this.api.updateSchedule(original.id, input).subscribe({
-        next: () => this.finish(original.id, 'Расписание сохранено'),
-        error: () => this.isSaving.set(false),
+    // Заведённые в листе теги идут первыми: расписание хранит их списком
+    // идентификаторов, а идентификатор нового тега знает только сервер.
+    this.tags
+      .resolveIds(this.spendingApi)
+      .pipe(
+        switchMap((tagIds) => {
+          const input: SpendingScheduleInput = {
+            ...rule,
+            description: this.description().trim(),
+            amount,
+            currencyId: this.currencyId(),
+            categoryId: this.category()?.id ?? null,
+            tagIds,
+          };
+
+          return original
+            ? this.api.updateSchedule(original.id, input).pipe(map(() => original.id))
+            : this.api.createSchedule(input);
+        }),
+      )
+      .subscribe({
+        next: (id) =>
+          this.finish(id, original ? 'Расписание сохранено' : 'Расписание создано'),
+        error: (error: unknown) => this.failSave(error),
       });
+  }
 
-      return;
+  /**
+   * Оставляет лист открытым после сбоя.
+   *
+   * Состояние не теряется: заведённые теги уже получили идентификаторы, и
+   * повторное сохранение не заведёт их второй раз. Об отказе сервера сообщает
+   * перехватчик, плашка нужна только собственным ошибкам сохранения.
+   */
+  private failSave(error: unknown): void {
+    this.isSaving.set(false);
+
+    if (!(error instanceof HttpErrorResponse)) {
+      this.toast.error('Не удалось сохранить изменения');
     }
-
-    this.api.createSchedule(input).subscribe({
-      next: (id) => this.finish(id, 'Расписание создано'),
-      error: () => this.isSaving.set(false),
-    });
   }
 
   protected close(): void {

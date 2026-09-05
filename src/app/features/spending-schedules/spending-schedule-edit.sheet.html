@@ -85,6 +85,7 @@
         type="button"
         class="panel panel--bordered category-row"
         aria-labelledby="schedule-category-label"
+        [disabled]="isSaving()"
         (click)="pickCategory()"
       >
         <app-icon class="category-row__icon" name="folder" />
@@ -101,14 +102,14 @@
     <section class="markup">
       <h3 class="field__label">Теги</h3>
       <div class="chips">
-        @for (tag of tags(); track tag.id) {
+        @for (tag of tags.list(); track tagKey(tag)) {
           <span class="chip chips__chip">
             {{ tag.title }}
             <button
               type="button"
               class="chips__remove"
               [attr.aria-label]="'Снять тег ' + tag.title"
-              [disabled]="isMarkupBusy()"
+              [disabled]="isSaving()"
               (click)="removeTag(tag)"
             >
               <app-icon name="close" />
@@ -119,7 +120,7 @@
         <button
           type="button"
           class="chip chips__add"
-          [disabled]="isMarkupBusy()"
+          [disabled]="isSaving()"
           (click)="addTag()"
         >
           <app-icon name="plus" />

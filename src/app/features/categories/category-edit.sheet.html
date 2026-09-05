@@ -14,7 +14,13 @@
         <app-icon name="trash" />
       </button>
     }
-    <button type="button" class="icon-btn" aria-label="Закрыть" (click)="close()">
+    <button
+      type="button"
+      class="icon-btn"
+      aria-label="Закрыть"
+      [disabled]="isSaving()"
+      (click)="close()"
+    >
       <app-icon name="close" />
     </button>
   </div>
@@ -37,17 +43,12 @@
     </div>
 
     <section class="block">
-      <div class="block__head">
-        <h3 class="field__label">Входит в категорию</h3>
-        @if (isEdit) {
-          <span class="block__hint">Сохраняется сразу</span>
-        }
-      </div>
+      <h3 class="field__label">Входит в категорию</h3>
 
       <button
         type="button"
         class="panel panel--bordered parent"
-        [disabled]="isLinkBusy()"
+        [disabled]="isSaving()"
         (click)="changeParent()"
       >
         <app-icon class="parent__icon" name="folder" />
@@ -70,20 +71,17 @@
 
     @if (isEdit) {
       <section class="block">
-        <div class="block__head">
-          <h3 class="field__label">Теги категории</h3>
-          <span class="block__hint">Сохраняются сразу</span>
-        </div>
+        <h3 class="field__label">Теги категории</h3>
 
         <div class="tag-chips">
-          @for (tag of tags(); track tag.id) {
+          @for (tag of tags.list(); track tagKey(tag)) {
             <span class="chip chip--tag tag-chips__chip">
               {{ tag.title }}
               <button
                 type="button"
                 class="tag-chips__remove"
                 [attr.aria-label]="'Снять тег ' + tag.title"
-                [disabled]="isLinkBusy()"
+                [disabled]="isSaving()"
                 (click)="removeTag(tag)"
               >
                 <app-icon name="close" />
@@ -94,7 +92,7 @@
           <button
             type="button"
             class="chip tag-chips__add"
-            [disabled]="isLinkBusy()"
+            [disabled]="isSaving()"
             (click)="addTag()"
           >
             <app-icon name="plus" />
@@ -116,7 +114,7 @@
       <button
         type="button"
         class="btn btn--secondary btn--block"
-        [disabled]="isLinkBusy()"
+        [disabled]="isSaving()"
         (click)="createChild()"
       >
         <app-icon name="plus" />
@@ -126,7 +124,14 @@
   </div>
 
   <div class="sheet__footer">
-    <button type="button" class="btn btn--secondary" (click)="close()">Отмена</button>
+    <button
+      type="button"
+      class="btn btn--secondary"
+      [disabled]="isSaving()"
+      (click)="close()"
+    >
+      Отмена
+    </button>
     <button type="button" class="btn btn--primary" [disabled]="!canSave()" (click)="save()">
       {{ isSaving() ? 'Сохраняем…' : 'Сохранить' }}
     </button>

@@ -1,11 +1,13 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Observable, concat, tap } from 'rxjs';
 
 import { SheetService } from '../../core/ui/sheet.service';
 import { TelegramService } from '../../core/telegram/telegram.service';
 import { ToastService } from '../../core/ui/toast.service';
 import { SpendingApiService } from '../../domain/api/spending-api.service';
-import { Category, Tag } from '../../domain/models/models';
+import { Category } from '../../domain/models/models';
 import {
   CategoryPickerData,
   CategoryPickerResult,
@@ -21,6 +23,7 @@ import { IconComponent } from '../../shared/ui/icon.component';
 import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
 import { closeOnDismiss } from '../../shared/util/dismiss.util';
 import { categoryPath, subtreeIds } from '../../shared/util/category-tree.util';
+import { DraftTag, DraftTags, draftTagKey } from '../../shared/util/tag-draft.util';
 import {
   MarkupGuideData,
   MarkupGuideSection,
@@ -36,9 +39,8 @@ export type CategoryEditResult = { readonly kind: 'changed' };
 /**
  * Правка категории: название, место в дереве и теги.
  *
- * Название сохраняется по кнопке, а родитель и теги применяются сразу: это
- * отдельные запросы, и держать их до «Сохранить» значило бы копить в листе
- * состояние, которое всё равно нельзя откатить.
+ * Всё, что человек меняет в листе, копится в его состоянии и уходит на сервер
+ * пачкой запросов по кнопке «Сохранить». Закрытие листа не применяет ничего.
  */
 @Component({
   selector: 'app-category-edit',
@@ -59,8 +61,18 @@ export class CategoryEditSheet {
   private readonly createParentId =
     this.data.mode === 'create' ? (this.data.parentId ?? null) : null;
 
-  /** Связи меняются сразу, поэтому список нужно обновить даже при отмене правки имени. */
-  private touched = false;
+  /**
+   * Что уже применено на сервере.
+   *
+   * Пока пусто, лист закрывается без результата - обновлять список категорий
+   * не от чего. Значение появляется от сохранения, от вложенного листа
+   * подкатегории и от пачки, оборвавшейся посреди сохранения.
+   */
+  private hasAppliedChanges = false;
+
+  /** Название и родитель, известные серверу: с ними сравнивается правка. */
+  private savedTitle = this.existing?.title ?? '';
+  private savedParentId = this.existing?.parentId ?? null;
 
   protected readonly isEdit = this.existing !== null;
   protected readonly title = this.isEdit ? 'Категория' : 'Новая категория';
@@ -69,9 +81,10 @@ export class CategoryEditSheet {
   protected readonly parentId = signal<string | null>(
     this.existing?.parentId ?? this.createParentId,
   );
-  protected readonly tags = signal<readonly Tag[]>(this.existing?.tags ?? []);
+  protected readonly tags = new DraftTags(this.existing?.tags ?? []);
   protected readonly isSaving = signal(false);
-  protected readonly isLinkBusy = signal(false);
+
+  protected readonly tagKey = draftTagKey;
 
   /** Все категории владельца: нужны для пути родителя и запрета переноса в себя. */
   private readonly allCategories = signal<readonly Category[]>([]);
@@ -96,13 +109,11 @@ export class CategoryEditSheet {
   );
 
   constructor() {
-    // Родитель и теги применяются сразу: список категорий нужно обновить
-    // и когда лист закрыли Escape или тапом мимо.
+    // Подкатегорию заводит вложенный лист, и её появление надо донести до
+    // страницы при любом способе закрытия, включая Escape и клик мимо.
     closeOnDismiss(this.dialogRef, () => this.close());
 
-    this.api.getCategories().subscribe({
-      next: (categories) => this.allCategories.set(categories),
-    });
+    this.loadCategories();
   }
 
   protected onName(event: Event): void {
@@ -138,38 +149,18 @@ export class CategoryEditSheet {
           return;
         }
 
-
-        const newParentId = result.kind === 'root' ? null : result.category.id;
-        if (!category) {
-          this.parentId.set(newParentId);
-          return;
-        }
-
-        this.isLinkBusy.set(true);
-        this.api.moveCategory(category.id, newParentId).subscribe({
-          next: () => {
-            this.parentId.set(newParentId);
-            this.touched = true;
-            this.isLinkBusy.set(false);
-            this.telegram.impact('light');
-          },
-          error: () => this.isLinkBusy.set(false),
-        });
+        this.parentId.set(result.kind === 'root' ? null : result.category.id);
+        this.telegram.impact('light');
       });
   }
 
   // ------------------------------------------------------------ теги
 
   protected addTag(): void {
-    const category = this.existing;
-    if (!category) {
-      return;
-    }
-
     this.sheets
       .openSheet<TagPickerResult, TagPickerData>(
         TagPickerSheet,
-        { excludedIds: this.tags().map((tag) => tag.id) },
+        { excludedIds: this.tags.selectedIds() },
         { ariaLabel: 'Выбор тега' },
       )
       .closed.subscribe((result) => {
@@ -177,41 +168,30 @@ export class CategoryEditSheet {
           return;
         }
 
-        this.isLinkBusy.set(true);
-
         if (result.kind === 'existing') {
-          this.api.setCategoryTag(category.id, result.tag.id, true).subscribe({
-            next: () => this.refreshTags(category.id),
-            error: () => this.isLinkBusy.set(false),
-          });
-
-          return;
+          this.tags.addExisting(result.tag);
+        } else {
+          this.tags.addNew(result.title);
         }
 
-        // Идентификатор нового тега знает только сервер, поэтому связь
-        // навешивается после того, как список тегов перечитан.
-        this.api.createTag(result.title).subscribe({
-          next: () => this.attachCreatedTag(category.id, result.title),
-          error: () => this.isLinkBusy.set(false),
-        });
+        this.telegram.impact('light');
       });
   }
 
-  protected removeTag(tag: Tag): void {
-    const category = this.existing;
-    if (!category) {
-      return;
-    }
-
-    this.isLinkBusy.set(true);
-    this.api.setCategoryTag(category.id, tag.id, false).subscribe({
-      next: () => this.refreshTags(category.id),
-      error: () => this.isLinkBusy.set(false),
-    });
+  protected removeTag(tag: DraftTag): void {
+    this.tags.remove(tag);
+    this.telegram.impact('light');
   }
 
   // ------------------------------------------------------------ действия
 
+  /**
+   * Заводит подкатегорию вложенным листом.
+   *
+   * Единственное действие листа, которое применяется до «Сохранить»: у него
+   * своя кнопка сохранения, и отложить создание некуда - подкатегории нужен
+   * существующий родитель.
+   */
   protected createChild(): void {
     const category = this.existing;
     if (!category) {
@@ -225,10 +205,14 @@ export class CategoryEditSheet {
         { ariaLabel: 'Новая подкатегория' },
       )
       .closed.subscribe((result) => {
-        if (result?.kind === 'changed') {
-          this.touched = true;
-          this.refreshTags(category.id);
+        if (result?.kind !== 'changed') {
+          return;
         }
+
+        this.hasAppliedChanges = true;
+        // Перечитывается только дерево: несохранённые поля этого листа
+        // трогать нельзя.
+        this.loadCategories();
       });
   }
 
@@ -239,18 +223,57 @@ export class CategoryEditSheet {
 
     this.isSaving.set(true);
     const title = this.name().trim();
+    const category = this.existing;
 
-    const request = this.existing
-      ? this.api.updateCategory({ id: this.existing.id, title })
-      : this.api.createCategory(title, this.parentId());
+    if (!category) {
+      this.api.createCategory(title, this.parentId()).subscribe({
+        next: () => {
+          this.hasAppliedChanges = true;
+          this.finishSave('Категория создана');
+        },
+        error: (error: unknown) => this.failSave(error),
+      });
 
-    request.subscribe({
-      next: () => {
-        this.telegram.notify('success');
-        this.toast.success(this.isEdit ? 'Категория сохранена' : 'Категория создана');
-        this.dialogRef.close({ kind: 'changed' });
-      },
-      error: () => this.isSaving.set(false),
+      return;
+    }
+
+    // Порядок осмысленный: сперва название, потом место в дереве, потом теги -
+    // по оборвавшейся пачке видно, что успело примениться.
+    const requests: Observable<unknown>[] = [];
+
+    if (title !== this.savedTitle) {
+      requests.push(
+        this.api
+          .updateCategory({ id: category.id, title })
+          .pipe(tap(() => (this.savedTitle = title))),
+      );
+    }
+
+    const parentId = this.parentId();
+    if (parentId !== this.savedParentId) {
+      requests.push(
+        this.api
+          .moveCategory(category.id, parentId)
+          .pipe(tap(() => (this.savedParentId = parentId))),
+      );
+    }
+
+    requests.push(
+      ...this.tags.requests(this.api, (tagId, isSet) =>
+        this.api.setCategoryTag(category.id, tagId, isSet),
+      ),
+    );
+
+    if (requests.length === 0) {
+      // Менять нечего: сообщать о сохранении, которого не было, незачем.
+      this.closeWithResult();
+      return;
+    }
+
+    concat(...requests).subscribe({
+      next: () => (this.hasAppliedChanges = true),
+      complete: () => this.finishSave('Категория сохранена'),
+      error: (error: unknown) => this.failSave(error),
     });
   }
 
@@ -290,44 +313,44 @@ export class CategoryEditSheet {
   }
 
   protected close(): void {
-    this.dialogRef.close(this.touched ? { kind: 'changed' } : undefined);
+    // Закрытие поверх незавершённой пачки отдало бы результат до первого
+    // успешного ответа: страница не стала бы перечитывать список, а запросы
+    // всё равно дошли бы до сервера.
+    if (this.isSaving()) {
+      return;
+    }
+
+    this.closeWithResult();
   }
 
-  private attachCreatedTag(categoryId: string, title: string): void {
-    this.api.getTags().subscribe({
-      next: (tags) => {
-        const created = tags.find(
-          (tag) => tag.title.toLowerCase() === title.toLowerCase(),
-        );
-
-        if (!created) {
-          this.isLinkBusy.set(false);
-          return;
-        }
-
-        this.api.setCategoryTag(categoryId, created.id, true).subscribe({
-          next: () => this.refreshTags(categoryId),
-          error: () => this.isLinkBusy.set(false),
-        });
-      },
-      error: () => this.isLinkBusy.set(false),
-    });
+  private closeWithResult(): void {
+    this.dialogRef.close(this.hasAppliedChanges ? { kind: 'changed' } : undefined);
   }
 
-  private refreshTags(categoryId: string): void {
+  private loadCategories(): void {
     this.api.getCategories().subscribe({
-      next: (categories) => {
-        this.allCategories.set(categories);
-
-        const category = categories.find((item) => item.id === categoryId);
-        this.tags.set(category?.tags ?? []);
-        this.parentId.set(category?.parentId ?? null);
-
-        this.touched = true;
-        this.isLinkBusy.set(false);
-        this.telegram.impact('light');
-      },
-      error: () => this.isLinkBusy.set(false),
+      next: (categories) => this.allCategories.set(categories),
     });
+  }
+
+  private finishSave(message: string): void {
+    this.telegram.notify('success');
+    this.toast.success(message);
+    this.closeWithResult();
+  }
+
+  /**
+   * Оставляет лист открытым после сбоя.
+   *
+   * Состояние не теряется, а часть запросов могла примениться: страница
+   * перечитает список при закрытии. Об отказе сервера сообщает перехватчик,
+   * плашка нужна только собственным ошибкам сохранения.
+   */
+  private failSave(error: unknown): void {
+    this.isSaving.set(false);
+
+    if (!(error instanceof HttpErrorResponse)) {
+      this.toast.error('Не удалось сохранить изменения');
+    }
   }
 }
