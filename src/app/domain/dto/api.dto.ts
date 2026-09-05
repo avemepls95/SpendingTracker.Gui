@@ -29,6 +29,7 @@ export interface SpendingDto {
   readonly id: string;
   readonly amount: number;
   readonly currencyId: string;
+  /** Календарный день в поясе владельца: dd.MM.yyyy. */
   readonly date: string;
   readonly createDate: string;
   readonly description: string;
@@ -103,6 +104,7 @@ export interface SpendingScheduleDto {
 
 export interface ScheduleSpendingDto {
   readonly id: string;
+  /** Календарный день dd.MM.yyyy, как у SpendingDto.date. */
   readonly date: string;
   readonly amount: number;
   readonly currencyId: string;

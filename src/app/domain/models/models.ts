@@ -47,6 +47,7 @@ export interface Spending {
   readonly id: string;
   readonly amount: number;
   readonly currencyId: string;
+  /** Календарный день в поясе владельца: dd.MM.yyyy, а не момент времени. */
   readonly date: string;
   readonly createDate: string;
   readonly description: string;
@@ -162,7 +163,7 @@ export interface SpendingSchedule extends RecurrenceInput {
 /** Трата, созданная расписанием. */
 export interface ScheduleSpending {
   readonly id: string;
-  /** ISO-строка, как у Spending.date, а не локальная строка расписания. */
+  /** Календарный день dd.MM.yyyy, как у Spending.date. */
   readonly date: string;
   readonly amount: number;
   readonly currencyId: string;

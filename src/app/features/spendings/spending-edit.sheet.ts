@@ -25,6 +25,7 @@ import {
 import { IconComponent } from '../../shared/ui/icon.component';
 import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
 import {
+  formatApiDate,
   formatInputDate,
   parseCalendarDate,
 } from '../../shared/util/date.util';
@@ -408,7 +409,9 @@ export class SpendingEditSheet {
       description: this.description().trim(),
       amount,
       currencyId: this.currencyId(),
-      date: formatInputDate(date),
+      // Формат сервера, а не поля ввода: этот объект уходит в список вместо
+      // прежней траты, и yyyy-MM-dd разъехался бы с датами соседних строк.
+      date: formatApiDate(date),
       category: savedCategory(this.savedChoice()),
       tags: this.savedTags(),
       categorySource: this.savedSource(),
@@ -651,7 +654,9 @@ function isFieldsChanged(updated: Spending, original: Spending): boolean {
     updated.description !== original.description ||
     updated.amount !== original.amount ||
     updated.currencyId !== original.currencyId ||
-    updated.date !== toInputValue(original.date)
+    // Обе даты приводятся к одному виду: в списке трата может лежать как в
+    // формате сервера, так и в формате прошлого оптимистичного обновления.
+    toInputValue(updated.date) !== toInputValue(original.date)
   );
 }
 
