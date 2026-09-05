@@ -1,5 +1,12 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 
 import { TelegramService } from '../../core/telegram/telegram.service';
 import { IconComponent } from '../../shared/ui/icon.component';
@@ -31,6 +38,8 @@ export class MarkupGuideSheet {
   private readonly dialogRef = inject<DialogRef<void>>(DialogRef);
   private readonly telegram = inject(TelegramService);
 
+  private readonly body = viewChild.required<ElementRef<HTMLElement>>('body');
+
   /** Раздел, с которого открыли: зависит от того, откуда позвали. */
   protected readonly section = signal<MarkupGuideSection>(this.data.section);
 
@@ -41,6 +50,10 @@ export class MarkupGuideSheet {
 
     this.telegram.selectionChanged();
     this.section.set(section);
+
+    // Оба раздела делят одну область прокрутки, и без сброса новый текст
+    // открывается с середины - как будто его уже читали.
+    this.body().nativeElement.scrollTop = 0;
   }
 
   protected close(): void {

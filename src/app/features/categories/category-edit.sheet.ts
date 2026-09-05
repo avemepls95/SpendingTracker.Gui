@@ -21,6 +21,11 @@ import { IconComponent } from '../../shared/ui/icon.component';
 import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
 import { closeOnDismiss } from '../../shared/util/dismiss.util';
 import { categoryPath, subtreeIds } from '../../shared/util/category-tree.util';
+import {
+  MarkupGuideData,
+  MarkupGuideSection,
+  MarkupGuideSheet,
+} from '../help/markup-guide.sheet';
 
 export type CategoryEditData =
   | { readonly mode: 'create'; readonly parentId?: string | null }
@@ -274,6 +279,14 @@ export class CategoryEditSheet {
       },
       error: () => this.isSaving.set(false),
     });
+  }
+
+  protected openGuide(section: MarkupGuideSection): void {
+    this.sheets.openSheet<void, MarkupGuideData>(
+      MarkupGuideSheet,
+      { section },
+      { ariaLabel: 'Как размечать траты' },
+    );
   }
 
   protected close(): void {
