@@ -1,17 +1,9 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  computed,
-  effect,
-  input,
-  output,
-  viewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
 
-import { MaskFormat, editMasked, skipSeparator } from '../util/mask-input.util';
+import { MaskFormat } from '../util/mask-input.util';
 import { parseTime } from '../util/time.util';
 import { IconComponent } from './icon.component';
+import { MaskedPickerFieldBase } from './masked-picker-field.base';
 
 /** Порядок частей времени в поле - он же подсказка внутри пустого поля. */
 export const TIME_INPUT_FORMAT = 'чч:мм';
@@ -99,67 +91,15 @@ export function timeFieldError(text: string, emptyMessage = 'Укажите вр
     />
   `,
 })
-export class TimeInputComponent {
-  /** Время в формате чч:мм; пустая строка - поле не заполнено. */
-  readonly value = input.required<string>();
-
-  /** Идентификатор контрола: по нему форма связывает поле со своей подписью. */
-  readonly inputId = input.required<string>();
-
-  /** Подпись поля: уточняет, время чего именно выбирают. */
-  readonly label = input.required<string>();
-
-  readonly invalid = input(false);
-  readonly disabled = input(false);
-  readonly describedBy = input<string | null>(null);
-
-  readonly valueChange = output<string>();
-
+export class TimeInputComponent extends MaskedPickerFieldBase {
   protected readonly format = TIME_INPUT_FORMAT;
 
-  private readonly control = viewChild.required<ElementRef<HTMLInputElement>>('control');
-  private readonly native = viewChild.required<ElementRef<HTMLInputElement>>('native');
-
-  /**
-   * Текст, стоявший в поле до последней правки.
-   *
-   * По нему маска отличает вставленное от стёртого: браузер сообщает только
-   * итоговое содержимое, а места цифр надо разложить по сегментам.
-   */
-  private text = '';
+  protected readonly mask = TIME_MASK;
 
   protected readonly pickerLabel = computed(() => `Открыть выбор времени: ${this.label()}`);
 
   /** Значение нативного поля: выбор должен открыться на набранном времени. */
   protected readonly nativeValue = computed(() => parseTime(this.value()) ?? '');
-
-  constructor() {
-    // Значение переносится в DOM вручную, а не привязкой [value]: маска правит
-    // набранное прямо в поле, и повторная запись той же строки привязкой
-    // сбрасывала бы каретку в конец.
-    effect(() => {
-      const text = this.value();
-      const element = this.control().nativeElement;
-
-      if (element.value !== text) {
-        element.value = text;
-      }
-
-      this.text = text;
-    });
-  }
-
-  protected onInput(event: Event): void {
-    const element = event.target as HTMLInputElement;
-    const caret = element.selectionStart ?? element.value.length;
-    const edited = editMasked(TIME_MASK, this.text, element.value, caret);
-
-    this.apply(edited.text, edited.caret);
-  }
-
-  protected onKeydown(event: KeyboardEvent): void {
-    skipSeparator(event.target as HTMLInputElement, event.key, TIME_MASK.separator);
-  }
 
   /**
    * Вставка готового времени из буфера.
@@ -178,29 +118,6 @@ export class TimeInputComponent {
     this.apply(pasted, pasted.length);
   }
 
-  /** Открывает выбор времени с кнопки - с клавиатуры или из скринридера. */
-  protected openPicker(): void {
-    const native = this.native().nativeElement;
-
-    try {
-      native.showPicker();
-    } catch {
-      // showPicker() нет в Safari на iOS и он отказывает вне жеста
-      // пользователя. Фокус на нативном поле открывает выбор сам.
-      native.focus();
-    }
-  }
-
-  /** Нажатие на прозрачный слой над кнопкой. */
-  protected onNativeClick(): void {
-    try {
-      this.native().nativeElement.showPicker();
-    } catch {
-      // В Safari на iOS метода нет, но там выбор уже открыт самим нажатием
-      // на нативное поле - делать больше нечего.
-    }
-  }
-
   protected onNativePick(event: Event): void {
     // Нативное поле отдаёт время в 24-часовом виде независимо от того, в
     // каком показывало его само.
@@ -210,20 +127,6 @@ export class TimeInputComponent {
     }
 
     this.apply(picked, picked.length);
-  }
-
-  /** Пишет текст в поле, ставит каретку и сообщает форме о новом значении. */
-  private apply(text: string, caret: number): void {
-    const element = this.control().nativeElement;
-
-    element.value = text;
-    element.setSelectionRange(caret, caret);
-
-    this.text = text;
-
-    if (text !== this.value()) {
-      this.valueChange.emit(text);
-    }
   }
 }
 

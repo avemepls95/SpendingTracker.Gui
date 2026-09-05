@@ -1,13 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  computed,
-  effect,
-  input,
-  output,
-  viewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
 
 import {
   formatApiDate,
@@ -15,8 +6,9 @@ import {
   parseApiDate,
   parseCalendarDate,
 } from '../util/date.util';
-import { MaskFormat, editMasked, skipSeparator } from '../util/mask-input.util';
+import { MaskFormat } from '../util/mask-input.util';
 import { IconComponent } from './icon.component';
+import { MaskedPickerFieldBase } from './masked-picker-field.base';
 
 /** Порядок частей даты в поле - он же подсказка внутри пустого поля. */
 export const DATE_INPUT_FORMAT = 'дд.мм.гггг';
@@ -105,34 +97,10 @@ export function dateFieldError(text: string, emptyMessage = 'Укажите да
     />
   `,
 })
-export class DateInputComponent {
-  /** Дата в формате дд.мм.гггг; пустая строка - поле не заполнено. */
-  readonly value = input.required<string>();
-
-  /** Идентификатор контрола: по нему форма связывает поле со своей подписью. */
-  readonly inputId = input.required<string>();
-
-  /** Подпись поля: уточняет, какой именно календарь откроет кнопка. */
-  readonly label = input.required<string>();
-
-  readonly invalid = input(false);
-  readonly disabled = input(false);
-  readonly describedBy = input<string | null>(null);
-
-  readonly valueChange = output<string>();
-
+export class DateInputComponent extends MaskedPickerFieldBase {
   protected readonly format = DATE_INPUT_FORMAT;
 
-  private readonly control = viewChild.required<ElementRef<HTMLInputElement>>('control');
-  private readonly native = viewChild.required<ElementRef<HTMLInputElement>>('native');
-
-  /**
-   * Текст, стоявший в поле до последней правки.
-   *
-   * По нему маска отличает вставленное от стёртого: браузер сообщает только
-   * итоговое содержимое, а места цифр надо разложить по сегментам.
-   */
-  private text = '';
+  protected readonly mask = DATE_MASK;
 
   protected readonly pickerLabel = computed(() => `Открыть календарь: ${this.label()}`);
 
@@ -142,34 +110,6 @@ export class DateInputComponent {
 
     return date ? formatInputDate(date) : '';
   });
-
-  constructor() {
-    // Значение переносится в DOM вручную, а не привязкой [value]: маска правит
-    // набранное прямо в поле, и повторная запись той же строки привязкой
-    // сбрасывала бы каретку в конец.
-    effect(() => {
-      const text = this.value();
-      const element = this.control().nativeElement;
-
-      if (element.value !== text) {
-        element.value = text;
-      }
-
-      this.text = text;
-    });
-  }
-
-  protected onInput(event: Event): void {
-    const element = event.target as HTMLInputElement;
-    const caret = element.selectionStart ?? element.value.length;
-    const edited = editMasked(DATE_MASK, this.text, element.value, caret);
-
-    this.apply(edited.text, edited.caret);
-  }
-
-  protected onKeydown(event: KeyboardEvent): void {
-    skipSeparator(event.target as HTMLInputElement, event.key, DATE_MASK.separator);
-  }
 
   /**
    * Вставка целой даты из буфера.
@@ -188,30 +128,6 @@ export class DateInputComponent {
     this.applyDate(pasted);
   }
 
-  /** Открывает календарь с кнопки - с клавиатуры или из скринридера. */
-  protected openPicker(): void {
-    const native = this.native().nativeElement;
-
-    try {
-      native.showPicker();
-    } catch {
-      // showPicker() нет в Safari на iOS и он отказывает вне жеста
-      // пользователя. Фокус на нативном поле открывает выбор сам - на
-      // телефоне это тот же системный календарь.
-      native.focus();
-    }
-  }
-
-  /** Нажатие на прозрачный слой над кнопкой. */
-  protected onNativeClick(): void {
-    try {
-      this.native().nativeElement.showPicker();
-    } catch {
-      // В Safari на iOS метода нет, но там календарь уже открыт самим
-      // нажатием на нативное поле - делать больше нечего.
-    }
-  }
-
   protected onNativePick(event: Event): void {
     // Календарь отдаёт гггг-мм-дд и заведомо существующий день.
     const picked = parseCalendarDate((event.target as HTMLInputElement).value);
@@ -227,20 +143,6 @@ export class DateInputComponent {
     const text = formatApiDate(date);
 
     this.apply(text, text.length);
-  }
-
-  /** Пишет текст в поле, ставит каретку и сообщает форме о новом значении. */
-  private apply(text: string, caret: number): void {
-    const element = this.control().nativeElement;
-
-    element.value = text;
-    element.setSelectionRange(caret, caret);
-
-    this.text = text;
-
-    if (text !== this.value()) {
-      this.valueChange.emit(text);
-    }
   }
 }
 

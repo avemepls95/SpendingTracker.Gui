@@ -56,6 +56,7 @@ import { parseAmount } from '../../shared/util/money.util';
 import { intervalUnitLabel } from '../../shared/util/recurrence.util';
 import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
 import { DraftTag, DraftTags, draftTagKey } from '../../shared/util/tag-draft.util';
+import { parseTime } from '../../shared/util/time.util';
 
 export interface SpendingScheduleEditData {
   /** null - создание нового расписания. */
@@ -71,6 +72,9 @@ export interface SpendingScheduleEditResult {
 const PREVIEW_DEBOUNCE_MS = 350;
 
 const MAX_INTERVAL_VALUE = 1000;
+
+/** Время срабатывания, подставляемое новому расписанию. */
+const DEFAULT_START_TIME = '10:00';
 
 /**
  * Правка расписания: поля, разметка и правило.
@@ -121,7 +125,9 @@ export class SpendingScheduleEditSheet implements OnDestroy {
   );
 
   protected readonly startDateText = signal(toFieldValue(this.original?.startDate));
-  protected readonly startTimeText = signal(this.original?.startTime ?? '10:00');
+  protected readonly startTimeText = signal(
+    this.original ? toTimeFieldValue(this.original.startTime) : DEFAULT_START_TIME,
+  );
   protected readonly endDateText = signal(toFieldValue(this.original?.endDate));
 
   /**
@@ -524,4 +530,16 @@ function toFieldValue(value: string | null | undefined): string {
   const date = parseCalendarDate(value);
 
   return date ? formatApiDate(date) : '';
+}
+
+/**
+ * Значение поля времени: тот же вид HH:mm, в котором время шлёт сервер.
+ *
+ * Контракта у API нет, и время может прийти с секундами или в чужом виде.
+ * Поле с маской показало бы такую строку как есть, поэтому непрочитанное
+ * время превращается в пустое - его видно по ошибке поля, а не по битому
+ * тексту в нём.
+ */
+function toTimeFieldValue(value: string): string {
+  return parseTime(value) ?? '';
 }
