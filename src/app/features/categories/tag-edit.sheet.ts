@@ -9,6 +9,7 @@ import { Tag } from '../../domain/models/models';
 import { confirmAction } from '../../shared/ui/confirm.dialog';
 import { IconComponent } from '../../shared/ui/icon.component';
 import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
+import { normalizeGroupTitle } from '../../shared/util/tag-group.util';
 import { MarkupGuideData, MarkupGuideSheet } from '../help/markup-guide.sheet';
 
 export type TagEditData =
@@ -74,7 +75,7 @@ export class TagEditSheet {
    * рядом с чипом «Место» - та же самая группа, а не отсутствие выбора.
    */
   protected isGroupPicked(value: string): boolean {
-    return this.group().trim().toLowerCase() === value.toLowerCase();
+    return normalizeGroupTitle(this.group()) === normalizeGroupTitle(value);
   }
 
   protected onName(event: Event): void {
@@ -108,6 +109,28 @@ export class TagEditSheet {
   }
 
   /**
+   * Название группы в том написании, в каком группа уже существует.
+   *
+   * Введённое руками «место» - та же группа, что и «Место»: так на неё смотрят
+   * и сервер, и лист управления группами. Если оставить написание как есть, в
+   * списке тегов появится вторая секция с тем же названием, отличающимся
+   * регистром, - визуальный дубликат, которого человек не заводил.
+   */
+  private pickedGroupTitle(): string | null {
+    const group = this.group().trim();
+
+    if (group === '') {
+      return null;
+    }
+
+    const existing = this.groupSuggestions().find(
+      (suggestion) => normalizeGroupTitle(suggestion) === normalizeGroupTitle(group),
+    );
+
+    return existing ?? group;
+  }
+
+  /**
    * Загружает список групп для подсказок.
    *
    * Ошибка гасится: подсказки - удобство, и без них группу всё ещё можно
@@ -127,7 +150,7 @@ export class TagEditSheet {
     this.isSaving.set(true);
 
     const title = this.name().trim();
-    const group = this.group().trim() || null;
+    const group = this.pickedGroupTitle();
 
     const spreadsByDescription = this.spreads();
 

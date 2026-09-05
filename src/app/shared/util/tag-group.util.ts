@@ -6,25 +6,44 @@ export interface TagGroup {
 }
 
 /**
+ * Ключ, по которому группа опознаётся.
+ *
+ * Регистр не учитывается: так на группы смотрит и сервер, и лист управления
+ * группами, а расхождение показало бы «Место» и «место» двумя секциями там, где
+ * у остальных - одна группа.
+ */
+export function normalizeGroupTitle(title: string): string {
+  return title.trim().toLowerCase();
+}
+
+/**
  * Раскладывает теги по группам.
  *
  * Группы идут по алфавиту, теги без группы - последними: иначе безымянная
  * группа оказывалась бы первой и выглядела как основная.
+ *
+ * Написания, отличающиеся только регистром, - одна группа. Заголовком берётся
+ * наименьшее написание в кодовом порядке, то есть при прочих равных то, что с
+ * заглавной буквы: выбор не зависит от порядка тегов, а значит, заголовок не
+ * скачет от того, какой тег завели раньше.
  */
 export function groupTags(tags: readonly Tag[]): readonly TagGroup[] {
-  const byGroup = new Map<string, Tag[]>();
+  const byGroup = new Map<string, { label: string; tags: Tag[] }>();
 
   for (const tag of tags) {
-    const label = tag.group ?? UNGROUPED_TAG_LABEL;
-    const group = byGroup.get(label) ?? [];
-    group.push(tag);
-    byGroup.set(label, group);
+    const label = tag.group?.trim() || UNGROUPED_TAG_LABEL;
+    const key = normalizeGroupTitle(label);
+    const group = byGroup.get(key) ?? { label, tags: [] };
+
+    group.label = group.label < label ? group.label : label;
+    group.tags.push(tag);
+    byGroup.set(key, group);
   }
 
-  return [...byGroup.entries()]
-    .map(([label, groupTagsList]) => ({
-      label,
-      tags: [...groupTagsList].sort((left, right) =>
+  return [...byGroup.values()]
+    .map((group) => ({
+      label: group.label,
+      tags: [...group.tags].sort((left, right) =>
         left.title.localeCompare(right.title, 'ru'),
       ),
     }))

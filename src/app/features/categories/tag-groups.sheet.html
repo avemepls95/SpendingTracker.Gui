@@ -136,7 +136,14 @@
   </div>
 
   <div class="sheet__footer">
-    <button type="button" class="btn btn--secondary" (click)="close()">Отмена</button>
+    <button
+      type="button"
+      class="btn btn--secondary"
+      [disabled]="isSaving()"
+      (click)="close()"
+    >
+      Отмена
+    </button>
     <button type="button" class="btn btn--primary" [disabled]="!canSave()" (click)="save()">
       {{ isSaving() ? 'Сохраняем…' : 'Сохранить' }}
     </button>

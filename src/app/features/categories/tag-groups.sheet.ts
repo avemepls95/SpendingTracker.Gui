@@ -10,11 +10,20 @@ import { IconComponent } from '../../shared/ui/icon.component';
 import { closeOnDismiss } from '../../shared/util/dismiss.util';
 import { PluralForms, plural } from '../../shared/util/plural.util';
 import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
+import { normalizeGroupTitle } from '../../shared/util/tag-group.util';
 
 export type TagGroupsResult = { readonly kind: 'changed' };
 
 /** Ограничение сервера на название группы. */
 const MAX_TITLE_LENGTH = 50;
+
+/**
+ * Начало временного названия, на которое группа уезжает при обмене названиями.
+ *
+ * Название видно человеку, только если пачка оборвалась ровно на этом шаге,
+ * поэтому оно читаемое, а не служебное.
+ */
+const PARKED_TITLE_PREFIX = 'Переносится';
 
 const TAG_FORMS: PluralForms = ['тег', 'тега', 'тегов'];
 
@@ -99,7 +108,7 @@ export class TagGroupsSheet {
       const isDuplicate = visible.some(
         (other) =>
           other.key !== row.key &&
-          other.title.trim().toLowerCase() === title.toLowerCase(),
+          normalizeGroupTitle(other.title) === normalizeGroupTitle(title),
       );
 
       if (isDuplicate) {
@@ -121,7 +130,7 @@ export class TagGroupsSheet {
     }
 
     const isTaken = this.visibleRows().some(
-      (row) => row.title.trim().toLowerCase() === title.toLowerCase(),
+      (row) => normalizeGroupTitle(row.title) === normalizeGroupTitle(title),
     );
 
     return isTaken ? 'Такая группа уже есть' : null;
@@ -291,19 +300,7 @@ export class TagGroupsSheet {
       }
     }
 
-    for (const row of this.rows()) {
-      const title = row.title.trim();
-
-      if (row.isRemoved || row.savedTitle === null || row.savedTitle === title) {
-        continue;
-      }
-
-      requests.push(
-        this.api
-          .renameTagGroup(row.savedTitle, title)
-          .pipe(tap(() => this.commitTitle(row.key, title))),
-      );
-    }
+    requests.push(...this.buildRenameRequests());
 
     for (const row of this.rows()) {
       if (row.isRemoved || row.savedTitle !== null) {
@@ -320,6 +317,94 @@ export class TagGroupsSheet {
     }
 
     return requests;
+  }
+
+  /**
+   * Переименования в порядке, при котором каждое название свободно к своему
+   * запросу.
+   *
+   * Порядка строк здесь мало: сервер отказывает в переименовании в занятое
+   * название, а занять его может соседняя строка, которую ещё не успели
+   * переименовать. Поэтому очередным идёт то переименование, чьё новое
+   * название не держит никто из оставшихся.
+   *
+   * Обмен названиями («Отпуск» → «Поездка» и «Поездка» → «Отпуск») так не
+   * разбирается: свободного названия нет ни у одного из двух. Такой цикл
+   * разрывается временным названием - группа сначала уезжает на свободное имя,
+   * освобождая своё, и доименовывается в конце. Запрещать обмен нельзя:
+   * цепочка «Отпуск» → «Поездка» → «Дорога» с виду такая же, а она
+   * раскладывается без ухищрений и человеку понятна.
+   */
+  private buildRenameRequests(): readonly Observable<unknown>[] {
+    const pending = this.rows()
+      .filter((row) => !row.isRemoved && row.savedTitle !== null)
+      .map((row) => ({ key: row.key, from: row.savedTitle!, to: row.title.trim() }))
+      .filter((rename) => rename.from !== rename.to);
+
+    // Названия, которые до конца пачки заняты своими прежними владельцами.
+    const held = new Set(pending.map((rename) => normalizeGroupTitle(rename.from)));
+    const requests: Observable<unknown>[] = [];
+
+    while (pending.length > 0) {
+      const readyIndex = pending.findIndex(
+        (rename) =>
+          // Смена одного регистра занимает название сама у себя: сервер её
+          // разрешает, и ждать освобождения тут нечего.
+          normalizeGroupTitle(rename.to) === normalizeGroupTitle(rename.from) ||
+          !held.has(normalizeGroupTitle(rename.to)),
+      );
+
+      if (readyIndex !== -1) {
+        const [rename] = pending.splice(readyIndex, 1);
+        held.delete(normalizeGroupTitle(rename.from));
+        requests.push(this.renameRequest(rename.key, rename.from, rename.to));
+        continue;
+      }
+
+      // Свободных названий не осталось - значит, переименования замкнуты в
+      // цикл. Любое из них, уехав на временное название, разрывает цикл, а
+      // остаток очереди доедет обычным порядком.
+      const rename = pending.shift()!;
+      const parkedTitle = this.freeTitle(held);
+
+      held.delete(normalizeGroupTitle(rename.from));
+      held.add(normalizeGroupTitle(parkedTitle));
+      requests.push(this.renameRequest(rename.key, rename.from, parkedTitle));
+      pending.push({ key: rename.key, from: parkedTitle, to: rename.to });
+    }
+
+    return requests;
+  }
+
+  private renameRequest(key: number, from: string, to: string): Observable<unknown> {
+    return this.api.renameTagGroup(from, to).pipe(tap(() => this.commitTitle(key, to)));
+  }
+
+  /**
+   * Название, которое сейчас никем не занято.
+   *
+   * Занятыми считаются и названия строк листа, и названия, до которых пачка
+   * ещё не дошла: временная группа живёт до конца пачки и столкнуться с ними
+   * не должна.
+   */
+  private freeTitle(held: ReadonlySet<string>): string {
+    const taken = new Set(held);
+
+    for (const row of this.rows()) {
+      taken.add(normalizeGroupTitle(row.title));
+
+      if (row.savedTitle !== null) {
+        taken.add(normalizeGroupTitle(row.savedTitle));
+      }
+    }
+
+    for (let index = 1; ; index++) {
+      const candidate = `${PARKED_TITLE_PREFIX} ${index}`;
+
+      if (!taken.has(normalizeGroupTitle(candidate))) {
+        return candidate;
+      }
+    }
   }
 
   private commitRemoval(key: number): void {
