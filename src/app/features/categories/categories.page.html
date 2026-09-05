@@ -106,45 +106,59 @@
     } @else {
       <div class="content">
         @if (mode() === 'categories') {
-          <div class="panel">
-            @for (row of rows(); track row.category.id) {
-              <div class="tree-row" [attr.data-level]="row.level">
-                @if (row.hasChildren) {
-                  <button
-                    type="button"
-                    class="tree-row__toggle"
-                    [attr.aria-expanded]="row.isExpanded"
-                    [attr.aria-label]="
-                      (row.isExpanded ? 'Свернуть ' : 'Раскрыть ') + row.category.title
-                    "
-                    (click)="toggle(row)"
-                  >
-                    <app-icon [name]="row.isExpanded ? 'chevron-down' : 'chevron-right'" />
-                  </button>
-                } @else {
-                  <span class="tree-row__toggle tree-row__toggle--empty" aria-hidden="true"></span>
-                }
-
-                <button type="button" class="tree-row__button" (click)="edit(row.category)">
-                  <app-icon class="category__icon" name="folder" />
-                  <span class="category__main">
-                    <span class="category__title truncate">{{ row.category.title }}</span>
-
-                    @if (row.category.tags.length > 0) {
-                      <!-- Теги категории действуют на все её траты, поэтому
-                           видны прямо в дереве. -->
-                      <span class="category__tags">
-                        @for (tag of row.category.tags; track tag.id) {
-                          <span class="chip chip--tag chip--mini">{{ tag.title }}</span>
-                        }
-                      </span>
-                    }
-                  </span>
-                  <app-icon class="category__chevron" name="chevron-right" />
+          <section class="tree">
+            @if (hasBranches()) {
+              <div class="tree__tools">
+                <button type="button" class="tree__toggle" (click)="toggleAll()">
+                  <app-icon [name]="isAnyExpanded() ? 'chevrons-up' : 'chevrons-down'" />
+                  {{ isAnyExpanded() ? 'Свернуть всё' : 'Развернуть всё' }}
                 </button>
               </div>
             }
-          </div>
+
+            <div class="panel">
+              @for (row of rows(); track row.category.id) {
+                <div class="tree-row" [attr.data-level]="row.level">
+                  @if (row.hasChildren) {
+                    <button
+                      type="button"
+                      class="tree-row__toggle"
+                      [attr.aria-expanded]="row.isExpanded"
+                      [attr.aria-label]="
+                        (row.isExpanded ? 'Свернуть ' : 'Раскрыть ') + row.category.title
+                      "
+                      (click)="toggle(row)"
+                    >
+                      <app-icon [name]="row.isExpanded ? 'chevron-down' : 'chevron-right'" />
+                    </button>
+                  } @else {
+                    <span
+                      class="tree-row__toggle tree-row__toggle--empty"
+                      aria-hidden="true"
+                    ></span>
+                  }
+
+                  <button type="button" class="tree-row__button" (click)="edit(row.category)">
+                    <app-icon class="category__icon" name="folder" />
+                    <span class="category__main">
+                      <span class="category__title truncate">{{ row.category.title }}</span>
+
+                      @if (row.category.tags.length > 0) {
+                        <!-- Теги категории действуют на все её траты, поэтому
+                             видны прямо в дереве. -->
+                        <span class="category__tags">
+                          @for (tag of row.category.tags; track tag.id) {
+                            <span class="chip chip--tag chip--mini">{{ tag.title }}</span>
+                          }
+                        </span>
+                      }
+                    </span>
+                    <app-icon class="category__chevron" name="chevron-right" />
+                  </button>
+                </div>
+              }
+            </div>
+          </section>
 
           <button type="button" class="btn btn--secondary btn--block" (click)="create()">
             <app-icon name="plus" />

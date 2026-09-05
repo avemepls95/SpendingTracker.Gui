@@ -17,6 +17,56 @@
   padding: 0 var(--sp-4) var(--sp-6);
 }
 
+// Дерево с кнопкой раскрытия над ним. Кнопка стоит здесь, а не в шапке
+// страницы: в шапке она спорила бы за место с «+» и превратилась бы в значок,
+// который надо разгадывать.
+.tree {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.tree__tools {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 var(--sp-1);
+}
+
+.tree__toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 32px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-md);
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  --icon-size: 16px;
+
+  // Видимая высота ниже нормы касания, поэтому цель добирается
+  // псевдоэлементом - тем же приёмом, что у .icon-btn и нажимаемых чипов.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 50% 0 auto 0;
+    height: var(--tap-min);
+    transform: translateY(-50%);
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      color: var(--c-text);
+    }
+  }
+
+  &:active {
+    background: var(--c-pressed);
+  }
+}
+
 // Строка дерева: шеврон раскрывает ветку, остальная площадь открывает правку.
 .tree-row {
   display: flex;

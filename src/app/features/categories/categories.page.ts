@@ -9,6 +9,7 @@ import { IconComponent } from '../../shared/ui/icon.component';
 import { PageHeaderComponent } from '../../shared/ui/page-header.component';
 import {
   CategoryRow,
+  ancestorIds,
   flattenCategoryTree,
   parentCategoryIds,
 } from '../../shared/util/category-tree.util';
@@ -58,10 +59,32 @@ export class CategoriesPage {
 
   private readonly categories = signal<readonly Category[]>([]);
   private readonly tags = signal<readonly Tag[]>([]);
+
+  /** Дерево раскрывает сам человек: по умолчанию видны только корни. */
   private readonly expanded = signal<ReadonlySet<string>>(new Set());
+
+  /** Было ли дерево уже загружено - от этого зависит судьба раскрытых веток. */
+  private isLoaded = false;
 
   protected readonly rows = computed<readonly CategoryRow[]>(() =>
     flattenCategoryTree(this.categories(), this.expanded()),
+  );
+
+  /** Есть ли что раскрывать: у плоского списка кнопка раскрытия бессмысленна. */
+  protected readonly hasBranches = computed(() =>
+    this.rows().some((row) => row.hasChildren),
+  );
+
+  /**
+   * Смысл кнопки «раскрыть/свернуть всё».
+   *
+   * Считается по текущему дереву, а не по последнему нажатию: иначе кнопка
+   * залипала бы в состоянии «свернуть», когда человек уже свернул ветки руками.
+   * Пока раскрыта хоть одна ветка, кнопка сворачивает - о частично раскрытом
+   * дереве обычно просят «убрать лишнее», а не «раскрыть до конца».
+   */
+  protected readonly isAnyExpanded = computed(() =>
+    this.rows().some((row) => row.isExpanded),
   );
 
   protected readonly tagGroups = computed<readonly TagGroup[]>(() =>
@@ -90,6 +113,12 @@ export class CategoriesPage {
 
   protected setMode(mode: MarkupMode): void {
     this.mode.set(mode);
+  }
+
+  protected toggleAll(): void {
+    this.expanded.set(
+      this.isAnyExpanded() ? new Set() : new Set(parentCategoryIds(this.categories())),
+    );
   }
 
   protected toggle(row: CategoryRow): void {
@@ -152,16 +181,51 @@ export class CategoriesPage {
       tags: this.api.getTags(),
     }).subscribe({
       next: ({ categories, tags }) => {
+        const known = new Set(this.categories().map((category) => category.id));
+        const isReload = this.isLoaded;
+
         this.categories.set(categories);
         this.tags.set(tags);
 
-        // Ветки раскрыты по умолчанию: свёрнутое дерево показывает три строки
-        // и выглядит так, будто категорий почти нет.
-        this.expanded.set(new Set(parentCategoryIds(categories)));
+        // Раскрытие намеренно не сбрасывается: перезагрузка после правки не
+        // должна схлопывать дерево и терять место, где человек работал.
+        if (isReload) {
+          this.revealNew(categories, known);
+        }
+
+        this.isLoaded = true;
         this.status.set('ready');
       },
       error: () => this.status.set('error'),
     });
+  }
+
+  /**
+   * Раскрывает ветки до категорий, которых в прошлой загрузке не было.
+   *
+   * Заведя подкатегорию, человек ждёт увидеть её в дереве, а не гадать, какую
+   * ветку раскрыть. Какая именно категория создана, лист правки не сообщает -
+   * поэтому новые ищутся сравнением с прежним составом.
+   */
+  private revealNew(
+    categories: readonly Category[],
+    knownIds: ReadonlySet<string>,
+  ): void {
+    const next = new Set(this.expanded());
+
+    for (const category of categories) {
+      if (knownIds.has(category.id)) {
+        continue;
+      }
+
+      for (const id of ancestorIds(category, categories)) {
+        next.add(id);
+      }
+    }
+
+    if (next.size !== this.expanded().size) {
+      this.expanded.set(next);
+    }
   }
 
   private openCategorySheet(data: CategoryEditData): void {
