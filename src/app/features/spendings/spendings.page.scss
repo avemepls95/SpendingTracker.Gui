@@ -24,24 +24,6 @@
   background: var(--c-bg);
 }
 
-.toolbar__search {
-  position: relative;
-}
-
-.toolbar__search-icon {
-  position: absolute;
-  top: 50%;
-  left: var(--sp-3);
-  transform: translateY(-50%);
-  color: var(--c-text-3);
-  --icon-size: 18px;
-  pointer-events: none;
-}
-
-.toolbar__search-input {
-  padding-left: calc(var(--sp-3) + var(--sp-6));
-}
-
 .toolbar__filters {
   display: flex;
   gap: var(--sp-2);

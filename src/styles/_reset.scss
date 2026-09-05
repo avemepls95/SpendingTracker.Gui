@@ -45,6 +45,28 @@ select {
   color: inherit;
 }
 
+// Каретка акцентная, а не цвета текста. Начальная координата каретки совпадает
+// с началом первой буквы, и на iOS двухпиксельная чёрная полоса поверх глифа
+// читалась как испорченный символ; акцентный цвет её от текста отделяет.
+input,
+textarea {
+  caret-color: var(--c-accent);
+}
+
+// Подсветка выделения задаётся явно. Без правила её цвет остаётся на усмотрение
+// WebView: в Telegram на iOS выделение выходило неразличимым, хотя системное
+// меню «Вырезать/Скопировать» уже висело над текстом. Правило продублировано
+// для полей ввода намеренно - WebKit не всегда доносит общее ::selection
+// до их внутреннего содержимого.
+::selection,
+input::selection,
+textarea::selection {
+  background: var(--c-selection);
+  // Цвет текста повторяется вместе с фоном: иначе WebKit подменяет его
+  // системным, и выделенное читается хуже невыделенного.
+  color: var(--c-text);
+}
+
 button {
   border: 0;
   padding: 0;
@@ -98,6 +120,19 @@ input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
   appearance: none;
   margin: 0;
+}
+
+// Поисковое поле оформляется как обычное: системный вид добавляет собственные
+// внутренние отступы, а вместе с ними и свой крестик очистки - он вставал бы
+// рядом с нашим.
+input[type='search'] {
+  appearance: none;
+}
+
+input[type='search']::-webkit-search-cancel-button,
+input[type='search']::-webkit-search-decoration {
+  appearance: none;
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

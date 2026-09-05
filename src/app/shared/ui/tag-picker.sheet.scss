@@ -1,22 +1,6 @@
 .search {
-  position: relative;
   flex: none;
   padding: 0 var(--sp-4) var(--sp-3);
-}
-
-.search__icon {
-  position: absolute;
-  top: 50%;
-  left: calc(var(--sp-4) + var(--sp-3));
-  transform: translateY(-50%);
-  margin-top: calc(var(--sp-3) / -2);
-  color: var(--c-text-3);
-  --icon-size: 18px;
-  pointer-events: none;
-}
-
-.search__input {
-  padding-left: calc(var(--sp-4) + var(--sp-6));
 }
 
 .create {

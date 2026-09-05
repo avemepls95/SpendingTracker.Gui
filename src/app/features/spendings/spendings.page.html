@@ -50,19 +50,11 @@
 @if (view() === 'spendings') {
   <div class="toolbar">
     @if (isSearchOpen()) {
-      <div class="toolbar__search">
-        <app-icon class="toolbar__search-icon" name="search" />
-        <input
-          #searchInput
-          class="field__control toolbar__search-input"
-          type="search"
-          inputmode="search"
-          placeholder="Описание траты"
-          autocomplete="off"
-          [value]="store.search()"
-          (input)="onSearchInput($event)"
-        />
-      </div>
+      <app-search-field
+        placeholder="Описание траты"
+        [value]="store.search()"
+        (valueChange)="onSearchInput($event)"
+      />
     }
 
     <div class="toolbar__filters" role="group" aria-label="Фильтр трат">

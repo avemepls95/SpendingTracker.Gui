@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
   Injector,
   OnDestroy,
   afterNextRender,
@@ -20,6 +19,7 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { IconComponent } from '../../shared/ui/icon.component';
 import { MarkupSourceMarkComponent } from '../../shared/ui/markup-source-mark.component';
 import { PageHeaderComponent } from '../../shared/ui/page-header.component';
+import { SearchFieldComponent } from '../../shared/ui/search-field.component';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { IntersectDirective } from '../../shared/util/intersect.directive';
 import {
@@ -52,6 +52,7 @@ type SpendingsView = 'spendings' | 'schedules';
     IntersectDirective,
     MarkupSourceMarkComponent,
     MoneyPipe,
+    SearchFieldComponent,
     SpendingSchedulesList,
   ],
   templateUrl: './spendings.page.html',
@@ -80,8 +81,7 @@ export class SpendingsPage implements OnDestroy {
    */
   private spendingsOffset = 0;
 
-  private readonly searchInput =
-    viewChild<ElementRef<HTMLInputElement>>('searchInput');
+  private readonly searchField = viewChild(SearchFieldComponent);
 
   constructor() {
     this.store.reload();
@@ -175,15 +175,22 @@ export class SpendingsPage implements OnDestroy {
     // разборе документа; поле поиска появляется по нажатию. Фокус ставится
     // здесь, а не по появлению элемента: возврат с сегмента расписаний
     // отрисовывает поле заново и поднимал бы клавиатуру без просьбы.
-    afterNextRender(() => this.searchInput()?.nativeElement.focus(), {
+    afterNextRender(() => this.searchField()?.focus(), {
       injector: this.injector,
     });
   }
 
-  protected onSearchInput(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-
+  protected onSearchInput(value: string): void {
     clearTimeout(this.searchTimer);
+
+    // Пустой запрос применяется сразу: паузу здесь нечем оправдать - лишних
+    // запросов она не экономит, - а после нажатия на крестик список замирал бы
+    // на треть секунды со старой выборкой.
+    if (value === '') {
+      this.store.setSearch('');
+      return;
+    }
+
     this.searchTimer = setTimeout(
       () => this.store.setSearch(value),
       SEARCH_DEBOUNCE_MS,

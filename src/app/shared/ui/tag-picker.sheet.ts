@@ -5,6 +5,7 @@ import { SpendingApiService } from '../../domain/api/spending-api.service';
 import { Tag } from '../../domain/models/models';
 import { EmptyStateComponent } from './empty-state.component';
 import { IconComponent } from './icon.component';
+import { SearchFieldComponent } from './search-field.component';
 import { SwipeToCloseDirective } from '../util/swipe-to-close.directive';
 import { TagGroup, groupTags } from '../util/tag-group.util';
 
@@ -26,7 +27,7 @@ export type TagPickerResult =
 @Component({
   selector: 'app-tag-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, EmptyStateComponent, SwipeToCloseDirective],
+  imports: [IconComponent, EmptyStateComponent, SearchFieldComponent, SwipeToCloseDirective],
   template: `
     <div class="sheet" appSwipeToClose (dismissed)="close()">
       <div class="sheet__grabber" aria-hidden="true"></div>
@@ -38,17 +39,13 @@ export type TagPickerResult =
         </button>
       </div>
 
-      <div class="search">
-        <app-icon class="search__icon" name="search" />
-        <input
-          class="field__control search__input"
-          type="text"
-          placeholder="Название тега"
-          autocomplete="off"
-          [value]="query()"
-          (input)="onQuery($event)"
-        />
-      </div>
+      <app-search-field
+        class="search"
+        placeholder="Название тега"
+        [autofocus]="true"
+        [value]="query()"
+        (valueChange)="onQuery($event)"
+      />
 
       <div class="sheet__body">
         @if (canCreate()) {
@@ -134,8 +131,8 @@ export class TagPickerSheet {
     });
   }
 
-  protected onQuery(event: Event): void {
-    this.query.set((event.target as HTMLInputElement).value);
+  protected onQuery(value: string): void {
+    this.query.set(value);
   }
 
   protected select(tag: Tag): void {

@@ -5,6 +5,7 @@ import { SpendingApiService } from '../../domain/api/spending-api.service';
 import { Category } from '../../domain/models/models';
 import { EmptyStateComponent } from './empty-state.component';
 import { IconComponent } from './icon.component';
+import { SearchFieldComponent } from './search-field.component';
 import { SwipeToCloseDirective } from '../util/swipe-to-close.directive';
 import {
   CategoryRow,
@@ -46,7 +47,7 @@ export type CategoryPickerResult =
 @Component({
   selector: 'app-category-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, EmptyStateComponent, SwipeToCloseDirective],
+  imports: [IconComponent, EmptyStateComponent, SearchFieldComponent, SwipeToCloseDirective],
   template: `
     <div class="sheet" appSwipeToClose (dismissed)="close()">
       <div class="sheet__grabber" aria-hidden="true"></div>
@@ -58,17 +59,13 @@ export type CategoryPickerResult =
         </button>
       </div>
 
-      <div class="search">
-        <app-icon class="search__icon" name="search" />
-        <input
-          class="field__control search__input"
-          type="text"
-          placeholder="Название категории"
-          autocomplete="off"
-          [value]="query()"
-          (input)="onQuery($event)"
-        />
-      </div>
+      <app-search-field
+        class="search"
+        placeholder="Название категории"
+        [autofocus]="true"
+        [value]="query()"
+        (valueChange)="onQuery($event)"
+      />
 
       <div class="sheet__body">
         @if (rootOptionLabel) {
@@ -217,8 +214,8 @@ export class CategoryPickerSheet {
     });
   }
 
-  protected onQuery(event: Event): void {
-    this.query.set((event.target as HTMLInputElement).value);
+  protected onQuery(value: string): void {
+    this.query.set(value);
   }
 
   protected isExcluded(categoryId: string): boolean {

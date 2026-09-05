@@ -5,6 +5,7 @@ import { flagImageUrl } from '../../domain/currency/flag.util';
 import { Currency } from '../../domain/models/models';
 import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { IconComponent } from './icon.component';
+import { SearchFieldComponent } from './search-field.component';
 import { HideOnErrorDirective } from '../util/hide-on-error.directive';
 import { SwipeToCloseDirective } from '../util/swipe-to-close.directive';
 
@@ -21,7 +22,7 @@ export interface CurrencyPickerData {
 @Component({
   selector: 'app-currency-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, HideOnErrorDirective, SwipeToCloseDirective],
+  imports: [IconComponent, SearchFieldComponent, HideOnErrorDirective, SwipeToCloseDirective],
   template: `
     <div class="sheet" appSwipeToClose (dismissed)="close()">
       <div class="sheet__grabber" aria-hidden="true"></div>
@@ -33,17 +34,13 @@ export interface CurrencyPickerData {
         </button>
       </div>
 
-      <div class="picker__search">
-        <app-icon class="picker__search-icon" name="search" />
-        <input
-          class="field__control picker__search-input"
-          type="search"
-          placeholder="Код или название"
-          autocomplete="off"
-          [value]="query()"
-          (input)="onQuery($event)"
-        />
-      </div>
+      <app-search-field
+        class="picker__search"
+        placeholder="Код или название"
+        [autofocus]="true"
+        [value]="query()"
+        (valueChange)="onQuery($event)"
+      />
 
       <div class="sheet__body">
         @if (visible().length === 0) {
@@ -105,8 +102,8 @@ export class CurrencyPickerSheet {
     );
   });
 
-  protected onQuery(event: Event): void {
-    this.query.set((event.target as HTMLInputElement).value);
+  protected onQuery(value: string): void {
+    this.query.set(value);
   }
 
   protected flagUrl(currency: Currency): string | null {

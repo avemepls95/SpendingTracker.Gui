@@ -33,6 +33,9 @@
   --c-pressed: color-mix(in srgb, var(--c-text) 10%, transparent);
   --c-accent-soft: color-mix(in srgb, var(--c-accent) 12%, transparent);
   --c-danger-soft: color-mix(in srgb, var(--c-danger) 12%, transparent);
+  // Заметно плотнее кольца фокуса: подсветка выделения обязана читаться
+  // и под чёрным текстом, а 12% под ним теряются.
+  --c-selection: color-mix(in srgb, var(--c-accent) 26%, transparent);
   --c-scrim: color-mix(in srgb, #000 45%, transparent);
   --c-skeleton: color-mix(in srgb, var(--c-text) 8%, transparent);
   --c-skeleton-shine: color-mix(in srgb, var(--c-text) 14%, transparent);
