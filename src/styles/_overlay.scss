@@ -44,12 +44,32 @@
   }
 }
 
+// Зона, за которую лист перетаскивают: ухватка и шапка.
+//
+// touch-action: none обязателен. Иначе браузер считает вертикальное движение
+// пальца своей прокруткой, отдаёт его ближайшему прокручиваемому предку -
+// странице под листом - и обрывает наши pointermove событием pointercancel.
+// Со стороны выглядит так, будто тянется фон, а лист стоит на месте.
+.sheet__grabber,
+.sheet__header {
+  touch-action: none;
+}
+
 // Полоска-ухватка: показывает, что лист закрывается смахиванием вниз.
+//
+// Сама полоска - 4 пикселя высотой, попасть в неё пальцем нельзя, поэтому
+// видимая часть вынесена в ::before, а отступы вокруг работают зоной захвата.
 .sheet__grabber {
   flex: none;
+  align-self: center;
+  padding: var(--sp-2) var(--sp-6) var(--sp-1);
+}
+
+.sheet__grabber::before {
+  content: '';
+  display: block;
   width: 36px;
   height: 4px;
-  margin: var(--sp-2) auto var(--sp-1);
   border-radius: var(--r-full);
   background: var(--c-border-strong);
 }
@@ -60,6 +80,12 @@
   align-items: center;
   gap: var(--sp-2);
   padding: var(--sp-2) var(--sp-3) var(--sp-3);
+}
+
+// Пока лист тянут, transform ставит директива. Возврат на место должен ехать,
+// а не прыгать, поэтому переход описан здесь, а не инлайном в директиве.
+.sheet--returning {
+  transition: transform var(--dur) var(--ease);
 }
 
 .sheet__title {
