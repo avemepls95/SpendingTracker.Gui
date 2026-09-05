@@ -53,9 +53,6 @@ export class TagEditSheet {
   /** Новый тег заводится без переноса: цена ошибочного переноса выше. */
   protected readonly spreads = signal(this.existing?.spreadsByDescription ?? false);
 
-  /** Объяснение признака развёрнуто: оно длинное и нужно не каждый раз. */
-  protected readonly isSpreadHelpOpen = signal(false);
-
   protected readonly nameError = computed(() =>
     this.name().trim() === '' ? 'Укажите название' : null,
   );
@@ -88,10 +85,6 @@ export class TagEditSheet {
 
   protected onSpreads(event: Event): void {
     this.spreads.set((event.target as HTMLInputElement).checked);
-  }
-
-  protected toggleSpreadHelp(): void {
-    this.isSpreadHelpOpen.update((open) => !open);
   }
 
   protected openGuide(): void {
