@@ -16,6 +16,15 @@
 const RELOAD_FLAG = 'moneytrace.stale-build-reloaded';
 
 /**
+ * Потолок ожидания index.html.
+ *
+ * Пяти секунд хватает и медленной мобильной сети, а дальше лечиться уже поздно:
+ * пользователь всё это время работает в старой версии, и перезагрузка из-под
+ * начатого ввода навредит больше, чем протухший бандл.
+ */
+const FETCH_TIMEOUT_MS = 5000;
+
+/**
  * Перезагружает страницу, если выполняется не та сборка, что лежит на сервере.
  */
 export async function reloadIfStaleBuild(): Promise<void> {
@@ -31,12 +40,12 @@ export async function reloadIfStaleBuild(): Promise<void> {
 
   // Перезагрузка ровно одна за сеанс вкладки. Если reload по какой-то причине
   // не вытеснит старый документ, зацикленные перезагрузки будут заметно хуже
-  // самой протухшей версии, поэтому флаг ставится до вызова reload.
-  if (alreadyReloaded()) {
+  // самой протухшей версии, поэтому reload вызывается только после того, как
+  // флаг записан и подтверждён: не можем гарантировать одноразовость - не лечимся.
+  if (alreadyReloaded() || !rememberReload()) {
     return;
   }
 
-  rememberReload();
   location.reload();
 }
 
@@ -59,6 +68,7 @@ async function publishedBundle(): Promise<string | null> {
     // из-за которой документ и оказался старым, не должна отвечать на запрос.
     const response = await fetch(new URL('index.html', document.baseURI), {
       cache: 'no-store',
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
     if (!response.ok) {
       return null;
@@ -86,10 +96,20 @@ function alreadyReloaded(): boolean {
   }
 }
 
-function rememberReload(): void {
+/**
+ * Ставит флаг перезагрузки и сообщает, действительно ли он сохранён.
+ *
+ * Доступность чтения ничего не говорит о доступности записи: квота и политики
+ * хранения ограничивают setItem отдельно от getItem, и тогда флаг молча
+ * теряется. Поэтому значение перечитывается - без подтверждённого флага
+ * перезагрузка повторится при каждом открытии мини-аппа.
+ */
+function rememberReload(): boolean {
   try {
     sessionStorage.setItem(RELOAD_FLAG, '1');
+
+    return sessionStorage.getItem(RELOAD_FLAG) !== null;
   } catch {
-    // Сюда не попасть: alreadyReloaded уже проверил доступность хранилища.
+    return false;
   }
 }
