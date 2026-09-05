@@ -3,6 +3,15 @@
 
   <div class="sheet__header">
     <h2 class="sheet__title">{{ title }}</h2>
+    <!-- Справка в шапке: она про теги целиком, а не про отдельное поле листа. -->
+    <button
+      type="button"
+      class="icon-btn"
+      aria-label="Как выбрать теги"
+      (click)="openGuide()"
+    >
+      <app-icon name="info" />
+    </button>
     @if (isEdit) {
       <button
         type="button"
@@ -123,11 +132,6 @@
           </p>
         </div>
       }
-
-      <button type="button" class="help-link" (click)="openGuide()">
-        <app-icon name="info" />
-        Подробнее о тегах
-      </button>
     </div>
   </div>
 

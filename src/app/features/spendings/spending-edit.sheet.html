@@ -89,7 +89,20 @@
     </div>
 
     <section class="markup">
-      <h3 class="field__label">Категория</h3>
+      <div class="field-head">
+        <h3 class="field__label">Категория</h3>
+
+        <!-- Справка под рукой в момент выбора: решение принимается здесь, а не
+             на экране настроек, куда за ней пришлось бы уходить из формы. -->
+        <button
+          type="button"
+          class="field-head__help"
+          aria-label="Как выбрать категорию"
+          (click)="openGuide('basics')"
+        >
+          <app-icon name="info" />
+        </button>
+      </div>
 
       <button
         type="button"
@@ -110,13 +123,6 @@
         Категория отвечает на вопрос «на что потрачено» и всегда одна.
       </p>
 
-      <!-- Справка под рукой в момент выбора: решение принимается здесь, а не
-           на экране настроек, куда за ней пришлось бы уходить из формы. -->
-      <button type="button" class="help-link" (click)="openGuide('basics')">
-        <app-icon name="info" />
-        Как выбрать категорию и теги
-      </button>
-
       @if (canReject()) {
         <!-- Отказ - массовая операция и живёт отдельно от выбора категории:
              сменить категорию можно строкой выше, и это действие локальное. -->
@@ -132,7 +138,18 @@
     </section>
 
     <section class="markup">
-      <h3 class="field__label">Теги</h3>
+      <div class="field-head">
+        <h3 class="field__label">Теги</h3>
+
+        <button
+          type="button"
+          class="field-head__help"
+          aria-label="Как выбрать теги"
+          (click)="openGuide('tags')"
+        >
+          <app-icon name="info" />
+        </button>
+      </div>
 
       <div class="chips">
         @for (tag of tags.list(); track tagKey(tag)) {
@@ -165,11 +182,6 @@
         Теги - второе измерение: место, поездка, характер расхода. Теги
         категории действуют и без повторной пометки.
       </p>
-
-      <button type="button" class="help-link" (click)="openGuide('tags')">
-        <app-icon name="info" />
-        Подробнее о тегах
-      </button>
     </section>
   </div>
 

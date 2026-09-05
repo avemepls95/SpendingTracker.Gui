@@ -43,7 +43,20 @@
     </div>
 
     <section class="block">
-      <h3 class="field__label">Входит в категорию</h3>
+      <div class="field-head">
+        <h3 class="field__label">Входит в категорию</h3>
+
+        <!-- Справка в блоке, который виден и при создании: решение «категория
+             это или тег» принимается именно здесь, до сохранения. -->
+        <button
+          type="button"
+          class="field-head__help"
+          aria-label="Как выбрать категорию"
+          (click)="openGuide('basics')"
+        >
+          <app-icon name="info" />
+        </button>
+      </div>
 
       <button
         type="button"
@@ -60,18 +73,22 @@
         Траты этой категории попадут и в родительскую - так в аналитике
         получается дерево.
       </p>
-
-      <!-- Ссылка в блоке, который виден и при создании: решение «категория это
-           или тег» принимается именно здесь, до сохранения. -->
-      <button type="button" class="help-link" (click)="openGuide('basics')">
-        <app-icon name="info" />
-        Как выбрать категорию и теги
-      </button>
     </section>
 
     @if (isEdit) {
       <section class="block">
-        <h3 class="field__label">Теги категории</h3>
+        <div class="field-head">
+          <h3 class="field__label">Теги категории</h3>
+
+          <button
+            type="button"
+            class="field-head__help"
+            aria-label="Как выбрать теги"
+            (click)="openGuide('tags')"
+          >
+            <app-icon name="info" />
+          </button>
+        </div>
 
         <div class="tag-chips">
           @for (tag of tags.list(); track tagKey(tag)) {
@@ -104,11 +121,6 @@
           Тег категории действует на все её траты и на траты вложенных
           категорий: «Регулярные» достаточно поставить один раз.
         </p>
-
-        <button type="button" class="help-link" (click)="openGuide('tags')">
-          <app-icon name="info" />
-          Подробнее о тегах
-        </button>
       </section>
 
       <button
