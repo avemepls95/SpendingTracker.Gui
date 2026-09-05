@@ -65,13 +65,15 @@
             } @else if (isFinished(item)) {
               Больше не сработает
             } @else {
-              {{ item.nextOccurrenceDate }}
+              {{ item.nextOccurrenceDate | dateTime }}
             }
           </span>
         </div>
         <div class="panel__row fact">
           <span class="fact__label">Последнее срабатывание</span>
-          <span class="fact__value">{{ item.lastOccurrenceDate ?? 'Ещё не было' }}</span>
+          <span class="fact__value">
+            {{ (item.lastOccurrenceDate | dateTime) || 'Ещё не было' }}
+          </span>
         </div>
       </div>
 

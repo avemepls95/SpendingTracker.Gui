@@ -269,7 +269,7 @@
       } @else {
         <div class="panel panel--bordered">
           @for (occurrence of preview(); track $index) {
-            <div class="panel__row preview__row">{{ occurrence }}</div>
+            <div class="panel__row preview__row">{{ occurrence | dateTime }}</div>
           }
         </div>
       }

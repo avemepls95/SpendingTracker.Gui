@@ -14,6 +14,7 @@ import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { IconComponent } from '../../shared/ui/icon.component';
 import { confirmAction } from '../../shared/ui/confirm.dialog';
+import { DateTimePipe } from '../../shared/pipes/date-time.pipe';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../shared/pipes/short-date.pipe';
 import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
@@ -44,6 +45,7 @@ export type SpendingScheduleDetailsResult =
   selector: 'app-spending-schedule-details',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    DateTimePipe,
     EmptyStateComponent,
     IconComponent,
     MoneyPipe,

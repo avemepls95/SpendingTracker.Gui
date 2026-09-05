@@ -37,6 +37,7 @@ import {
   CurrencyPickerData,
   CurrencyPickerSheet,
 } from '../../shared/ui/currency-picker.sheet';
+import { DateTimePipe } from '../../shared/pipes/date-time.pipe';
 import { DateInputComponent, dateFieldError } from '../../shared/ui/date-input.component';
 import { IconComponent } from '../../shared/ui/icon.component';
 import {
@@ -85,7 +86,13 @@ const DEFAULT_START_TIME = '10:00';
 @Component({
   selector: 'app-spending-schedule-edit',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DateInputComponent, IconComponent, SwipeToCloseDirective, TimeInputComponent],
+  imports: [
+    DateInputComponent,
+    DateTimePipe,
+    IconComponent,
+    SwipeToCloseDirective,
+    TimeInputComponent,
+  ],
   templateUrl: './spending-schedule-edit.sheet.html',
   styleUrl: './spending-schedule-edit.sheet.scss',
 })

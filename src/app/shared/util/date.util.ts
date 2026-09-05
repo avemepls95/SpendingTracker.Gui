@@ -8,9 +8,14 @@
  * сутки. Формат yyyy-MM-dd тоже поддержан - его отдаёт `<input type="date">`.
  */
 
+import { parseTime } from './time.util';
+
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})/;
 const DOT_DATE = /^(\d{2})\.(\d{2})\.(\d{4})/;
 const DOT_DATE_EXACT = /^(\d{2})\.(\d{2})\.(\d{4})$/;
+// Дату от времени отделяет пробел или «T»: разделитель зависит от того, чем
+// сервер сериализовал момент, а не от его смысла.
+const DATE_TIME = /^(\S+)[ T](\S+)$/;
 
 /** Разбирает дату сервера в локальную полночь соответствующего дня. */
 export function parseCalendarDate(value: string | Date | null | undefined): Date | null {
@@ -147,6 +152,32 @@ export function formatDayLabel(date: Date, today = new Date()): string {
   }
 
   return `${day} ${month}, ${WEEKDAYS_SHORT[date.getDay()]}`;
+}
+
+/**
+ * Подпись момента: dd.MM.yyyy HH:mm.
+ *
+ * Момент приходит с сервера одной строкой, и её формат ничем не закреплён -
+ * swagger у API нет, а время в ней встречается и с секундами, и без. Поэтому
+ * дата и время разбираются теми же разборщиками, что и по отдельности, и
+ * печатаются заново. Строка, которая целиком не разобралась, показывается как
+ * есть: подпись останется непривычной, но не потеряет то, что пришло.
+ */
+export function formatDateTimeLabel(value: string | null | undefined): string {
+  if (!value) {
+    return '';
+  }
+
+  const trimmed = value.trim();
+  const parts = DATE_TIME.exec(trimmed);
+  if (!parts) {
+    return trimmed;
+  }
+
+  const date = parseCalendarDate(parts[1]);
+  const time = parseTime(parts[2]);
+
+  return date && time ? `${formatApiDate(date)} ${time}` : trimmed;
 }
 
 /** Короткая подпись даты для строк без группировки: 28.08.26. */

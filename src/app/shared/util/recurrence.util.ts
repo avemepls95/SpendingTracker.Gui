@@ -1,6 +1,7 @@
 import { IntervalUnit, RecurrenceInput } from '../../domain/models/models';
-import { parseCalendarDate } from './date.util';
+import { formatApiDate, parseCalendarDate } from './date.util';
 import { PluralForms, plural } from './plural.util';
+import { formatTimeLabel } from './time.util';
 
 const UNIT_PLURALS: Record<IntervalUnit, PluralForms> = {
   Hour: ['час', 'часа', 'часов'],
@@ -18,7 +19,9 @@ export function intervalUnitLabel(unit: IntervalUnit, count: number): string {
 /** Человекочитаемая периодичность: «раз в месяц, 15-го, в 10:00, до 31.12.2026». */
 export function describeRecurrence(rule: RecurrenceInput): string {
   if (rule.recurrenceKind === 'Once') {
-    return `Однократно ${rule.startDate} в ${rule.startTime}`;
+    return ['Однократно', datePart(rule.startDate), timePart(rule.startTime)]
+      .filter(Boolean)
+      .join(' ');
   }
 
   const unit = rule.intervalUnit;
@@ -34,13 +37,32 @@ export function describeRecurrence(rule: RecurrenceInput): string {
 
   // Для часового интервала время в сутках не фиксировано, показывать его нечестно.
   const parts =
-    unit === 'Hour' ? [period] : [period, dayPart(rule, unit), `в ${rule.startTime}`];
+    unit === 'Hour' ? [period] : [period, dayPart(rule, unit), timePart(rule.startTime)];
 
   if (rule.endDate) {
-    parts.push(`до ${rule.endDate}`);
+    parts.push(`до ${datePart(rule.endDate)}`);
   }
 
   return parts.filter(Boolean).join(', ');
+}
+
+/**
+ * Время суток в подписи: «в 10:00».
+ *
+ * Правило приходит и из формы, и из ответа сервера, а тот отдаёт время и с
+ * секундами: без нормализации подпись читалась бы «в 10:00:00».
+ */
+function timePart(startTime: string): string {
+  const time = formatTimeLabel(startTime);
+
+  return time ? `в ${time}` : '';
+}
+
+/** Дата в подписи: печатается заново, чтобы срезать пришедшее с ней время. */
+function datePart(value: string): string {
+  const date = parseCalendarDate(value);
+
+  return date ? formatApiDate(date) : value.trim();
 }
 
 function dayPart(rule: RecurrenceInput, unit: IntervalUnit): string {

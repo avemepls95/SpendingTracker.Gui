@@ -5,6 +5,7 @@ import { SpendingSchedule, isScheduleFinished } from '../../domain/models/models
 import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
+import { formatDateTimeLabel } from '../../shared/util/date.util';
 import { describeRecurrence } from '../../shared/util/recurrence.util';
 import {
   SpendingScheduleDetailsResult,
@@ -70,7 +71,9 @@ export class SpendingSchedulesList {
       return 'Завершено';
     }
 
-    return `Следующая: ${schedule.nextOccurrenceDate}`;
+    const next = formatDateTimeLabel(schedule.nextOccurrenceDate);
+
+    return next ? `Следующая: ${next}` : 'Активно';
   }
 
   /** Расписание, у которого впереди есть срабатывание: только его статус акцентен. */
