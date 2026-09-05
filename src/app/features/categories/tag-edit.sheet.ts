@@ -9,6 +9,7 @@ import { Tag } from '../../domain/models/models';
 import { confirmAction } from '../../shared/ui/confirm.dialog';
 import { IconComponent } from '../../shared/ui/icon.component';
 import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
+import { MarkupGuideData, MarkupGuideSheet } from '../help/markup-guide.sheet';
 
 export type TagEditData =
   | { readonly mode: 'create' }
@@ -72,6 +73,14 @@ export class TagEditSheet {
 
   protected toggleSpreadHelp(): void {
     this.isSpreadHelpOpen.update((open) => !open);
+  }
+
+  protected openGuide(): void {
+    this.sheets.openSheet<void, MarkupGuideData>(
+      MarkupGuideSheet,
+      { section: 'tags' },
+      { ariaLabel: 'Как размечать траты' },
+    );
   }
 
   protected pickGroup(value: string): void {

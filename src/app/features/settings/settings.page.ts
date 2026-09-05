@@ -16,6 +16,7 @@ import {
 import { IconComponent } from '../../shared/ui/icon.component';
 import { PageHeaderComponent } from '../../shared/ui/page-header.component';
 import { HideOnErrorDirective } from '../../shared/util/hide-on-error.directive';
+import { MarkupGuideData, MarkupGuideSheet } from '../help/markup-guide.sheet';
 import { AiMarkupSheet } from './ai-markup.sheet';
 
 @Component({
@@ -76,6 +77,14 @@ export class SettingsPage {
           this.settings.setViewCurrency(currency.id);
         }
       });
+  }
+
+  protected openGuide(): void {
+    this.sheets.openSheet<void, MarkupGuideData>(
+      MarkupGuideSheet,
+      { section: 'basics' },
+      { ariaLabel: 'Как размечать траты' },
+    );
   }
 
   protected openAiMarkup(): void {

@@ -13,6 +13,7 @@ import {
   parentCategoryIds,
 } from '../../shared/util/category-tree.util';
 import { TagGroup, groupTags } from '../../shared/util/tag-group.util';
+import { MarkupGuideData, MarkupGuideSheet } from '../help/markup-guide.sheet';
 import { MarkupDictionaryList } from '../markup/markup-dictionary.list';
 import { MarkupDictionaryStore } from '../markup/markup-dictionary.store';
 import {
@@ -100,6 +101,15 @@ export class CategoriesPage {
 
       return next;
     });
+  }
+
+  /** Справка открывается на разделе, соответствующем текущему виду разметки. */
+  protected openGuide(): void {
+    this.sheets.openSheet<void, MarkupGuideData>(
+      MarkupGuideSheet,
+      { section: this.mode() === 'tags' ? 'tags' : 'basics' },
+      { ariaLabel: 'Как размечать траты' },
+    );
   }
 
   /** Создаёт категорию или тег - смотря какой раздел открыт. */
