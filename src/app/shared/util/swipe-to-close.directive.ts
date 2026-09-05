@@ -19,8 +19,9 @@ const HANDLE_SELECTOR = '.sheet__header, .sheet__grabber';
  * Перетаскивание начинается только с шапки. Тело листа прокручивается, и жест
  * оттуда конфликтовал бы с прокруткой списка.
  *
- * Зона перетаскивания обязана иметь touch-action: none (задан в _overlay.scss):
- * иначе браузер забирает вертикальный жест себе ещё до первого pointermove.
+ * Зона перетаскивания обязана запрещать браузеру вертикальную прокрутку
+ * (touch-action в _overlay.scss): иначе браузер забирает вертикальный жест
+ * себе ещё до первого pointermove.
  */
 @Directive({
   selector: '[appSwipeToClose]',
@@ -29,6 +30,7 @@ const HANDLE_SELECTOR = '.sheet__header, .sheet__grabber';
     '(pointermove)': 'onPointerMove($event)',
     '(pointerup)': 'onPointerEnd($event)',
     '(pointercancel)': 'onPointerEnd($event)',
+    '(transitionend)': 'onTransitionEnd($event)',
   },
 })
 export class SwipeToCloseDirective {
@@ -93,13 +95,33 @@ export class SwipeToCloseDirective {
     // Лист возвращается на место в любом случае: обработчик закрытия может
     // отказать - например, пока идёт незавершённый запрос, - и тогда лист
     // остался бы висеть смещённым.
-    this.element.classList.add('sheet--returning');
+    //
+    // Без смещения переход не запустится, а значит и transitionend не придёт -
+    // класс остался бы на листе навсегда.
+    if (offset > 0) {
+      this.element.classList.add('sheet--returning');
+    }
+
     this.element.style.transform = '';
 
     // pointercancel приходит и когда систему увела с жеста на полпути:
     // закрывать лист по такому обрыву нельзя, палец до конца не дошёл.
     if (offset >= DISMISS_DISTANCE_PX && event.type === 'pointerup') {
       this.dismissed.emit();
+    }
+  }
+
+  /**
+   * Возврат доехал - класс перехода больше не нужен.
+   *
+   * Иначе он висел бы на листе до следующего жеста, и по разметке нельзя было
+   * бы отличить едущий лист от давно вернувшегося. Событие слушается на хосте,
+   * а не разовой подпиской в конце жеста: прерванный переход transitionend не
+   * шлёт, и разовые подписки копились бы на элементе.
+   */
+  protected onTransitionEnd(event: TransitionEvent): void {
+    if (event.target === this.element && event.propertyName === 'transform') {
+      this.element.classList.remove('sheet--returning');
     }
   }
 
