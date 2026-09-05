@@ -39,6 +39,11 @@ import {
   TagPickerResult,
   TagPickerSheet,
 } from '../../shared/ui/tag-picker.sheet';
+import {
+  MarkupGuideData,
+  MarkupGuideSection,
+  MarkupGuideSheet,
+} from '../help/markup-guide.sheet';
 
 export type SpendingEditResult =
   | {
@@ -185,6 +190,20 @@ export class SpendingEditSheet {
           this.currencyId.set(currency.id);
         }
       });
+  }
+
+  /**
+   * Открывает справку поверх карточки.
+   *
+   * Именно листом: карточка держит несохранённые поля, и уход по адресу их
+   * потерял бы.
+   */
+  protected openGuide(section: MarkupGuideSection): void {
+    this.sheets.openSheet<void, MarkupGuideData>(
+      MarkupGuideSheet,
+      { section },
+      { ariaLabel: 'Как размечать траты' },
+    );
   }
 
   // ------------------------------------------------------------ категория

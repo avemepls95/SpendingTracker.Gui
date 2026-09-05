@@ -1,4 +1,13 @@
 <app-page-header title="Разметка">
+  <button
+    type="button"
+    class="icon-btn"
+    aria-label="Как размечать траты"
+    (click)="openGuide()"
+  >
+    <app-icon name="info" />
+  </button>
+
   <!-- Записи словаря заводит система, вручную создавать их нечем. -->
   @if (mode() !== 'dictionary') {
     <button

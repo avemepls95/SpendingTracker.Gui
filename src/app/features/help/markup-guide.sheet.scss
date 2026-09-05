@@ -1,0 +1,86 @@
+// Переключатель разделов живёт над прокруткой: справка длинная, и уходить
+// за содержимым к переключателю пришлось бы прокруткой обратно наверх.
+.segmented {
+  margin: 0 var(--sp-4) var(--sp-3);
+}
+
+.guide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  font-size: var(--fs-sm);
+  color: var(--c-text-2);
+  line-height: var(--lh-normal);
+}
+
+.guide__block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.guide__title {
+  font-size: var(--fs-title);
+  font-weight: var(--fw-semibold);
+  color: var(--c-text);
+  line-height: var(--lh-tight);
+}
+
+.guide strong {
+  color: var(--c-text);
+  font-weight: var(--fw-semibold);
+}
+
+.guide__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding-left: var(--sp-5);
+  list-style: disc;
+}
+
+// Дерево категорий - пример с выравниванием по столбцу, поэтому моноширинный
+// и со своей прокруткой: на узком экране ветки иначе переносятся и рассыпаются.
+.guide__tree {
+  margin: 0;
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--c-surface-2);
+  color: var(--c-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+// Таблица шире экрана телефона, поэтому прокручивается внутри себя:
+// иначе горизонтальную прокрутку получал бы весь лист.
+.guide__table-scroll {
+  overflow-x: auto;
+}
+
+.guide__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-xs);
+  text-align: left;
+
+  th,
+  td {
+    padding: var(--sp-2);
+    border-bottom: 1px solid var(--c-border);
+    vertical-align: top;
+  }
+
+  th {
+    color: var(--c-text);
+    font-weight: var(--fw-semibold);
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}

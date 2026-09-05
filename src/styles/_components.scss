@@ -392,6 +392,25 @@ button.chip {
   color: var(--c-text-2);
 }
 
+// ---------------------------------------------------------------- ссылка-справка
+
+// Открывает справку, ничего не меняя, поэтому выглядит ссылкой, а не кнопкой
+// формы: рядом с полями иначе спорила бы за внимание с «Сохранить».
+.help-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  align-self: flex-start;
+  min-height: var(--tap-min);
+  padding: 0;
+  background: none;
+  color: var(--c-accent);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  text-align: left;
+  --icon-size: 16px;
+}
+
 // ---------------------------------------------------------------- сегменты
 
 // Переключатель двух-трёх равноправных разделов. Отличается от чипов тем, что
