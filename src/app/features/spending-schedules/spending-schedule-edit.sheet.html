@@ -195,17 +195,15 @@
       <div class="start">
         <div class="field start__date">
           <label class="field__label" for="schedule-start-date">Начало</label>
-          <input
-            id="schedule-start-date"
-            class="field__control"
-            [class.field__control--invalid]="touchedStart() && startDateError()"
-            type="date"
-            [attr.aria-invalid]="touchedStart() && startDateError() ? true : null"
-            [attr.aria-describedby]="
+          <app-date-input
+            inputId="schedule-start-date"
+            label="Начало периода"
+            [value]="startDateText()"
+            [invalid]="touchedStart() && startDateError() !== null"
+            [describedBy]="
               touchedStart() && startError() ? 'schedule-start-error' : null
             "
-            [value]="startDateText()"
-            (input)="onStartDate($event)"
+            (valueChange)="onStartDate($event)"
           />
         </div>
         <div class="field start__time">
@@ -234,14 +232,13 @@
           <label class="field__label" for="schedule-end-date">
             Окончание <span class="rule__optional">необязательно</span>
           </label>
-          <input
-            id="schedule-end-date"
-            class="field__control"
-            type="date"
-            [attr.aria-invalid]="endError() ? true : null"
-            [attr.aria-describedby]="endError() ? 'schedule-end-error' : null"
+          <app-date-input
+            inputId="schedule-end-date"
+            label="Окончание периода"
             [value]="endDateText()"
-            (input)="onEndDate($event)"
+            [invalid]="endError() !== null"
+            [describedBy]="endError() ? 'schedule-end-error' : null"
+            (valueChange)="onEndDate($event)"
           />
           @if (endError(); as error) {
             <p id="schedule-end-error" class="field__error">{{ error }}</p>

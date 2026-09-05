@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnDestroy,
+  WritableSignal,
   computed,
   effect,
   inject,
@@ -19,6 +20,7 @@ import {
 } from '../../domain/models/models';
 import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { UserSettingsStore } from '../../domain/stores/user-settings.store';
+import { DateInputComponent, dateFieldError } from '../../shared/ui/date-input.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { IconComponent } from '../../shared/ui/icon.component';
 import { PageHeaderComponent } from '../../shared/ui/page-header.component';
@@ -31,8 +33,8 @@ import {
 import {
   addDays,
   addMonths,
-  formatInputDate,
-  parseCalendarDate,
+  formatApiDate,
+  parseApiDate,
   startOfDay,
 } from '../../shared/util/date.util';
 import {
@@ -101,7 +103,14 @@ const DATE_INPUT_DEBOUNCE_MS = 400;
 @Component({
   selector: 'app-analytics-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PageHeaderComponent, EmptyStateComponent, IconComponent, MoneyPipe, RouterLink],
+  imports: [
+    PageHeaderComponent,
+    EmptyStateComponent,
+    DateInputComponent,
+    IconComponent,
+    MoneyPipe,
+    RouterLink,
+  ],
   templateUrl: './analytics.page.html',
   styleUrl: './analytics.page.scss',
 })
@@ -120,17 +129,27 @@ export class AnalyticsPage implements OnDestroy {
   /** Фильтр по тегам: учитываются траты, несущие все выбранные теги. */
   protected readonly selectedTags = signal<readonly TagFilterItem[]>([]);
 
-  private readonly customFrom = signal(formatInputDate(addDays(new Date(), -30)));
-  private readonly customTo = signal(formatInputDate(new Date()));
+  /**
+   * Границы произвольного периода: набранное в полях и применённое к отчёту.
+   *
+   * Пары две, потому что дата в поле набирается по цифре и большую часть
+   * времени неполна. Отчёт держится на последней целой дате, иначе на каждом
+   * промежуточном «0», «06», «06.0» период откатывался бы к значению по
+   * умолчанию, и график прыгал бы под руками.
+   */
+  private readonly customFromText = signal(formatApiDate(addDays(new Date(), -30)));
+  private readonly customToText = signal(formatApiDate(new Date()));
+  private readonly customFrom = signal(this.customFromText());
+  private readonly customTo = signal(this.customToText());
   private readonly expanded = signal<ReadonlySet<string>>(new Set());
 
   /** Отсекает ответ на устаревший запрос при быстрой смене периода. */
   private generation = 0;
 
   /**
-   * Нативное поле даты шлёт событие на каждый изменённый сегмент - день,
-   * месяц, год. Без паузы отчёт перезапрашивался бы трижды подряд, и один из
-   * промежуточных ответов мог прийти последним.
+   * Поле даты шлёт событие на каждую набранную цифру. Без паузы отчёт
+   * перезапрашивался бы на каждой правке, и один из промежуточных ответов мог
+   * прийти последним.
    *
    * Таймеры у полей раздельные: общий отменял бы ещё не применённую правку
    * начала периода, когда пользователь сразу переходит к его концу.
@@ -148,8 +167,11 @@ export class AnalyticsPage implements OnDestroy {
     { id: 'custom', label: 'Период' },
   ];
 
-  protected readonly fromValue = this.customFrom.asReadonly();
-  protected readonly toValue = this.customTo.asReadonly();
+  protected readonly fromValue = this.customFromText.asReadonly();
+  protected readonly toValue = this.customToText.asReadonly();
+
+  protected readonly fromError = computed(() => dateFieldError(this.customFromText()));
+  protected readonly toError = computed(() => dateFieldError(this.customToText()));
 
   protected readonly currencyCode = computed(() =>
     this.currencies.codeOf(this.settings.viewCurrencyId()),
@@ -294,14 +316,14 @@ export class AnalyticsPage implements OnDestroy {
     this.view.set(view);
   }
 
-  protected onFrom(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.scheduleDateChange('from', () => this.customFrom.set(value));
+  protected onFrom(value: string): void {
+    this.customFromText.set(value);
+    this.scheduleDateChange('from', value, this.customFrom);
   }
 
-  protected onTo(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.scheduleDateChange('to', () => this.customTo.set(value));
+  protected onTo(value: string): void {
+    this.customToText.set(value);
+    this.scheduleDateChange('to', value, this.customTo);
   }
 
   // ------------------------------------------------------------ фильтр
@@ -398,9 +420,18 @@ export class AnalyticsPage implements OnDestroy {
     this.settings.reload();
   }
 
-  private scheduleDateChange(field: 'from' | 'to', apply: () => void): void {
+  private scheduleDateChange(
+    field: 'from' | 'to',
+    value: string,
+    applied: WritableSignal<string>,
+  ): void {
     clearTimeout(this.dateTimers[field]);
-    this.dateTimers[field] = setTimeout(apply, DATE_INPUT_DEBOUNCE_MS);
+
+    // Незаконченная дата не применяется вовсе, а не заменяется значением по
+    // умолчанию: отчёт остаётся на прежнем периоде до целой даты.
+    if (parseApiDate(value)) {
+      this.dateTimers[field] = setTimeout(() => applied.set(value), DATE_INPUT_DEBOUNCE_MS);
+    }
   }
 
   /** Границы выбранного периода. */
@@ -423,8 +454,8 @@ export class AnalyticsPage implements OnDestroy {
         return { from: addMonths(today, -12), to: today };
 
       case 'custom': {
-        const from = parseCalendarDate(this.customFrom()) ?? addDays(today, -30);
-        const to = parseCalendarDate(this.customTo()) ?? today;
+        const from = parseApiDate(this.customFrom()) ?? addDays(today, -30);
+        const to = parseApiDate(this.customTo()) ?? today;
         // Перепутанные местами границы приводятся к нормальному порядку,
         // иначе сервер вернёт пустой отчёт без объяснения причины.
         return from <= to ? { from, to } : { from: to, to: from };

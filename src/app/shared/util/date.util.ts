@@ -10,6 +10,7 @@
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})/;
 const DOT_DATE = /^(\d{2})\.(\d{2})\.(\d{4})/;
+const DOT_DATE_EXACT = /^(\d{2})\.(\d{2})\.(\d{4})$/;
 
 /** Разбирает дату сервера в локальную полночь соответствующего дня. */
 export function parseCalendarDate(value: string | Date | null | undefined): Date | null {
@@ -45,6 +46,31 @@ export function formatApiDate(date: Date): string {
   const year = String(date.getFullYear()).padStart(4, '0');
 
   return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${year}`;
+}
+
+/**
+ * Строгий разбор той же строки dd.MM.yyyy, которую собирает formatApiDate.
+ *
+ * В отличие от parseCalendarDate отвергает несуществующие дни: конструктор
+ * Date молча переносит 30.02 и 32.13 на соседний месяц, и набранная руками
+ * дата прошла бы проверку. Поэтому разбор для полей ввода отдельный.
+ */
+export function parseApiDate(value: string): Date | null {
+  const match = DOT_DATE_EXACT.exec(value.trim());
+  if (!match) {
+    return null;
+  }
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  return date.getDate() === day &&
+    date.getMonth() === month - 1 &&
+    date.getFullYear() === year
+    ? date
+    : null;
 }
 
 /** Формат значения `<input type="date">`: yyyy-MM-dd. */

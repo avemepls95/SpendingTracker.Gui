@@ -37,6 +37,7 @@ import {
   CurrencyPickerData,
   CurrencyPickerSheet,
 } from '../../shared/ui/currency-picker.sheet';
+import { DateInputComponent, dateFieldError } from '../../shared/ui/date-input.component';
 import { IconComponent } from '../../shared/ui/icon.component';
 import {
   TagPickerData,
@@ -47,7 +48,7 @@ import { categoryPath } from '../../shared/util/category-tree.util';
 import { closeOnDismiss } from '../../shared/util/dismiss.util';
 import {
   formatApiDate,
-  formatInputDate,
+  parseApiDate,
   parseCalendarDate,
 } from '../../shared/util/date.util';
 import { parseAmount } from '../../shared/util/money.util';
@@ -80,7 +81,7 @@ const TIME_PATTERN = /^\d{2}:\d{2}$/;
 @Component({
   selector: 'app-spending-schedule-edit',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, SwipeToCloseDirective],
+  imports: [DateInputComponent, IconComponent, SwipeToCloseDirective],
   templateUrl: './spending-schedule-edit.sheet.html',
   styleUrl: './spending-schedule-edit.sheet.scss',
 })
@@ -119,9 +120,9 @@ export class SpendingScheduleEditSheet implements OnDestroy {
     this.original?.intervalUnit ?? 'Month',
   );
 
-  protected readonly startDateText = signal(toInputDate(this.original?.startDate));
+  protected readonly startDateText = signal(toFieldValue(this.original?.startDate));
   protected readonly startTimeText = signal(this.original?.startTime ?? '10:00');
-  protected readonly endDateText = signal(toInputDate(this.original?.endDate));
+  protected readonly endDateText = signal(toFieldValue(this.original?.endDate));
 
   /**
    * Поля, которых пользователь уже касался.
@@ -197,7 +198,7 @@ export class SpendingScheduleEditSheet implements OnDestroy {
   });
 
   protected readonly startDateError = computed(() =>
-    parseCalendarDate(this.startDateText()) ? null : 'Укажите дату начала',
+    dateFieldError(this.startDateText(), 'Укажите дату начала'),
   );
 
   protected readonly startTimeError = computed(() =>
@@ -226,12 +227,12 @@ export class SpendingScheduleEditSheet implements OnDestroy {
       return null;
     }
 
-    const end = parseCalendarDate(text);
+    const end = parseApiDate(text);
     if (!end) {
       return 'Укажите дату окончания или очистите поле';
     }
 
-    const start = parseCalendarDate(this.startDateText());
+    const start = parseApiDate(this.startDateText());
 
     return start && end < start ? 'Окончание раньше начала' : null;
   });
@@ -242,7 +243,7 @@ export class SpendingScheduleEditSheet implements OnDestroy {
       return null;
     }
 
-    const start = parseCalendarDate(this.startDateText());
+    const start = parseApiDate(this.startDateText());
     if (!start) {
       return null;
     }
@@ -250,7 +251,7 @@ export class SpendingScheduleEditSheet implements OnDestroy {
     // Дата окончания относится только к повторяющемуся правилу: у однократного
     // она может лишь отменить единственное срабатывание.
     const isInterval = this.recurrenceKind() === 'Interval';
-    const end = isInterval ? parseCalendarDate(this.endDateText()) : null;
+    const end = isInterval ? parseApiDate(this.endDateText()) : null;
 
     return {
       recurrenceKind: this.recurrenceKind(),
@@ -314,9 +315,9 @@ export class SpendingScheduleEditSheet implements OnDestroy {
     }
   }
 
-  protected onStartDate(event: Event): void {
+  protected onStartDate(value: string): void {
     this.touchedStart.set(true);
-    this.startDateText.set((event.target as HTMLInputElement).value);
+    this.startDateText.set(value);
   }
 
   protected onStartTime(event: Event): void {
@@ -324,8 +325,8 @@ export class SpendingScheduleEditSheet implements OnDestroy {
     this.startTimeText.set((event.target as HTMLInputElement).value);
   }
 
-  protected onEndDate(event: Event): void {
-    this.endDateText.set((event.target as HTMLInputElement).value);
+  protected onEndDate(value: string): void {
+    this.endDateText.set(value);
   }
 
   protected setKind(kind: RecurrenceKind): void {
@@ -520,9 +521,9 @@ export class SpendingScheduleEditSheet implements OnDestroy {
   }
 }
 
-/** Значение <input type="date">: сервер шлёт dd.MM.yyyy, поле ждёт yyyy-MM-dd. */
-function toInputDate(value: string | null | undefined): string {
+/** Значение поля даты: тот же вид dd.MM.yyyy, в котором дату шлёт сервер. */
+function toFieldValue(value: string | null | undefined): string {
   const date = parseCalendarDate(value);
 
-  return date ? formatInputDate(date) : '';
+  return date ? formatApiDate(date) : '';
 }

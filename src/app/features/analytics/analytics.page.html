@@ -16,14 +16,34 @@
 
 @if (preset() === 'custom') {
   <div class="range">
-    <label class="field range__field">
-      <span class="field__label">С</span>
-      <input class="field__control" type="date" [value]="fromValue()" (input)="onFrom($event)" />
-    </label>
-    <label class="field range__field">
-      <span class="field__label">По</span>
-      <input class="field__control" type="date" [value]="toValue()" (input)="onTo($event)" />
-    </label>
+    <div class="field range__field" [class.field--invalid]="fromError()">
+      <label class="field__label" for="analytics-from">С</label>
+      <app-date-input
+        inputId="analytics-from"
+        label="Начало периода"
+        [value]="fromValue()"
+        [invalid]="fromError() !== null"
+        [describedBy]="fromError() ? 'analytics-from-error' : null"
+        (valueChange)="onFrom($event)"
+      />
+      @if (fromError(); as error) {
+        <p id="analytics-from-error" class="field__error">{{ error }}</p>
+      }
+    </div>
+    <div class="field range__field" [class.field--invalid]="toError()">
+      <label class="field__label" for="analytics-to">По</label>
+      <app-date-input
+        inputId="analytics-to"
+        label="Окончание периода"
+        [value]="toValue()"
+        [invalid]="toError() !== null"
+        [describedBy]="toError() ? 'analytics-to-error' : null"
+        (valueChange)="onTo($event)"
+      />
+      @if (toError(); as error) {
+        <p id="analytics-to-error" class="field__error">{{ error }}</p>
+      }
+    </div>
   </div>
 }
 

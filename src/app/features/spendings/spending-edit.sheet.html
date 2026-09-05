@@ -75,16 +75,16 @@
 
     <div class="field" [class.field--invalid]="dateError()">
       <label class="field__label" for="spending-date">Дата</label>
-      <!-- Нативное поле даты открывает системный выбор, привычный на телефоне. -->
-      <input
-        id="spending-date"
-        class="field__control"
-        type="date"
+      <app-date-input
+        inputId="spending-date"
+        label="Дата"
         [value]="dateText()"
-        (input)="onDate($event)"
+        [invalid]="dateError() !== null"
+        [describedBy]="dateError() ? 'spending-date-error' : null"
+        (valueChange)="onDate($event)"
       />
       @if (dateError(); as error) {
-        <p class="field__error">{{ error }}</p>
+        <p id="spending-date-error" class="field__error">{{ error }}</p>
       }
     </div>
 

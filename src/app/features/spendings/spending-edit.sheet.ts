@@ -22,11 +22,12 @@ import {
   CurrencyPickerData,
   CurrencyPickerSheet,
 } from '../../shared/ui/currency-picker.sheet';
+import { DateInputComponent, dateFieldError } from '../../shared/ui/date-input.component';
 import { IconComponent } from '../../shared/ui/icon.component';
 import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
 import {
   formatApiDate,
-  formatInputDate,
+  parseApiDate,
   parseCalendarDate,
 } from '../../shared/util/date.util';
 import { parseAmount } from '../../shared/util/money.util';
@@ -83,7 +84,12 @@ type CategoryChoice =
 @Component({
   selector: 'app-spending-edit',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, MarkupSourceMarkComponent, SwipeToCloseDirective],
+  imports: [
+    DateInputComponent,
+    IconComponent,
+    MarkupSourceMarkComponent,
+    SwipeToCloseDirective,
+  ],
   templateUrl: './spending-edit.sheet.html',
   styleUrl: './spending-edit.sheet.scss',
 })
@@ -99,7 +105,7 @@ export class SpendingEditSheet {
   protected readonly description = signal(this.original.description);
   protected readonly amountText = signal(formatAmountForInput(this.original.amount));
   protected readonly currencyId = signal(this.original.currencyId);
-  protected readonly dateText = signal(toInputValue(this.original.date));
+  protected readonly dateText = signal(toFieldValue(this.original.date));
 
   protected readonly choice = signal<CategoryChoice>(toChoice(this.original.category));
   protected readonly tags = new DraftTags(this.original.tags);
@@ -180,9 +186,7 @@ export class SpendingEditSheet {
     return value === 0 ? 'Сумма не может быть нулевой' : null;
   });
 
-  protected readonly dateError = computed(() =>
-    parseCalendarDate(this.dateText()) ? null : 'Укажите дату',
-  );
+  protected readonly dateError = computed(() => dateFieldError(this.dateText()));
 
   /**
    * Отказ предлагается, только когда категорию поставил словарь.
@@ -234,8 +238,8 @@ export class SpendingEditSheet {
     this.amountText.set((event.target as HTMLInputElement).value);
   }
 
-  protected onDate(event: Event): void {
-    this.dateText.set((event.target as HTMLInputElement).value);
+  protected onDate(value: string): void {
+    this.dateText.set(value);
   }
 
   protected pickCurrency(): void {
@@ -397,7 +401,7 @@ export class SpendingEditSheet {
 
   protected save(): void {
     const amount = this.amount();
-    const date = parseCalendarDate(this.dateText());
+    const date = parseApiDate(this.dateText());
     if (!this.canSave() || amount === null || !date) {
       return;
     }
@@ -409,8 +413,6 @@ export class SpendingEditSheet {
       description: this.description().trim(),
       amount,
       currencyId: this.currencyId(),
-      // Формат сервера, а не поля ввода: этот объект уходит в список вместо
-      // прежней траты, и yyyy-MM-dd разъехался бы с датами соседних строк.
       date: formatApiDate(date),
       category: savedCategory(this.savedChoice()),
       tags: this.savedTags(),
@@ -656,13 +658,18 @@ function isFieldsChanged(updated: Spending, original: Spending): boolean {
     updated.currencyId !== original.currencyId ||
     // Обе даты приводятся к одному виду: в списке трата может лежать как в
     // формате сервера, так и в формате прошлого оптимистичного обновления.
-    toInputValue(updated.date) !== toInputValue(original.date)
+    toFieldValue(updated.date) !== toFieldValue(original.date)
   );
 }
 
-function toInputValue(value: string): string {
+/**
+ * Значение поля даты: dd.MM.yyyy - тот же вид, в котором дату шлёт и принимает
+ * сервер. Разбор нестрогий: в списке трата может лежать и в yyyy-MM-dd, если
+ * туда её положило старое оптимистичное обновление.
+ */
+function toFieldValue(value: string): string {
   const date = parseCalendarDate(value);
-  return date ? formatInputDate(date) : '';
+  return date ? formatApiDate(date) : '';
 }
 
 /** В поле ввода дробная часть отделяется точкой, без разделителей разрядов. */

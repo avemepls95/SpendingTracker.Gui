@@ -44,8 +44,8 @@ export function describeRecurrence(rule: RecurrenceInput): string {
 }
 
 function dayPart(rule: RecurrenceInput, unit: IntervalUnit): string {
-  // Дата разбирается, а не режется по позициям: в форму она попадает из
-  // <input type="date"> в формате yyyy-MM-dd, и нарезка дала бы другое число.
+  // Дата разбирается, а не режется по позициям: правило собирается и из формы,
+  // и из ответа сервера, и нарезка по позициям зависела бы от их формата.
   const anchor = parseCalendarDate(rule.startDate);
   if (!anchor) {
     return '';
