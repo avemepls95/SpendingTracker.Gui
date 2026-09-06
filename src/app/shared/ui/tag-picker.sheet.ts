@@ -91,11 +91,7 @@ export type TagPickerResult =
           <app-empty-state
             icon="tag"
             [title]="query() ? 'Ничего не нашлось' : 'Свободных тегов нет'"
-            [hint]="
-              data.allowCreate === false
-                ? 'Теги заводятся в разделе разметки.'
-                : 'Начните вводить название, чтобы создать новый.'
-            "
+            [hint]="emptyHint"
           />
         }
       </div>
@@ -104,9 +100,15 @@ export type TagPickerResult =
   styleUrl: './tag-picker.sheet.scss',
 })
 export class TagPickerSheet {
-  protected readonly data = inject<TagPickerData>(DIALOG_DATA);
+  private readonly data = inject<TagPickerData>(DIALOG_DATA);
   private readonly dialogRef = inject<DialogRef<TagPickerResult>>(DialogRef);
   private readonly api = inject(SpendingApiService);
+
+  /** Подсказка пустого списка обещает создание только там, где оно разрешено. */
+  protected readonly emptyHint =
+    this.data.allowCreate === false
+      ? 'Теги заводятся в разделе разметки.'
+      : 'Начните вводить название, чтобы создать новый.';
 
   protected readonly query = signal('');
   protected readonly isLoading = signal(true);

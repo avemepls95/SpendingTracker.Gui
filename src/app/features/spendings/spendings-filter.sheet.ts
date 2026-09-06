@@ -85,12 +85,17 @@ export class SpendingsFilterSheet {
     return from && to && from > to ? 'Начало периода позже конца' : null;
   });
 
+  /** Единственная ошибка периода: первая непустая из трёх. */
+  protected readonly periodError = computed(
+    () => this.dateFromError() ?? this.dateToError() ?? this.rangeError(),
+  );
+
+  protected readonly periodErrorId = computed(() =>
+    this.periodError() ? 'filter-period-error' : null,
+  );
+
   protected readonly canApply = computed(
-    () =>
-      !this.isLoading() &&
-      this.dateFromError() === null &&
-      this.dateToError() === null &&
-      this.rangeError() === null,
+    () => !this.isLoading() && this.periodError() === null,
   );
 
   protected readonly isEmpty = computed(
@@ -200,7 +205,13 @@ export class SpendingsFilterSheet {
       kind: 'applied',
       filter: {
         onlyWithoutCategories: this.onlyWithoutCategories(),
-        categoryIds: this.categories().map((item) => item.id),
+        // Список категорий гасится ещё раз здесь, а не только при переключении:
+        // подписи выбранного приезжают асинхронно и заполняют его уже после того,
+        // как человек включил «только без категории». Сервер такую пару отвергает,
+        // и список трат показал бы ошибку загрузки на обычном действии.
+        categoryIds: this.onlyWithoutCategories()
+          ? []
+          : this.categories().map((item) => item.id),
         tagIds: this.tags().map((item) => item.id),
         dateFrom: parseOptionalDate(this.dateFromText()),
         dateTo: parseOptionalDate(this.dateToText()),

@@ -110,6 +110,7 @@
             label="Начало периода"
             [value]="dateFromText()"
             [invalid]="dateFromError() !== null"
+            [describedBy]="periodErrorId()"
             (valueChange)="onDateFrom($event)"
           />
         </div>
@@ -121,15 +122,16 @@
             label="Конец периода"
             [value]="dateToText()"
             [invalid]="dateToError() !== null"
+            [describedBy]="periodErrorId()"
             (valueChange)="onDateTo($event)"
           />
         </div>
       </div>
 
-      @if (dateFromError() || dateToError(); as error) {
-        <p class="field__error">{{ error }}</p>
-      } @else if (rangeError(); as error) {
-        <p class="field__error">{{ error }}</p>
+      <!-- Ошибка одна на оба поля: перевёрнутый период - свойство их пары, а не
+           отдельного поля, и разводить два текста по полям было бы неправдой. -->
+      @if (periodError(); as error) {
+        <p id="filter-period-error" class="field__error">{{ error }}</p>
       } @else {
         <p class="hint">Обе границы необязательны и входят в период.</p>
       }
@@ -137,10 +139,12 @@
   </div>
 
   <div class="sheet__footer">
+    <!-- Сброс ждёт справочники: до них выбранное ещё не показано, и очистка
+         вслепую перетёрлась бы их приходом. -->
     <button
       type="button"
       class="btn btn--secondary"
-      [disabled]="isEmpty()"
+      [disabled]="isEmpty() || isLoading()"
       (click)="reset()"
     >
       Сбросить
