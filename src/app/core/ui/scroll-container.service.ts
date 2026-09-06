@@ -12,12 +12,35 @@ import { Injectable } from '@angular/core';
 export class ScrollContainerService {
   private element: HTMLElement | null = null;
 
-  /** Место в списке на момент блокировки; null - блокировки нет. */
-  private lockedOffset: number | null = null;
+  /**
+   * Открыто ли поверх каркаса наложение.
+   *
+   * Признак хранится отдельно от элемента: блокировка принадлежит наложениям,
+   * а каркас за её время могут уничтожить и создать заново.
+   */
+  private locked = false;
 
-  /** null снимает регистрацию: ссылка на элемент уничтоженного каркаса не нужна. */
+  /** Место в списке на момент блокировки. */
+  private lockedOffset = 0;
+
+  /**
+   * null снимает регистрацию: ссылка на элемент уничтоженного каркаса не нужна.
+   *
+   * Каркас может смениться прямо под открытым наложением: лист живёт в
+   * контейнере наложений, а не в дереве роутера, и переживает уход на экран
+   * входа по истёкшей сессии и возврат обратно. Поэтому блокировка
+   * переносится на новый элемент, а запомненное место забывается - оно
+   * относилось к уничтоженному элементу и вернуло бы чужую прокрутку.
+   */
   register(element: HTMLElement | null): void {
     this.element = element;
+
+    if (!element || !this.locked) {
+      return;
+    }
+
+    this.lockedOffset = element.scrollTop;
+    element.classList.add('shell__content--locked');
   }
 
   get offset(): number {
@@ -41,25 +64,28 @@ export class ScrollContainerService {
    * наверх.
    */
   lock(): void {
-    const element = this.element;
-    if (!element || this.lockedOffset !== null) {
+    if (this.locked) {
       return;
     }
 
-    this.lockedOffset = element.scrollTop;
-    element.classList.add('shell__content--locked');
+    this.locked = true;
+    this.lockedOffset = this.element?.scrollTop ?? 0;
+    this.element?.classList.add('shell__content--locked');
   }
 
   unlock(): void {
-    const element = this.element;
-    const offset = this.lockedOffset;
-    this.lockedOffset = null;
+    if (!this.locked) {
+      return;
+    }
 
-    if (!element || offset === null) {
+    this.locked = false;
+
+    const element = this.element;
+    if (!element) {
       return;
     }
 
     element.classList.remove('shell__content--locked');
-    element.scrollTop = offset;
+    element.scrollTop = this.lockedOffset;
   }
 }
