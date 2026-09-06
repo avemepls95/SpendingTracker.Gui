@@ -9,7 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 
 import { ScrollContainerService } from '../../core/ui/scroll-container.service';
 import { SheetService } from '../../core/ui/sheet.service';
@@ -21,6 +21,7 @@ import { MarkupSourceMarkComponent } from '../../shared/ui/markup-source-mark.co
 import { PageHeaderComponent } from '../../shared/ui/page-header.component';
 import { SearchFieldComponent } from '../../shared/ui/search-field.component';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
+import { formatApiDate, parseApiDate } from '../../shared/util/date.util';
 import { IntersectDirective } from '../../shared/util/intersect.directive';
 import {
   SpendingScheduleEditData,
@@ -33,7 +34,16 @@ import {
   SpendingEditResult,
   SpendingEditSheet,
 } from './spending-edit.sheet';
-import { SpendingsStore } from './spendings.store';
+import {
+  SpendingsFilterData,
+  SpendingsFilterResult,
+  SpendingsFilterSheet,
+} from './spendings-filter.sheet';
+import {
+  EMPTY_SPENDINGS_FILTER,
+  SpendingsFilter,
+  SpendingsStore,
+} from './spendings.store';
 
 /** Пауза перед запросом, чтобы не дёргать сервер на каждую букву. */
 const SEARCH_DEBOUNCE_MS = 350;
@@ -83,14 +93,27 @@ export class SpendingsPage implements OnDestroy {
 
   private readonly searchField = viewChild(SearchFieldComponent);
 
-  constructor() {
-    this.store.reload();
+  /**
+   * Началась ли работа страницы.
+   *
+   * Подписка на параметры адреса срабатывает синхронно уже при подписке, и
+   * первый её проход обязан только положить фильтр в стор: список грузится
+   * ниже одним запросом. Без этой отметки заход по ссылке с фильтром дал бы
+   * две загрузки подряд.
+   */
+  private isStarted = false;
 
-    // Сегмент живёт в адресе, иначе системная кнопка «Назад» уводит из
-    // приложения вместо возврата к списку трат.
+  constructor() {
+    // Сегмент и фильтр живут в адресе: иначе системная кнопка «Назад» уводит
+    // из приложения вместо возврата к прежней выборке, а ссылка на траты
+    // категории не открывала бы их у себя.
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       this.applyView(params.get('view') === 'schedules' ? 'schedules' : 'spendings');
+      this.applyFilter(readFilter(params));
     });
+
+    this.isStarted = true;
+    this.store.reload();
   }
 
   ngOnDestroy(): void {
@@ -197,14 +220,65 @@ export class SpendingsPage implements OnDestroy {
     );
   }
 
+  protected openFilter(): void {
+    this.sheets
+      .openSheet<SpendingsFilterResult, SpendingsFilterData>(
+        SpendingsFilterSheet,
+        {
+          filter: this.store.filter(),
+          withoutCategoryCount: this.store.withoutCategoryCount(),
+        },
+        { ariaLabel: 'Фильтр трат' },
+      )
+      .closed.subscribe((result) => {
+        if (result) {
+          this.writeFilter(result.filter);
+        }
+      });
+  }
+
+  /** Быстрый вход в очередь разбора: остальные условия при этом снимаются. */
+  protected showWithoutCategories(): void {
+    this.writeFilter({ ...EMPTY_SPENDINGS_FILTER, onlyWithoutCategories: true });
+  }
+
+  protected clearFilter(): void {
+    this.writeFilter(EMPTY_SPENDINGS_FILTER);
+  }
+
   /**
-   * Фильтр переключается по (change), а не по (click).
+   * Кладёт фильтр в адрес; в стор его положит подписка на параметры.
    *
-   * Прежний чекбокс вызывал перезагрузку из обработчика клика, то есть до того,
-   * как ngModel успевал получить новое значение, и фильтр применялся со старым.
+   * Так фильтр переживает перезагрузку страницы и снимается системной кнопкой
+   * «Назад» - вместе с прочими шагами по адресу.
    */
-  protected setOnlyWithoutCategories(value: boolean): void {
-    this.store.setOnlyWithoutCategories(value);
+  private writeFilter(filter: SpendingsFilter): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        withoutCategory: filter.onlyWithoutCategories ? '1' : null,
+        categoryIds: filter.categoryIds.length > 0 ? [...filter.categoryIds] : null,
+        tagIds: filter.tagIds.length > 0 ? [...filter.tagIds] : null,
+        dateFrom: filter.dateFrom ? formatApiDate(filter.dateFrom) : null,
+        dateTo: filter.dateTo ? formatApiDate(filter.dateTo) : null,
+      },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  private applyFilter(filter: SpendingsFilter): void {
+    if (this.isStarted && isSameFilter(filter, this.store.filter())) {
+      return;
+    }
+
+    this.store.setFilter(filter);
+
+    if (this.isStarted) {
+      // Прежнее место в списке относится к прежней выборке: догруженные
+      // страницы сбрасываются, и возвращаться некуда.
+      this.spendingsOffset = 0;
+      this.store.reload();
+    }
   }
 
   protected currencyCode(currencyId: string): string {
@@ -246,4 +320,46 @@ export class SpendingsPage implements OnDestroy {
   protected loadMore(): void {
     this.store.loadMore();
   }
+}
+
+/**
+ * Читает фильтр из параметров адреса.
+ *
+ * Непонятная дата отбрасывается, а не роняет страницу: параметры правит и
+ * человек руками, и ссылка из чужой переписки.
+ */
+function readFilter(params: ParamMap): SpendingsFilter {
+  const categoryIds = params.getAll('categoryIds');
+  const onlyWithoutCategories = params.get('withoutCategory') === '1';
+
+  return {
+    onlyWithoutCategories,
+    // «Без категории» и выбор категорий несовместимы, и сервер такой запрос
+    // отвергает: в адресе, набранном руками, оказаться вместе они могут.
+    categoryIds: onlyWithoutCategories ? [] : categoryIds,
+    tagIds: params.getAll('tagIds'),
+    dateFrom: parseApiDate(params.get('dateFrom') ?? ''),
+    dateTo: parseApiDate(params.get('dateTo') ?? ''),
+  };
+}
+
+function isSameFilter(left: SpendingsFilter, right: SpendingsFilter): boolean {
+  return (
+    left.onlyWithoutCategories === right.onlyWithoutCategories &&
+    isSameIds(left.categoryIds, right.categoryIds) &&
+    isSameIds(left.tagIds, right.tagIds) &&
+    isSameDate(left.dateFrom, right.dateFrom) &&
+    isSameDate(left.dateTo, right.dateTo)
+  );
+}
+
+/** Порядок значим: он же порядок параметров в адресе. */
+function isSameIds(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((id, index) => id === right[index]);
+}
+
+function isSameDate(left: Date | null, right: Date | null): boolean {
+  return left === null || right === null
+    ? left === right
+    : left.getTime() === right.getTime();
 }

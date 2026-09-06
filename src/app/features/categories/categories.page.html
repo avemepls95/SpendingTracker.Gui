@@ -160,6 +160,18 @@
                     </span>
                     <app-icon class="category__chevron" name="chevron-right" />
                   </button>
+
+                  <!-- Отдельной кнопкой, а не пунктом внутри правки: вопрос
+                       «что у меня по этой категории» задают, листая список, и
+                       ради него не хочется открывать лист. -->
+                  <button
+                    type="button"
+                    class="row-action"
+                    [attr.aria-label]="'Траты по категории ' + row.category.title"
+                    (click)="showCategorySpendings(row.category)"
+                  >
+                    <app-icon name="receipt" />
+                  </button>
                 </div>
               }
             </div>
@@ -192,11 +204,22 @@
                 }
 
                 @for (tag of group.tags; track tag.id) {
-                  <button type="button" class="panel__row category" (click)="editTag(tag)">
-                    <app-icon class="category__icon" name="tag" />
-                    <span class="category__title truncate">{{ tag.title }}</span>
-                    <app-icon class="category__chevron" name="chevron-right" />
-                  </button>
+                  <div class="panel__row tag-row">
+                    <button type="button" class="tag-row__button" (click)="editTag(tag)">
+                      <app-icon class="category__icon" name="tag" />
+                      <span class="category__title truncate">{{ tag.title }}</span>
+                      <app-icon class="category__chevron" name="chevron-right" />
+                    </button>
+
+                    <button
+                      type="button"
+                      class="row-action"
+                      [attr.aria-label]="'Траты по тегу ' + tag.title"
+                      (click)="showTagSpendings(tag)"
+                    >
+                      <app-icon name="receipt" />
+                    </button>
+                  </div>
                 }
               </div>
             </section>

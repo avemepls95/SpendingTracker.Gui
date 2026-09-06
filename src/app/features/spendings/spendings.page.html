@@ -58,29 +58,36 @@
     }
 
     <div class="toolbar__filters" role="group" aria-label="Фильтр трат">
+      <!-- Условия отбора живут в отдельном листе: категорий и тегов у владельца
+           много, и лентой чипсов они заняли бы весь экран над списком. -->
       <button
         type="button"
         class="chip"
-        [class.chip--selected]="!store.onlyWithoutCategories()"
-        [attr.aria-pressed]="!store.onlyWithoutCategories()"
-        (click)="setOnlyWithoutCategories(false)"
+        [class.chip--selected]="store.activeFilterCount() > 0"
+        (click)="openFilter()"
       >
-        Все
-      </button>
-      <!-- Счётчик - это размер очереди разбора целиком, а не число записей на
-           экране, поэтому он одинаков при любом состоянии фильтра. -->
-      <button
-        type="button"
-        class="chip"
-        [class.chip--selected]="store.onlyWithoutCategories()"
-        [attr.aria-pressed]="store.onlyWithoutCategories()"
-        (click)="setOnlyWithoutCategories(true)"
-      >
-        Без категорий
-        @if (store.withoutCategoryCount() > 0) {
-          <span class="chip__count">{{ store.withoutCategoryCount() }}</span>
+        <app-icon name="sliders" />
+        Фильтр
+        @if (store.activeFilterCount() > 0) {
+          <span class="chip__count">{{ store.activeFilterCount() }}</span>
         }
       </button>
+
+      <!-- Быстрый вход в очередь разбора: счётчик - её размер целиком, а не
+           число записей на экране. -->
+      @if (store.withoutCategoryCount() > 0 && !store.onlyWithoutCategories()) {
+        <button type="button" class="chip" (click)="showWithoutCategories()">
+          Без категорий
+          <span class="chip__count">{{ store.withoutCategoryCount() }}</span>
+        </button>
+      }
+
+      @if (store.activeFilterCount() > 0) {
+        <button type="button" class="chip toolbar__clear" (click)="clearFilter()">
+          <app-icon name="close" />
+          Сбросить
+        </button>
+      }
     </div>
   </div>
 
@@ -108,7 +115,7 @@
 
     @default {
       @if (store.isEmpty()) {
-        @if (store.onlyWithoutCategories()) {
+        @if (store.onlyWithoutCategories() && store.activeFilterCount() === 1) {
           <app-empty-state
             icon="check-circle"
             title="Все траты разнесены"
@@ -118,8 +125,12 @@
           <app-empty-state
             icon="search"
             title="Ничего не нашлось"
-            hint="Попробуйте другое слово из описания траты."
-          />
+            hint="Попробуйте ослабить фильтр или изменить слово в поиске."
+          >
+            <button type="button" class="btn btn--secondary" (click)="openFilter()">
+              Изменить фильтр
+            </button>
+          </app-empty-state>
         } @else {
           <app-empty-state
             icon="receipt"

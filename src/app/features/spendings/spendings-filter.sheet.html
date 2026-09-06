@@ -1,0 +1,157 @@
+<div class="sheet" appSwipeToClose (dismissed)="close()">
+  <div class="sheet__grabber" aria-hidden="true"></div>
+
+  <div class="sheet__header">
+    <h2 class="sheet__title">Фильтр</h2>
+    <button type="button" class="icon-btn" aria-label="Закрыть" (click)="close()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <div class="sheet__body">
+    <div class="field">
+      <span class="field__label">Категории</span>
+
+      <label class="panel panel--bordered switch-row">
+        <span class="switch-row__main">
+          <span class="switch-row__title">Только без категории</span>
+          <!-- Счётчик - размер очереди разбора целиком, а не число записей на
+               экране, поэтому он одинаков при любом состоянии фильтра. -->
+          <span class="switch-row__hint">
+            @if (withoutCategoryCount > 0) {
+              Неразнесённых трат: {{ withoutCategoryCount }}
+            } @else {
+              Все траты разнесены
+            }
+          </span>
+        </span>
+        <input
+          class="switch"
+          type="checkbox"
+          role="switch"
+          [checked]="onlyWithoutCategories()"
+          (change)="onOnlyWithoutCategories($event)"
+        />
+      </label>
+
+      @if (!onlyWithoutCategories()) {
+        <div class="picked">
+          @for (category of categories(); track category.id) {
+            <span class="chip chip--selected picked__chip">
+              {{ category.title }}
+              <button
+                type="button"
+                class="picked__remove"
+                [attr.aria-label]="'Убрать из фильтра категорию ' + category.title"
+                (click)="removeCategory(category.id)"
+              >
+                <app-icon name="close" />
+              </button>
+            </span>
+          }
+
+          <button
+            type="button"
+            class="chip picked__add"
+            [disabled]="isLoading()"
+            (click)="addCategory()"
+          >
+            <app-icon name="plus" />
+            Категория
+          </button>
+        </div>
+
+        <p class="hint">Категория показывает и траты всех вложенных в неё.</p>
+      }
+    </div>
+
+    <div class="field">
+      <span class="field__label">Теги</span>
+
+      <div class="picked">
+        @for (tag of tags(); track tag.id) {
+          <span class="chip chip--selected picked__chip">
+            {{ tag.title }}
+            <button
+              type="button"
+              class="picked__remove"
+              [attr.aria-label]="'Убрать из фильтра тег ' + tag.title"
+              (click)="removeTag(tag.id)"
+            >
+              <app-icon name="close" />
+            </button>
+          </span>
+        }
+
+        <button
+          type="button"
+          class="chip picked__add"
+          [disabled]="isLoading()"
+          (click)="addTag()"
+        >
+          <app-icon name="plus" />
+          Тег
+        </button>
+      </div>
+
+      @if (tags().length > 1) {
+        <p class="hint">Показываются траты, у которых есть все выбранные теги.</p>
+      }
+    </div>
+
+    <div class="field">
+      <span class="field__label">Период</span>
+
+      <div class="range">
+        <div class="range__item">
+          <label class="range__label" for="filter-date-from">с</label>
+          <app-date-input
+            inputId="filter-date-from"
+            label="Начало периода"
+            [value]="dateFromText()"
+            [invalid]="dateFromError() !== null"
+            (valueChange)="onDateFrom($event)"
+          />
+        </div>
+
+        <div class="range__item">
+          <label class="range__label" for="filter-date-to">по</label>
+          <app-date-input
+            inputId="filter-date-to"
+            label="Конец периода"
+            [value]="dateToText()"
+            [invalid]="dateToError() !== null"
+            (valueChange)="onDateTo($event)"
+          />
+        </div>
+      </div>
+
+      @if (dateFromError() || dateToError(); as error) {
+        <p class="field__error">{{ error }}</p>
+      } @else if (rangeError(); as error) {
+        <p class="field__error">{{ error }}</p>
+      } @else {
+        <p class="hint">Обе границы необязательны и входят в период.</p>
+      }
+    </div>
+  </div>
+
+  <div class="sheet__footer">
+    <button
+      type="button"
+      class="btn btn--secondary"
+      [disabled]="isEmpty()"
+      (click)="reset()"
+    >
+      Сбросить
+    </button>
+    <button
+      type="button"
+      class="btn btn--primary"
+      [disabled]="!canApply()"
+      (click)="apply()"
+    >
+      Применить
+    </button>
+  </div>
+</div>

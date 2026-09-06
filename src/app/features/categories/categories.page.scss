@@ -187,3 +187,41 @@
   font-size: var(--fs-sm);
   color: var(--c-text-2);
 }
+
+// Строка тега перестала быть кнопкой целиком: правку открывает её основная
+// часть, а «Траты» стоят отдельной кнопкой - вложить кнопку в кнопку нельзя.
+.tag-row {
+  padding: 0;
+}
+
+.tag-row__button {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: 1;
+  min-width: 0;
+  min-height: var(--tap-min);
+  padding: var(--sp-3) 0 var(--sp-3) var(--sp-4);
+  text-align: left;
+
+  &:active {
+    background: var(--c-pressed);
+  }
+}
+
+// Действие в конце строки: тот же размер, что у кнопки раскрытия ветки, чтобы
+// в дереве обе стороны строки читались одинаково.
+.row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  color: var(--c-text-3);
+  --icon-size: 18px;
+
+  &:active {
+    background: var(--c-pressed);
+  }
+}

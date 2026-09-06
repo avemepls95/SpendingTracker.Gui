@@ -54,6 +54,16 @@ export interface SpendingsQuery {
   readonly count: number;
   readonly searchString: string;
   readonly onlyWithoutCategories: boolean;
+
+  /** Категории отбора: каждая тянет и своё поддерево. */
+  readonly categoryIds: readonly string[];
+
+  /** Теги отбора: трата обязана нести их все, считая унаследованные. */
+  readonly tagIds: readonly string[];
+
+  /** Границы периода по дате траты, включительно. null - без ограничения. */
+  readonly dateFrom: Date | null;
+  readonly dateTo: Date | null;
 }
 
 export interface MarkupsQuery {
@@ -92,11 +102,31 @@ export class SpendingApiService {
    * владельца и в элемент страницы не помещается.
    */
   getSpendings(query: SpendingsQuery): Observable<SpendingsPageResult> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('offset', query.offset)
       .set('count', query.count)
       .set('searchString', query.searchString)
       .set('onlyWithoutCategories', query.onlyWithoutCategories);
+
+    // Идентификаторы уходят повторяющимся параметром - так их принимает
+    // привязка модели, как и в аналитике по тегам.
+    for (const categoryId of query.categoryIds) {
+      params = params.append('categoryIds', categoryId);
+    }
+
+    for (const tagId of query.tagIds) {
+      params = params.append('tagIds', tagId);
+    }
+
+    // Пустая граница не передаётся вовсе: пустая строка привязку модели не
+    // устроит - она разбирает значение как дату.
+    if (query.dateFrom) {
+      params = params.set('dateFrom', formatApiDate(query.dateFrom));
+    }
+
+    if (query.dateTo) {
+      params = params.set('dateTo', formatApiDate(query.dateTo));
+    }
 
     return this.http
       .get<SpendingsPageDto>(this.url('v1/spending/list-with-categories'), { params })

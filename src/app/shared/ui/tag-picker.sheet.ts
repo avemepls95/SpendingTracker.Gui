@@ -12,6 +12,14 @@ import { TagGroup, groupTags } from '../util/tag-group.util';
 export interface TagPickerData {
   /** Теги, уже навешенные на объект: повторно их предлагать незачем. */
   readonly excludedIds: readonly string[];
+
+  /**
+   * Разрешено ли заводить тег прямо из выбора. По умолчанию да.
+   *
+   * Выключается там, где новый тег бессмыслен, - в фильтре списка: тег без
+   * трат ничего не найдёт.
+   */
+  readonly allowCreate?: boolean;
 }
 
 export type TagPickerResult =
@@ -83,7 +91,11 @@ export type TagPickerResult =
           <app-empty-state
             icon="tag"
             [title]="query() ? 'Ничего не нашлось' : 'Свободных тегов нет'"
-            hint="Начните вводить название, чтобы создать новый."
+            [hint]="
+              data.allowCreate === false
+                ? 'Теги заводятся в разделе разметки.'
+                : 'Начните вводить название, чтобы создать новый.'
+            "
           />
         }
       </div>
@@ -92,7 +104,7 @@ export type TagPickerResult =
   styleUrl: './tag-picker.sheet.scss',
 })
 export class TagPickerSheet {
-  private readonly data = inject<TagPickerData>(DIALOG_DATA);
+  protected readonly data = inject<TagPickerData>(DIALOG_DATA);
   private readonly dialogRef = inject<DialogRef<TagPickerResult>>(DialogRef);
   private readonly api = inject(SpendingApiService);
 
@@ -113,6 +125,10 @@ export class TagPickerSheet {
   });
 
   protected readonly canCreate = computed(() => {
+    if (this.data.allowCreate === false) {
+      return false;
+    }
+
     const title = this.query().trim();
     if (title === '') {
       return false;

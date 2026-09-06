@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { SheetService } from '../../core/ui/sheet.service';
@@ -54,6 +55,7 @@ export type MarkupMode = 'categories' | 'tags' | 'dictionary';
 export class CategoriesPage {
   private readonly api = inject(SpendingApiService);
   private readonly sheets = inject(SheetService);
+  private readonly router = inject(Router);
 
   protected readonly status = signal<Status>('loading');
   protected readonly mode = signal<MarkupMode>('categories');
@@ -171,6 +173,22 @@ export class CategoriesPage {
 
   protected edit(category: Category): void {
     this.openCategorySheet({ mode: 'edit', category });
+  }
+
+  /**
+   * Уводит на вкладку трат с готовым фильтром.
+   *
+   * Прежде «какие у меня траты по этой категории» приходилось спрашивать у
+   * аналитики, выбирая там период; здесь период не нужен - показываются все.
+   * Фильтр задаётся адресом целиком, без merge: прежние условия относятся к
+   * другому вопросу и остаться не должны.
+   */
+  protected showCategorySpendings(category: Category): void {
+    this.router.navigate(['/spendings'], { queryParams: { categoryIds: category.id } });
+  }
+
+  protected showTagSpendings(tag: Tag): void {
+    this.router.navigate(['/spendings'], { queryParams: { tagIds: tag.id } });
   }
 
   protected editTag(tag: Tag): void {

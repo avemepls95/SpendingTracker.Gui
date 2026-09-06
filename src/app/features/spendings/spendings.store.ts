@@ -9,6 +9,31 @@ const PAGE_SIZE = 25;
 
 export type ListStatus = 'loading' | 'ready' | 'error';
 
+/**
+ * Условия отбора списка трат.
+ *
+ * Хранятся идентификаторами, а не объектами: фильтр приходит и из адреса -
+ * переходом из списка категорий или тегов, - где названий взять неоткуда.
+ * Названия для чипсов подставляет лист фильтра, который и так читает справочники.
+ */
+export interface SpendingsFilter {
+  readonly onlyWithoutCategories: boolean;
+  readonly categoryIds: readonly string[];
+  readonly tagIds: readonly string[];
+
+  /** Границы периода по дате траты, включительно. null - без ограничения. */
+  readonly dateFrom: Date | null;
+  readonly dateTo: Date | null;
+}
+
+export const EMPTY_SPENDINGS_FILTER: SpendingsFilter = {
+  onlyWithoutCategories: false,
+  categoryIds: [],
+  tagIds: [],
+  dateFrom: null,
+  dateTo: null,
+};
+
 export interface CurrencyTotal {
   readonly currencyId: string;
   readonly amount: number;
@@ -39,7 +64,7 @@ export class SpendingsStore {
   private readonly withoutCategoryCountSignal = signal(0);
 
   private readonly searchSignal = signal('');
-  private readonly withoutCategoriesSignal = signal(false);
+  private readonly filterSignal = signal<SpendingsFilter>(EMPTY_SPENDINGS_FILTER);
 
   /**
    * Номер поколения запроса.
@@ -55,8 +80,28 @@ export class SpendingsStore {
   readonly isLoadingMore = this.loadingMoreSignal.asReadonly();
   readonly hasMore = this.hasMoreSignal.asReadonly();
   readonly search = this.searchSignal.asReadonly();
-  readonly onlyWithoutCategories = this.withoutCategoriesSignal.asReadonly();
+  readonly filter = this.filterSignal.asReadonly();
   readonly spendings = this.items.asReadonly();
+
+  readonly onlyWithoutCategories = computed(() => this.filterSignal().onlyWithoutCategories);
+
+  /**
+   * Сколько условий стоит в фильтре - число на кнопке.
+   *
+   * Категории и теги считаются поштучно, период - одним условием при любой
+   * заполненной границе: кнопка отвечает на вопрос «насколько сужен список»,
+   * а не «сколько полей заполнено».
+   */
+  readonly activeFilterCount = computed(() => {
+    const filter = this.filterSignal();
+
+    return (
+      (filter.onlyWithoutCategories ? 1 : 0) +
+      filter.categoryIds.length +
+      filter.tagIds.length +
+      (filter.dateFrom || filter.dateTo ? 1 : 0)
+    );
+  });
 
   /**
    * Размер очереди разбора: сколько трат владельца без категории.
@@ -71,7 +116,7 @@ export class SpendingsStore {
   );
 
   readonly isFiltered = computed(
-    () => this.searchSignal().trim() !== '' || this.withoutCategoriesSignal(),
+    () => this.searchSignal().trim() !== '' || this.activeFilterCount() > 0,
   );
 
   /** Траты, сгруппированные по дням, в порядке прихода от сервера. */
@@ -104,13 +149,15 @@ export class SpendingsStore {
     this.reload();
   }
 
-  setOnlyWithoutCategories(value: boolean): void {
-    if (value === this.withoutCategoriesSignal()) {
-      return;
-    }
-
-    this.withoutCategoriesSignal.set(value);
-    this.reload();
+  /**
+   * Ставит фильтр целиком.
+   *
+   * Список сам не перезагружается: фильтр живёт в адресе, и подписка на его
+   * параметры срабатывает и при первом заходе на страницу - перезагрузка
+   * оттуда шла бы вторым запросом поверх начальной загрузки.
+   */
+  setFilter(filter: SpendingsFilter): void {
+    this.filterSignal.set(filter);
   }
 
   /**
@@ -163,13 +210,18 @@ export class SpendingsStore {
   private fetch(offset: number, apply: (page: readonly Spending[]) => void): void {
     const generation = ++this.generation;
     const isStale = (): boolean => generation !== this.generation;
+    const filter = this.filterSignal();
 
     this.api
       .getSpendings({
         offset,
         count: PAGE_SIZE,
         searchString: this.searchSignal().trim(),
-        onlyWithoutCategories: this.withoutCategoriesSignal(),
+        onlyWithoutCategories: filter.onlyWithoutCategories,
+        categoryIds: filter.categoryIds,
+        tagIds: filter.tagIds,
+        dateFrom: filter.dateFrom,
+        dateTo: filter.dateTo,
       })
       .subscribe({
         next: (page) => {
