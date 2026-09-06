@@ -17,13 +17,9 @@
           <span class="switch-row__title">Только без категории</span>
           <!-- Счётчик - размер очереди разбора целиком, а не число записей на
                экране, поэтому он одинаков при любом состоянии фильтра. -->
-          <span class="switch-row__hint">
-            @if (withoutCategoryCount > 0) {
-              Неразнесённых трат: {{ withoutCategoryCount }}
-            } @else {
-              Все траты разнесены
-            }
-          </span>
+          @if (withoutCategoryCount > 0) {
+            <span class="switch-row__hint">Неразнесённых трат: {{ withoutCategoryCount }}</span>
+          }
         </span>
         <input
           class="switch"
