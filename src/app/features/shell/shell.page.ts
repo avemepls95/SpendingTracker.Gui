@@ -48,6 +48,15 @@ import { TabBarComponent } from './tab-bar.component';
       overscroll-behavior-y: contain;
       -webkit-overflow-scrolling: touch;
     }
+
+    // Класс вешает ScrollContainerService, пока открыт лист или диалог.
+    .shell__content--locked {
+      overflow-y: hidden;
+      // touch-action страхует WebView: overflow убирает прокрутку у самого
+      // каркаса, но не мешает жесту дойти до прокручиваемых блоков внутри
+      // страницы - например, до ленты вкладок аналитики.
+      touch-action: none;
+    }
   `,
 })
 export class ShellPage {

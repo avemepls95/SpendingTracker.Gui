@@ -4,6 +4,7 @@ import { Overlay } from '@angular/cdk/overlay';
 import { Injectable, inject } from '@angular/core';
 
 import { TelegramService } from '../telegram/telegram.service';
+import { ScrollContainerService } from './scroll-container.service';
 
 export interface SheetOptions {
   /**
@@ -28,6 +29,7 @@ export class SheetService {
   private readonly dialog = inject(Dialog);
   private readonly overlay = inject(Overlay);
   private readonly telegram = inject(TelegramService);
+  private readonly scroll = inject(ScrollContainerService);
 
   /** Сколько наложений открыто: шит может открыть поверх себя другой шит. */
   private openCount = 0;
@@ -65,9 +67,9 @@ export class SheetService {
       // в шапке листа первой стоит кнопка удаления, и она принимала бы Enter
       // сразу после открытия.
       autoFocus: 'dialog',
-      // Страховка на случай, если содержимое когда-нибудь начнёт
-      // прокручивать документ: сейчас прокрутка живёт внутри .shell__content,
-      // высота которого равна экрану, и блокировать документу нечего.
+      // Стратегия CDK держит только документ - он в приложении и не
+      // прокручивается. Прокрутку каркаса, которая живёт внутри
+      // .shell__content, блокирует trackOverlay.
       scrollStrategy: this.overlay.scrollStrategies.block(),
       positionStrategy: this.overlay
         .position()
@@ -103,15 +105,20 @@ export class SheetService {
   }
 
   /**
-   * Пока открыто хотя бы одно наложение, показывает системную кнопку «Назад».
+   * Пока открыто хотя бы одно наложение, страница под ним стоит на месте
+   * и показана системная кнопка «Назад».
    *
-   * Без этого в Mini App нажатие «Назад» при открытом листе сворачивает всё
-   * приложение вместо того, чтобы закрыть лист.
+   * Без кнопки в Mini App нажатие «Назад» при открытом листе сворачивает всё
+   * приложение вместо того, чтобы закрыть лист. Блокировка и кнопка снимаются
+   * по одному счётчику: лист вправе открыть поверх себя другой лист, и
+   * закрытие верхнего не должно возвращать прокрутку нижнему.
    */
   private trackOverlay<TResult>(ref: DialogRef<TResult>): void {
     this.openCount += 1;
 
     if (this.openCount === 1) {
+      this.scroll.lock();
+
       this.releaseBackButton = this.telegram.showBackButton(() => {
         const top = this.dialog.openDialogs.at(-1);
         if (!top) {
@@ -131,6 +138,7 @@ export class SheetService {
     ref.closed.subscribe(() => {
       this.openCount -= 1;
       if (this.openCount === 0) {
+        this.scroll.unlock();
         this.releaseBackButton?.();
         this.releaseBackButton = null;
       }
