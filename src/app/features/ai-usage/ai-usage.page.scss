@@ -1,0 +1,225 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--sp-4) var(--sp-6);
+}
+
+.chips {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  padding-bottom: var(--sp-2);
+}
+
+.chip {
+  flex: none;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+}
+
+.chip--active {
+  border-color: transparent;
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+}
+
+.totals {
+  display: flex;
+  gap: var(--sp-3);
+}
+
+.total {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+}
+
+.total__value {
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-semibold);
+}
+
+.section-note {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
+}
+
+.totals__note {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
+}
+
+.total__label {
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
+}
+
+.panel--message,
+.panel--warning {
+  padding: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.panel--warning {
+  background: var(--c-warning-soft, var(--c-accent-soft));
+  color: var(--c-warning, var(--c-text-1));
+}
+
+.panel--form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+}
+
+.panel__empty {
+  padding: var(--sp-4);
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+}
+
+.row + .row {
+  border-top: 1px solid var(--c-border);
+}
+
+.row__main {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.row__title {
+  font-weight: var(--fw-medium);
+}
+
+.row__hint {
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
+}
+
+// Идентификатор пользователя длинный и переносится: моноширинный шрифт и
+// разрыв по любому символу не дают ему растянуть строку.
+.row__hint--mono {
+  font-family: monospace;
+  word-break: break-all;
+}
+
+.row__value {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-medium);
+}
+
+.day {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.day__date {
+  flex: none;
+  width: 88px;
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.day__bar {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--c-border);
+  overflow: hidden;
+}
+
+.day__fill {
+  display: block;
+  height: 100%;
+  background: var(--c-accent);
+}
+
+.day__cost {
+  flex: none;
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+// Звёздочка у суммы дня: у части обращений стоимость неизвестна, и без пометки нулевой
+// столбик читался бы как «в этот день было бесплатно».
+.day__unknown {
+  color: var(--c-text-3, var(--c-text-2));
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.field__label {
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
+}
+
+.field__input {
+  padding: var(--sp-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-bg);
+  color: var(--c-text-1);
+  font-size: var(--fs-sm);
+}
+
+.field__actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.field__error {
+  margin: 0;
+  color: var(--c-danger, var(--c-text-1));
+  font-size: var(--fs-xs);
+}
+
+.button {
+  padding: var(--sp-2) var(--sp-4);
+  border: none;
+  border-radius: var(--r-md);
+  background: var(--c-accent);
+  color: var(--c-on-accent, #fff);
+  font-size: var(--fs-sm);
+}
+
+.button--ghost {
+  background: transparent;
+  border: 1px solid var(--c-border);
+  color: var(--c-text-2);
+}
+
+.button--wide {
+  width: 100%;
+}

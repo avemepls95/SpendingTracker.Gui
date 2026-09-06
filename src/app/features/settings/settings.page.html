@@ -86,6 +86,24 @@
     </div>
   </section>
 
+  @if (isAdmin()) {
+    <section>
+      <h2 class="section-title">Администрирование</h2>
+      <div class="panel">
+        <a class="panel__row" routerLink="/ai-usage">
+          <app-icon class="row__icon" name="chart" />
+          <span class="row__main">
+            <span class="row__title">Расход на ИИ</span>
+            <span class="row__hint">
+              Обращения к модели, их стоимость и цены за токены
+            </span>
+          </span>
+          <app-icon class="row__chevron" name="chevron-right" />
+        </a>
+      </div>
+    </section>
+  }
+
   @if (canSignOut) {
     <section>
       <div class="panel">

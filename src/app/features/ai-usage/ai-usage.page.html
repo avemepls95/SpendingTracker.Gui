@@ -1,0 +1,240 @@
+<app-page-header title="Расход на ИИ" />
+
+<div class="content">
+  @if (store.status() === 'error') {
+    <div class="panel panel--message">Не удалось загрузить раздел</div>
+  } @else if (store.status() === 'loading' && !store.summary()) {
+    <!-- Только до первой загрузки: при смене периода экран уже наполнен, и прятать его
+         значило бы мигать пустотой на каждом переключении. -->
+    <div class="panel panel--message">Загружается…</div>
+  } @else {
+    <section>
+      <div class="chips">
+        @for (option of periods; track option.value) {
+          <button
+            type="button"
+            class="chip"
+            [class.chip--active]="store.period() === option.value"
+            (click)="setPeriod(option.value)"
+          >
+            {{ option.label }}
+          </button>
+        }
+      </div>
+
+      @if (store.summary(); as summary) {
+        <div class="totals">
+          <div class="total">
+            <span class="total__value">{{ summary.periodCost | usd }}</span>
+            <span class="total__label">за период, {{ summary.periodRequestCount }} попыток</span>
+          </div>
+          <div class="total">
+            <span class="total__value">{{ summary.todayCost | usd }}</span>
+            <span class="total__label">сегодня, {{ summary.todayRequestCount }} попыток</span>
+          </div>
+        </div>
+
+        @if (summary.periodUnknownCostCount > 0 || summary.todayUnknownCostCount > 0) {
+          <p class="totals__note">
+            Стоимость неизвестна у {{ summary.periodUnknownCostCount }} попыток периода
+            @if (summary.todayUnknownCostCount > 0) {
+              (из них {{ summary.todayUnknownCostCount }} сегодня)
+            }
+            - в суммы они не вошли.
+          </p>
+        }
+      }
+    </section>
+
+    @if (isPricingMissing()) {
+      <div class="panel panel--warning">
+        Цены за токены не заданы, и обращения к модели не отправляются. Задайте их ниже.
+      </div>
+    }
+
+    @if (store.summary()?.byCallSite?.length) {
+      <section>
+        <h2 class="section-title">По местам вызова</h2>
+        <div class="panel">
+          @for (row of store.summary()!.byCallSite; track row.callSite) {
+            <div class="row">
+              <span class="row__main">
+                <span class="row__title">{{ callSiteLabel(row.callSite) }}</span>
+                <span class="row__hint">
+                  {{ row.requestCount }} попыток, {{ row.inputTokens }} входных и
+                  {{ row.outputTokens }} выходных токенов
+                  @if (row.unknownCostCount > 0) {
+                    · у {{ row.unknownCostCount }} стоимость неизвестна
+                  }
+                </span>
+              </span>
+              <span class="row__value">{{ row.cost | usd }}</span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    @if (store.summary()?.byDay?.length) {
+      <section>
+        <h2 class="section-title">По дням</h2>
+        <div class="panel">
+          @for (day of store.summary()!.byDay; track day.date) {
+            <div class="day">
+              <span class="day__date">{{ day.date }}</span>
+              <span class="day__bar"><span class="day__fill" [style.width]="dayWidth(day.cost)"></span></span>
+              <span class="day__cost">
+                {{ day.cost | usd }}@if (day.unknownCostCount > 0) {<span
+                  class="day__unknown"
+                  [title]="'У ' + day.unknownCostCount + ' обращений стоимость неизвестна'"
+                >*</span>}
+              </span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <section>
+      <h2 class="section-title">Обращения</h2>
+      <p class="section-note">Время и границы периода - в UTC.</p>
+
+      <div class="panel panel--form">
+        <label class="field">
+          <span class="field__label">Место вызова</span>
+          <select class="field__input" [value]="callSiteFilter()" (change)="onCallSiteFilter($event)">
+            <option value="">Все</option>
+            <option value="AutoMarkup">Автоматическая разметка</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Идентификатор пользователя</span>
+          <input
+            class="field__input"
+            type="text"
+            [value]="userFilter()"
+            (input)="onUserFilter($event)"
+            placeholder="Все"
+          />
+        </label>
+
+        @if (userFilterInvalid()) {
+          <p class="field__error">Идентификатор пользователя должен быть GUID</p>
+        }
+
+        <div class="field__actions">
+          <button type="button" class="button" (click)="applyFilters()">Показать</button>
+          <button type="button" class="button button--ghost" (click)="resetFilters()">Сбросить</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        @for (item of store.items(); track item.id) {
+          <div class="row">
+            <span class="row__main">
+              <span class="row__title">
+                {{ callSiteLabel(item.callSite) }}, {{ item.descriptionsCount }} описаний
+              </span>
+              <span class="row__hint">
+                {{ momentLabel(item.requestDate) }} · {{ item.model }} ·
+                {{ item.inputTokens }}/{{ item.outputTokens }} токенов ·
+                {{ outcomeLabel(item.outcome) }}
+              </span>
+              <span class="row__hint row__hint--mono">{{ item.userId }}</span>
+            </span>
+            <span class="row__value">{{ item.cost | usd }}</span>
+          </div>
+        } @empty {
+          <div class="panel__empty">За период обращений нет</div>
+        }
+      </div>
+
+      @if (store.hasMore()) {
+        <button
+          type="button"
+          class="button button--wide"
+          [disabled]="store.isLoadingMore()"
+          (click)="store.loadMore()"
+        >
+          {{ store.isLoadingMore() ? 'Загружается…' : 'Показать ещё' }}
+        </button>
+      }
+    </section>
+
+    @if (settingsRow(); as row) {
+      <section>
+        <h2 class="section-title">Настройки</h2>
+        <div class="panel panel--form">
+          <label class="field">
+            <span class="field__label">Модель</span>
+            <input
+              class="field__input"
+              type="text"
+              [value]="model()"
+              (input)="onModel($event)"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field__label">
+              Цена за миллион входных токенов, $ (от {{ store.settings()?.minPricePerMillionTokens }}
+              до {{ store.settings()?.maxPricePerMillionTokens }})
+            </span>
+            <!-- type=text с inputmode=decimal, как поля сумм на прочих экранах: числовое
+                 поле не отдаёт незаконченный ввод, и дробную цену в нём не набрать. -->
+            <input
+              class="field__input"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              [value]="inputPriceText()"
+              (input)="onInputPrice($event)"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Цена за миллион выходных токенов, $</span>
+            <input
+              class="field__input"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              [value]="outputPriceText()"
+              (input)="onOutputPrice($event)"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field__label">
+              Срок хранения журнала, дней (не меньше {{ store.settings()?.minRetentionDays }})
+            </span>
+            <input
+              class="field__input"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              [value]="retentionDaysText()"
+              (input)="onRetentionDays($event)"
+            />
+          </label>
+
+          @if (saveError(); as error) {
+            <p class="field__error">{{ error }}</p>
+          }
+
+          <div class="field__actions">
+            <button
+              type="button"
+              class="button"
+              [disabled]="store.isSaving()"
+              (click)="saveSettings(row)"
+            >
+              {{ store.isSaving() ? 'Сохраняется…' : 'Сохранить' }}
+            </button>
+          </div>
+        </div>
+      </section>
+    }
+  }
+</div>

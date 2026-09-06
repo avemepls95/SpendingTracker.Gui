@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { CurrentUserStore } from '../../core/auth/current-user.store';
 import { TokenStorageService } from '../../core/auth/token-storage.service';
 import { TelegramService } from '../../core/telegram/telegram.service';
 import { SheetService } from '../../core/ui/sheet.service';
@@ -22,17 +24,18 @@ import { AiMarkupSheet } from './ai-markup.sheet';
 @Component({
   selector: 'app-settings-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PageHeaderComponent, IconComponent, HideOnErrorDirective],
+  imports: [PageHeaderComponent, IconComponent, HideOnErrorDirective, RouterLink],
   templateUrl: './settings.page.html',
   styleUrl: './settings.page.scss',
 })
-export class SettingsPage {
+export class SettingsPage implements OnInit {
   private readonly settings = inject(UserSettingsStore);
   private readonly currencies = inject(CurrenciesStore);
   private readonly sheets = inject(SheetService);
   private readonly telegram = inject(TelegramService);
   private readonly auth = inject(AuthService);
   private readonly storage = inject(TokenStorageService);
+  private readonly currentUser = inject(CurrentUserStore);
 
   protected readonly isSaving = this.settings.isSaving;
   protected readonly profile = this.storage.profile;
@@ -55,6 +58,13 @@ export class SettingsPage {
 
   protected readonly isAiMarkupBlocked = this.settings.isAiMarkupBlocked;
 
+  /**
+   * Раздел расхода на ИИ виден только администратору. Это удобство: сам раздел
+   * закрыт на сервере и отвечает обычному пользователю так же, как
+   * несуществующий маршрут.
+   */
+  protected readonly isAdmin = this.currentUser.isAdmin;
+
   protected readonly aiMarkupStatus = computed(() => {
     if (!this.settings.aiMarkupUserConsent()) {
       return 'Выключена';
@@ -62,6 +72,10 @@ export class SettingsPage {
 
     return this.isAiMarkupBlocked() ? 'Нет лимита' : 'Включена';
   });
+
+  async ngOnInit(): Promise<void> {
+    await this.currentUser.ensureLoaded();
+  }
 
   protected pickCurrency(): void {
     this.sheets

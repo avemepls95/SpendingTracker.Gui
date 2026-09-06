@@ -9,6 +9,7 @@ import {
   TelegramAuthRequest,
   TokenInformation,
 } from './auth.contracts';
+import { CurrentUserStore } from './current-user.store';
 import { TokenStorageService } from './token-storage.service';
 
 @Injectable({ providedIn: 'root' })
@@ -16,6 +17,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly storage = inject(TokenStorageService);
+  private readonly currentUser = inject(CurrentUserStore);
 
   private readonly baseUrl = environment.spendingApi;
 
@@ -59,6 +61,7 @@ export class AuthService {
 
   signOut(): void {
     this.storage.clear();
+    this.currentUser.reset();
     void this.router.navigate(['/auth']);
   }
 }

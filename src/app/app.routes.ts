@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+import { adminGuard } from './core/auth/admin.guard';
 import { authGuard } from './core/auth/auth.guard';
 
 /**
@@ -50,6 +51,15 @@ export const routes: Routes = [
         title: 'Настройки',
         loadComponent: () =>
           import('./features/settings/settings.page').then((m) => m.SettingsPage),
+      },
+      {
+        path: 'ai-usage',
+        title: 'Расход на ИИ',
+        // Guard - удобство: запрос в обход интерфейса всё равно получит от
+        // админских маршрутов 404, потому что права проверяются на сервере.
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/ai-usage/ai-usage.page').then((m) => m.AiUsagePage),
       },
     ],
   },
