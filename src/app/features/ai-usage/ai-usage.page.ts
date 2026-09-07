@@ -3,6 +3,8 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import {
   AiCallSiteDto,
   AiCallSiteSettingDto,
+  AiEffortDto,
+  AiUsageKindDto,
   AiUsagePeriodDto,
 } from '../../domain/dto/ai-usage.dto';
 import { UsdPipe } from '../../shared/pipes/usd.pipe';
@@ -26,6 +28,37 @@ const OUTCOME_LABELS: Record<string, string> = {
 const CALL_SITE_LABELS: Record<string, string> = {
   AutoMarkup: 'Автоматическая разметка',
 };
+
+const KIND_LABELS: Record<string, string> = {
+  Markup: 'Разметка',
+  ConnectionCheck: 'Проверка связи',
+};
+
+/** Подписи итога проверки связи: код сервера человеку ничего не говорит. */
+const CHECK_STATUS_LABELS: Record<string, string> = {
+  Ok: 'Связь есть: запрос ушёл, ответ получен',
+  KeyRejected: 'Ключ провайдера отвергнут',
+  ModelRejected: 'Вендор не знает такой модели',
+  RequestRejected: 'Вендор отверг запрос - похоже, модель не принимает заданные параметры',
+  RateLimited: 'Вендор ограничил частоту обращений',
+  VendorUnavailable: 'Вендор не справился с запросом',
+  NoResponse: 'Ответа нет: истёк дедлайн либо оборвалась связь',
+  NotConfigured: 'Обращение не отправлено: настройки не позволяют',
+  Throttled: 'Обращение не отправлено: слишком часто',
+};
+
+/**
+ * Пункты списка глубины размышления. Пустое значение - «не отправлять»: параметр не уходит
+ * в запросе вовсе, и это единственное состояние, годное для модели, которая его не принимает.
+ */
+const EFFORT_OPTIONS: readonly { value: AiEffortDto | ''; label: string }[] = [
+  { value: '', label: 'не отправлять' },
+  { value: 'Low', label: 'low' },
+  { value: 'Medium', label: 'medium' },
+  { value: 'High', label: 'high' },
+  { value: 'XHigh', label: 'xhigh' },
+  { value: 'Max', label: 'max' },
+];
 
 /**
  * Набранное значение не читается числом.
@@ -67,10 +100,19 @@ export class AiUsagePage implements OnInit {
 
   protected readonly callSiteFilter = signal<AiCallSiteDto | ''>('');
 
+  protected readonly kindFilter = signal<AiUsageKindDto | ''>('');
+
   /** Введённый идентификатор не похож на GUID - отбор не отправляется. */
   protected readonly userFilterInvalid = signal(false);
 
   protected readonly model = signal('');
+
+  protected readonly vendor = signal('');
+
+  /** Пустая строка - «не отправлять». */
+  protected readonly effort = signal<AiEffortDto | ''>('');
+
+  protected readonly effortOptions = EFFORT_OPTIONS;
 
   /**
    * Числовые поля держат введённый текст, а не разобранное число, - как поля сумм на прочих
@@ -126,9 +168,56 @@ export class AiUsagePage implements OnInit {
     );
   });
 
+  /**
+   * Форма разошлась с тем, что лежит в базе.
+   *
+   * Проверка связи читает настройки из базы, а не из формы: иначе проверить можно было бы
+   * одно, а сохранить другое. Значит при несохранённых правках кнопку надо гасить - зелёная
+   * галочка про прежнюю модель ввела бы в заблуждение.
+   */
+  protected readonly hasUnsavedChanges = computed(() => {
+    const row = this.settingsRow();
+    const settings = this.store.settings();
+
+    if (row === null || !settings) {
+      return false;
+    }
+
+    return (
+      this.model().trim() !== row.model ||
+      this.vendor() !== row.vendor ||
+      this.effort() !== (row.effort ?? '') ||
+      this.inputPriceText() !== PriceText(row.inputPricePerMillionTokens) ||
+      this.outputPriceText() !== PriceText(row.outputPricePerMillionTokens) ||
+      this.retentionDaysText() !== String(settings.retentionDays)
+    );
+  });
+
   async ngOnInit(): Promise<void> {
     await this.store.load();
     this.fillForm();
+  }
+
+  protected kindLabel(kind: string): string {
+    return KIND_LABELS[kind] ?? kind;
+  }
+
+  protected checkStatusLabel(status: string): string {
+    return CHECK_STATUS_LABELS[status] ?? status;
+  }
+
+  protected effortLabel(effort: AiEffortDto | undefined): string {
+    return EFFORT_OPTIONS.find((option) => option.value === (effort ?? ''))?.label ?? String(effort);
+  }
+
+  /**
+   * Что делалось и в каком объёме. У проверки связи описаний ноль, и «0 описаний» читалось бы
+   * как потерянное значение.
+   */
+  protected operationLabel(kind: string, callSite: string, descriptionsCount: number): string {
+    return kind === 'ConnectionCheck'
+      ? `${this.callSiteLabel(callSite)}, проверка связи`
+      : `${this.callSiteLabel(callSite)}, ${descriptionsCount} описаний`;
   }
 
   protected outcomeLabel(outcome: string): string {
@@ -183,6 +272,22 @@ export class AiUsagePage implements OnInit {
     this.model.set((event.target as HTMLInputElement).value);
   }
 
+  protected onVendor(event: Event): void {
+    this.vendor.set((event.target as HTMLSelectElement).value);
+  }
+
+  protected onEffort(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+
+    this.effort.set(value === '' ? '' : (value as AiEffortDto));
+  }
+
+  protected onKindFilter(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+
+    this.kindFilter.set(value === '' ? '' : (value as AiUsageKindDto));
+  }
+
   protected onInputPrice(event: Event): void {
     this.inputPriceText.set((event.target as HTMLInputElement).value);
   }
@@ -213,14 +318,23 @@ export class AiUsagePage implements OnInit {
     }
 
     this.userFilterInvalid.set(false);
-    this.store.setFilters(callSite === '' ? null : callSite, userId === '' ? null : userId);
+    this.store.setFilters(
+      callSite === '' ? null : callSite,
+      this.kindFilter() === '' ? null : this.kindFilter() as AiUsageKindDto,
+      userId === '' ? null : userId,
+    );
   }
 
   protected resetFilters(): void {
     this.callSiteFilter.set('');
+    this.kindFilter.set('');
     this.userFilter.set('');
     this.userFilterInvalid.set(false);
-    this.store.setFilters(null, null);
+    this.store.setFilters(null, null, null);
+  }
+
+  protected async checkConnection(row: AiCallSiteSettingDto): Promise<void> {
+    await this.store.checkConnection(row.callSite);
   }
 
   protected async saveSettings(row: AiCallSiteSettingDto): Promise<void> {
@@ -246,8 +360,9 @@ export class AiUsagePage implements OnInit {
 
     const saved = await this.store.save({
       callSite: row.callSite,
-      vendor: row.vendor,
+      vendor: this.vendor(),
       model: this.model().trim(),
+      effort: this.effort() === '' ? null : (this.effort() as AiEffortDto),
       inputPricePerMillionTokens: this.inputPrice(),
       outputPricePerMillionTokens: this.outputPrice(),
       retentionDays,
@@ -264,6 +379,8 @@ export class AiUsagePage implements OnInit {
 
     if (row) {
       this.model.set(row.model);
+      this.vendor.set(row.vendor);
+      this.effort.set(row.effort ?? '');
       this.inputPriceText.set(PriceText(row.inputPricePerMillionTokens));
       this.outputPriceText.set(PriceText(row.outputPricePerMillionTokens));
     }

@@ -5,7 +5,9 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   AiCallSiteDto,
+  AiConnectionCheckResultDto,
   AiSettingsDto,
+  AiUsageKindDto,
   AiUsageLogPageDto,
   AiUsagePeriodDto,
   AiUsageSummaryDto,
@@ -15,6 +17,7 @@ import {
 export interface AiUsageLogQuery {
   readonly period: AiUsagePeriodDto;
   readonly callSite: AiCallSiteDto | null;
+  readonly kind: AiUsageKindDto | null;
   readonly userId: string | null;
 
   /** Курсор предыдущей страницы; null - первая. */
@@ -50,6 +53,10 @@ export class AiUsageApiService {
       params = params.set('callSite', query.callSite);
     }
 
+    if (query.kind) {
+      params = params.set('kind', query.kind);
+    }
+
     if (query.userId) {
       params = params.set('userId', query.userId);
     }
@@ -67,5 +74,17 @@ export class AiUsageApiService {
 
   updateSettings(settings: UpdateAiSettingsDto): Observable<void> {
     return this.http.put<void>(`${this.baseUrl}/settings`, settings);
+  }
+
+  /**
+   * Проверка связи по сохранённым настройкам места вызова.
+   *
+   * POST, а не GET: обращение стоит денег и пишет строку журнала. Настройки телом не идут -
+   * сервер читает их из базы, иначе проверить можно было бы одно, а сохранить другое.
+   */
+  checkConnection(callSite: AiCallSiteDto): Observable<AiConnectionCheckResultDto> {
+    return this.http.post<AiConnectionCheckResultDto>(`${this.baseUrl}/check-connection`, {
+      callSite,
+    });
   }
 }

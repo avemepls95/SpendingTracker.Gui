@@ -109,6 +109,15 @@
         </label>
 
         <label class="field">
+          <span class="field__label">Вид записи</span>
+          <select class="field__input" [value]="kindFilter()" (change)="onKindFilter($event)">
+            <option value="">Все</option>
+            <option value="Markup">Разметка</option>
+            <option value="ConnectionCheck">Проверка связи</option>
+          </select>
+        </label>
+
+        <label class="field">
           <span class="field__label">Идентификатор пользователя</span>
           <input
             class="field__input"
@@ -134,7 +143,7 @@
           <div class="row">
             <span class="row__main">
               <span class="row__title">
-                {{ callSiteLabel(item.callSite) }}, {{ item.descriptionsCount }} описаний
+                {{ operationLabel(item.kind, item.callSite, item.descriptionsCount) }}
               </span>
               <span class="row__hint">
                 {{ momentLabel(item.requestDate) }} · {{ item.model }} ·
@@ -167,6 +176,15 @@
         <h2 class="section-title">Настройки</h2>
         <div class="panel panel--form">
           <label class="field">
+            <span class="field__label">Вендор</span>
+            <select class="field__input" [value]="vendor()" (change)="onVendor($event)">
+              @for (option of store.settings()?.supportedVendors ?? []; track option) {
+                <option [value]="option">{{ option }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
             <span class="field__label">Модель</span>
             <input
               class="field__input"
@@ -174,6 +192,21 @@
               [value]="model()"
               (input)="onModel($event)"
             />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Глубина размышления</span>
+            <select class="field__input" [value]="effort()" (change)="onEffort($event)">
+              @for (option of effortOptions; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+            <span class="field__hint">
+              Параметр принимают не все модели - у Haiku 4.5 его нет; при «не отправлять» он не
+              уходит вовсе. Чем выше глубина, тем большая часть потолка ответа уходит на
+              размышление: на высоких значениях полная пачка обрывается по длине, и обращение
+              оплачивается без единого вердикта.
+            </span>
           </label>
 
           <label class="field">
@@ -232,7 +265,50 @@
             >
               {{ store.isSaving() ? 'Сохраняется…' : 'Сохранить' }}
             </button>
+
+            <!-- Проверка читает настройки из базы, а не из формы: иначе проверить можно было
+                 бы одно, а сохранить другое. Отсюда и порядок кнопок, и запрет при
+                 несохранённых правках. -->
+            <button
+              type="button"
+              class="button button--ghost"
+              [disabled]="store.isChecking() || store.isSaving() || hasUnsavedChanges()"
+              (click)="checkConnection(row)"
+            >
+              {{ store.isChecking() ? 'Проверяется…' : 'Проверить связь' }}
+            </button>
           </div>
+
+          @if (hasUnsavedChanges()) {
+            <p class="field__hint">
+              Сначала сохраните: проверка идёт по настройкам из базы, а не по набранным здесь.
+            </p>
+          }
+
+          @if (store.checkResult(); as check) {
+            <div class="check">
+              <p class="check__status">{{ checkStatusLabel(check.status) }}</p>
+
+              @if (check.message) {
+                <p class="check__message">{{ check.message }}</p>
+              }
+
+              @if (check.status !== 'NotConfigured' && check.status !== 'Throttled') {
+                <p class="check__hint">
+                  {{ check.vendor }} · {{ check.model }} · глубина: {{ effortLabel(check.effort) }} ·
+                  {{ check.inputTokens }}/{{ check.outputTokens }} токенов ·
+                  {{ check.cost | usd }} · {{ check.elapsedMilliseconds }} мс
+                </p>
+              }
+
+              <!-- Дословный ответ вендора: именно он различает «модель не принимает параметр»
+                   и «такой модели нет». Интерполяцией, а не разметкой - текст пришёл с чужой
+                   стороны. -->
+              @if (check.vendorMessage) {
+                <pre class="check__vendor">{{ check.vendorMessage }}</pre>
+              }
+            </div>
+          }
         </div>
       </section>
     }

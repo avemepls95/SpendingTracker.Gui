@@ -4,7 +4,9 @@ import { Observable, firstValueFrom } from 'rxjs';
 import { AiUsageApiService } from '../../domain/api/ai-usage-api.service';
 import {
   AiCallSiteDto,
+  AiConnectionCheckResultDto,
   AiSettingsDto,
+  AiUsageKindDto,
   AiUsageLogItemDto,
   AiUsagePeriodDto,
   AiUsageSummaryDto,
@@ -29,6 +31,7 @@ export class AiUsageStore {
 
   private readonly periodSignal = signal<AiUsagePeriodDto>('Last30Days');
   private readonly callSiteSignal = signal<AiCallSiteDto | null>(null);
+  private readonly kindSignal = signal<AiUsageKindDto | null>(null);
   private readonly userIdSignal = signal<string | null>(null);
 
   private readonly summarySignal = signal<AiUsageSummaryDto | null>(null);
@@ -38,6 +41,8 @@ export class AiUsageStore {
   private readonly statusSignal = signal<AiUsageStatus>('loading');
   private readonly loadingMoreSignal = signal(false);
   private readonly savingSignal = signal(false);
+  private readonly checkingSignal = signal(false);
+  private readonly checkResultSignal = signal<AiConnectionCheckResultDto | null>(null);
 
   /**
    * Номер поколения запроса: ответ на сменённый период не должен перетирать
@@ -47,6 +52,7 @@ export class AiUsageStore {
 
   readonly period = this.periodSignal.asReadonly();
   readonly callSite = this.callSiteSignal.asReadonly();
+  readonly kind = this.kindSignal.asReadonly();
   readonly userId = this.userIdSignal.asReadonly();
   readonly summary = this.summarySignal.asReadonly();
   readonly settings = this.settingsSignal.asReadonly();
@@ -54,6 +60,8 @@ export class AiUsageStore {
   readonly status = this.statusSignal.asReadonly();
   readonly isLoadingMore = this.loadingMoreSignal.asReadonly();
   readonly isSaving = this.savingSignal.asReadonly();
+  readonly isChecking = this.checkingSignal.asReadonly();
+  readonly checkResult = this.checkResultSignal.asReadonly();
 
   readonly hasMore = computed(() => this.cursorSignal() !== null);
 
@@ -72,6 +80,7 @@ export class AiUsageStore {
           this.api.getLog({
             period: this.periodSignal(),
             callSite: this.callSiteSignal(),
+            kind: this.kindSignal(),
             userId: this.userIdSignal(),
             cursor: null,
             count: PAGE_SIZE,
@@ -110,6 +119,7 @@ export class AiUsageStore {
         this.api.getLog({
           period: this.periodSignal(),
           callSite: this.callSiteSignal(),
+          kind: this.kindSignal(),
           userId: this.userIdSignal(),
           cursor,
           count: PAGE_SIZE,
@@ -140,8 +150,13 @@ export class AiUsageStore {
     void this.load();
   }
 
-  setFilters(callSite: AiCallSiteDto | null, userId: string | null): void {
+  setFilters(
+    callSite: AiCallSiteDto | null,
+    kind: AiUsageKindDto | null,
+    userId: string | null,
+  ): void {
     this.callSiteSignal.set(callSite);
+    this.kindSignal.set(kind);
     this.userIdSignal.set(userId);
     void this.load();
   }
@@ -158,6 +173,34 @@ export class AiUsageStore {
       return false;
     } finally {
       this.savingSignal.set(false);
+    }
+  }
+
+  /**
+   * Проверка связи по сохранённым настройкам.
+   *
+   * После неё раздел перечитывается: проверка пишет строку журнала и тратит деньги, и не
+   * показать их сразу значило бы оставить на экране сумму, которая уже неверна.
+   */
+  async checkConnection(callSite: AiCallSiteDto): Promise<void> {
+    if (this.checkingSignal()) {
+      return;
+    }
+
+    this.checkingSignal.set(true);
+    this.checkResultSignal.set(null);
+
+    try {
+      const result = await this.request(() => this.api.checkConnection(callSite));
+      this.checkResultSignal.set(result);
+
+      if (result.status !== 'NotConfigured' && result.status !== 'Throttled') {
+        await this.load();
+      }
+    } catch {
+      // Отказ сервера показывает перехватчик ошибок общей плашкой.
+    } finally {
+      this.checkingSignal.set(false);
     }
   }
 
