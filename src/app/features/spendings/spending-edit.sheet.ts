@@ -17,7 +17,7 @@ import {
 import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { confirmAction } from '../../shared/ui/confirm.dialog';
 import { MarkupSourceMarkComponent } from '../../shared/ui/markup-source-mark.component';
-import { spendingsCount } from '../../shared/util/plural.util';
+import { spendingsCount, spendingsCountGenitive } from '../../shared/util/plural.util';
 import {
   CurrencyPickerData,
   CurrencyPickerSheet,
@@ -308,7 +308,8 @@ export class SpendingEditSheet {
       title: 'Отвергнуть разметку?',
       message:
         `Категория снимется со всех трат с описанием «${this.original.description}», ` +
-        `кроме размеченных вручную. ${this.rejectHint()}`,
+        'кроме размеченных вручную. Теги останутся - и у записи словаря, и на тратах. ' +
+        this.rejectHint(),
       confirmLabel: 'Отвергнуть',
       destructive: true,
     });
@@ -337,7 +338,7 @@ export class SpendingEditSheet {
 
           this.toast.success(
             result.affectedSpendings > 0
-              ? `Разметка снята с ${spendingsCount(result.affectedSpendings)}`
+              ? `Разметка снята с ${spendingsCountGenitive(result.affectedSpendings)}`
               : 'Разметка отвергнута',
           );
         }

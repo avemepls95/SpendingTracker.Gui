@@ -16,7 +16,7 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { IconComponent } from '../../shared/ui/icon.component';
 import { confirmAction } from '../../shared/ui/confirm.dialog';
 import { IntersectDirective } from '../../shared/util/intersect.directive';
-import { spendingsCount } from '../../shared/util/plural.util';
+import { spendingsCount, spendingsCountGenitive } from '../../shared/util/plural.util';
 import { MarkupDictionaryStore } from './markup-dictionary.store';
 
 interface VerdictFilter {
@@ -101,25 +101,46 @@ export class MarkupDictionaryList {
   }
 
   /**
+   * Категорию поставил сам человек, и операция снимает её же.
+   *
+   * Слово «отвергнуть» здесь читалось бы как отказ от чужого предложения,
+   * поэтому у своей разметки то же действие называется снятием категории.
+   * Операция при этом одна и та же: разными остаются только слова.
+   */
+  protected isCategoryRemoval(entry: MarkupEntry): boolean {
+    return entry.verdict === 'AssignedByUser' && entry.category !== null;
+  }
+
+  protected rejectLabel(entry: MarkupEntry): string {
+    return this.isCategoryRemoval(entry) ? 'Снять категорию' : 'Отвергнуть';
+  }
+
+  /**
    * Отказ: описание закрывается от модели, категория снимается с трат.
    *
    * Массовая операция, поэтому с подтверждением - как и удаление.
    */
   protected async reject(entry: MarkupEntry): Promise<void> {
+    const removal = this.isCategoryRemoval(entry);
+
     // У вердиктов «решения нет» и «модель не смогла» категории по построению
     // нет, снимать нечего, и обещать это в подтверждении нельзя: там отказ
     // означает ровно одно - больше не спрашивать модель.
     const message = entry.category
       ? `Категория снимется со всех трат с описанием «${entry.normalizedDescription}», ` +
-        'кроме размеченных вручную. Модель об этом описании больше не спросят, ' +
-        'пока вы не назначите категорию сами.'
+        'кроме размеченных вручную. Теги останутся - и у записи, и на тратах. ' +
+        // «Больше не спросят» уместно только там, где модель описание и правда
+        // спрашивала: у своей разметки она молчала и до снятия категории.
+        (removal
+          ? 'Модель об этом описании спрашивать не станут, пока вы не назначите категорию сами.'
+          : 'Модель об этом описании больше не спросят, пока вы не назначите категорию сами.')
       : `Модель больше не спросят про «${entry.normalizedDescription}», ` +
         'пока вы не назначите категорию сами. Теги записи останутся.';
 
     const confirmed = await confirmAction(this.sheets, this.telegram, {
-      title: 'Отвергнуть разметку?',
+      title: removal ? 'Снять категорию?' : 'Отвергнуть разметку?',
       message,
-      confirmLabel: 'Отвергнуть',
+      confirmLabel: removal ? 'Снять' : 'Отвергнуть',
       destructive: true,
     });
 
@@ -129,11 +150,15 @@ export class MarkupDictionaryList {
 
     this.run(entry, this.api.rejectMarkup({ markupId: entry.id }), (result) => {
       this.store.applyVerdictLocally(entry.id, 'RejectedByUser');
+      // Плашка повторяет слова кнопки: «отвергнуто» после «Снять категорию»
+      // читалось бы как другая операция.
       this.report(
         entry,
         result.affectedSpendings > 0
-          ? `разметка снята с ${spendingsCount(result.affectedSpendings)}`
-          : 'отвергнуто',
+          ? `${removal ? 'категория' : 'разметка'} снята с ${spendingsCountGenitive(result.affectedSpendings)}`
+          : removal
+            ? 'категория снята'
+            : 'отвергнуто',
       );
     });
   }
@@ -164,7 +189,7 @@ export class MarkupDictionaryList {
       this.report(
         entry,
         result.affectedSpendings > 0
-          ? `удалено, разметка снята с ${spendingsCount(result.affectedSpendings)}`
+          ? `удалено, разметка снята с ${spendingsCountGenitive(result.affectedSpendings)}`
           : 'удалено',
       );
     });

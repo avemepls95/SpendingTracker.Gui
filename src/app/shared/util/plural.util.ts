@@ -28,7 +28,24 @@ export function plural(value: number, forms: PluralForms): string {
 
 const SPENDING_FORMS: PluralForms = ['трата', 'траты', 'трат'];
 
+/**
+ * Формы для чисел 2-4 и 5+ совпадают не случайно: после предлога, требующего
+ * косвенного падежа, множественное число идёт родительным при любом числе,
+ * кроме оканчивающегося на «один», - «с 2 трат», а не «с 2 траты».
+ */
+const SPENDING_GENITIVE_FORMS: PluralForms = ['траты', 'трат', 'трат'];
+
 /** «1 трата», «4 траты», «12 трат» - число вместе с согласованным словом. */
 export function spendingsCount(value: number): string {
   return `${value} ${plural(value, SPENDING_FORMS)}`;
+}
+
+/**
+ * То же в родительном падеже: «с 1 траты», «с 4 трат».
+ *
+ * Отдельная форма нужна предлогам: именительный после «снята с» дал бы
+ * «снята с 4 траты».
+ */
+export function spendingsCountGenitive(value: number): string {
+  return `${value} ${plural(value, SPENDING_GENITIVE_FORMS)}`;
 }

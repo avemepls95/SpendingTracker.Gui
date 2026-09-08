@@ -133,7 +133,7 @@
                     [disabled]="busyId() === entry.id"
                     (click)="reject(entry)"
                   >
-                    Отвергнуть
+                    {{ rejectLabel(entry) }}
                   </button>
                 }
 
