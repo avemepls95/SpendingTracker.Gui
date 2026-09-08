@@ -1,0 +1,204 @@
+<div class="ranges" role="group" aria-label="Глубина отчёта">
+  @for (item of ranges; track item.id) {
+    <button
+      type="button"
+      class="chip"
+      [class.chip--selected]="range() === item.id"
+      [attr.aria-pressed]="range() === item.id"
+      (click)="selectRange(item.id)"
+    >
+      {{ item.label }}
+    </button>
+  }
+</div>
+
+<div class="regular-tags">
+  <span class="regular-tags__label">Считать регулярными</span>
+
+  @for (tag of regularTags(); track tag.id) {
+    <span class="chip chip--selected regular-tags__chip">
+      {{ tag.title }}
+      <button
+        type="button"
+        class="regular-tags__remove"
+        [attr.aria-label]="'Убрать тег регулярности ' + tag.title"
+        (click)="removeRegularTag(tag)"
+      >
+        <app-icon name="close" />
+      </button>
+    </span>
+  }
+
+  <button type="button" class="chip regular-tags__add" (click)="addRegularTag()">
+    <app-icon name="plus" />
+    Тег
+  </button>
+</div>
+
+@switch (status()) {
+  @case ('loading') {
+    <div class="content" aria-busy="true">
+      <div class="chart-skeleton">
+        @for (column of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; track column) {
+          <span
+            class="skeleton chart-skeleton__column"
+            [style.height.%]="30 + ((column * 37) % 60)"
+          ></span>
+        }
+      </div>
+    </div>
+  }
+
+  @case ('error') {
+    <app-empty-state
+      icon="alert-circle"
+      title="Не удалось построить отчёт"
+      hint="Проверьте связь и попробуйте ещё раз."
+    >
+      <button type="button" class="btn btn--primary" (click)="retry()">Повторить</button>
+    </app-empty-state>
+  }
+
+  @default {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="chart"
+        title="Пока не из чего строить ряд"
+        hint="В отчёт входят только закрытые месяцы, а текущий не считается. Он появится здесь первого числа следующего месяца."
+      />
+    } @else {
+      <div class="content">
+        <section class="chart-card">
+          <div class="chart-scroll">
+            <div class="chart" [style.--median-height.%]="medianHeight()">
+              @if (medianHeight() > 0) {
+                <span class="chart__median" aria-hidden="true"></span>
+              }
+
+              @for (column of months(); track column.key) {
+                <div
+                  class="chart__column"
+                  [attr.title]="
+                    column.label +
+                    ': ' +
+                    (column.totalAmount | money) +
+                    ' ' +
+                    currencyCode()
+                  "
+                >
+                  <span
+                    class="chart__segment chart__segment--one-time"
+                    [style.height.%]="column.oneTimeHeight"
+                  ></span>
+                  <span
+                    class="chart__segment chart__segment--regular"
+                    [style.height.%]="column.regularHeight"
+                  ></span>
+                </div>
+              }
+            </div>
+
+            <div class="axis">
+              @for (column of months(); track column.key) {
+                <div class="axis__item">
+                  <span class="axis__month">{{ column.label }}</span>
+                  @if (column.yearLabel; as year) {
+                    <span class="axis__year">{{ year }}</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="legend">
+            <span class="legend__item">
+              <i class="legend__mark legend__mark--regular"></i>
+              Регулярные
+            </span>
+            <span class="legend__item">
+              <i class="legend__mark legend__mark--one-time"></i>
+              Разовые
+            </span>
+            <span class="legend__count">{{ months().length }} мес.</span>
+          </div>
+        </section>
+
+        <section class="summary-card">
+          <table class="summary">
+            <caption class="summary__caption">
+              Суммы в {{ currencyCode() }}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col"></th>
+                <th scope="col">Всего</th>
+                <th scope="col">Регулярные</th>
+                <th scope="col">Разовые</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of summaryRows(); track row.label) {
+                <tr>
+                  <th scope="row">{{ row.label }}</th>
+                  <td>
+                    <span class="amount">{{ row.total.amount | money }}</span>
+                    @if (row.total.month; as month) {
+                      <small class="summary__month">{{ month }}</small>
+                    }
+                  </td>
+                  <td>
+                    <span class="amount">{{ row.regular.amount | money }}</span>
+                    @if (row.regular.month; as month) {
+                      <small class="summary__month">{{ month }}</small>
+                    }
+                  </td>
+                  <td>
+                    <span class="amount">{{ row.oneTime.amount | money }}</span>
+                    @if (row.oneTime.month; as month) {
+                      <small class="summary__month">{{ month }}</small>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          <div class="share" aria-hidden="true">
+            <span class="share__regular" [style.width.%]="regularShare()"></span>
+          </div>
+          <p class="hint">
+            Регулярные - {{ regularShare() }}% расходов. Медианы разрезов не
+            складываются в медиану итога: они берутся от разных месяцев.
+          </p>
+        </section>
+
+        @if (breakdownRows().length > 0) {
+          <section class="breakdown-card">
+            <h2 class="breakdown__title">Из чего складывается регулярное</h2>
+
+            <ul class="bars">
+              @for (row of breakdownRows(); track row.key) {
+                <li class="bar">
+                  <span class="bar__head">
+                    <span class="bar__title truncate" [class.bar__title--tagged]="row.isTagged">
+                      {{ row.title }}
+                    </span>
+                    <span class="bar__amount amount">{{ row.amount | money }}</span>
+                  </span>
+                  <span class="bar__track">
+                    <span class="bar__fill" [style.width.%]="row.width"></span>
+                  </span>
+                </li>
+              }
+            </ul>
+
+            <p class="hint">
+              Суммы - вклад в среднемесячные расходы, а не размер платежа:
+              расписание, прожившее часть периода, показывает долю от своего.
+            </p>
+          </section>
+        }
+      </div>
+    }
+  }
+}

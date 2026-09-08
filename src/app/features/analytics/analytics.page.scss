@@ -23,11 +23,21 @@
 .views {
   display: flex;
   gap: var(--sp-2);
+  // Три разреза с иконками не помещаются в 375px, поэтому ряд прокручивается
+  // вбок - так же, как ряд пресетов выше. Прокрутка живёт внутри ряда:
+  // страница по горизонтали не двигается.
+  overflow-x: auto;
+  scrollbar-width: none;
   max-width: var(--content-max);
   margin: 0 auto;
   padding: 0 var(--sp-4) var(--sp-3);
 
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
   .chip {
+    flex: none;
     --icon-size: 15px;
   }
 }

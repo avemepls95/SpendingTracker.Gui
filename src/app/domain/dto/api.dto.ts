@@ -184,3 +184,38 @@ export interface TagAnalyticsDto {
   readonly untaggedAmount?: number | null;
   readonly tagInfos?: readonly TagAnalyticsItemDto[] | null;
 }
+
+export interface MonthlyAnalyticsMonthDto {
+  readonly year: number;
+  readonly month: number;
+  readonly totalAmount: number;
+  readonly regularAmount: number;
+  readonly oneTimeAmount: number;
+}
+
+export interface MonthlyAnalyticsExtremumDto {
+  readonly year: number;
+  readonly month: number;
+  readonly amount: number;
+}
+
+export interface MonthlyAnalyticsSummaryDto {
+  readonly average: number;
+  readonly median: number;
+  readonly min?: MonthlyAnalyticsExtremumDto | null;
+  readonly max?: MonthlyAnalyticsExtremumDto | null;
+}
+
+export interface MonthlyAnalyticsScheduleItemDto {
+  readonly scheduleId?: string | null;
+  readonly description?: string | null;
+  readonly averageAmount: number;
+}
+
+export interface MonthlyAnalyticsDto {
+  readonly months?: readonly MonthlyAnalyticsMonthDto[] | null;
+  readonly total?: MonthlyAnalyticsSummaryDto | null;
+  readonly regular?: MonthlyAnalyticsSummaryDto | null;
+  readonly oneTime?: MonthlyAnalyticsSummaryDto | null;
+  readonly regularBreakdown?: readonly MonthlyAnalyticsScheduleItemDto[] | null;
+}

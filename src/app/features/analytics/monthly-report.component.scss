@@ -1,0 +1,337 @@
+// Ряды управления держат ту же колонку, что и отчёт: он ограничен
+// --content-max и центрирован, иначе чипы уезжают к краю экрана.
+.ranges {
+  display: flex;
+  gap: var(--sp-2);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--sp-4) var(--sp-3);
+
+  .chip {
+    flex: none;
+  }
+}
+
+.regular-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--sp-4) var(--sp-3);
+}
+
+.regular-tags__label {
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
+}
+
+.regular-tags__chip {
+  padding-right: var(--sp-1);
+}
+
+.regular-tags__remove {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-full);
+  color: inherit;
+  --icon-size: 12px;
+
+  // Видимая кнопка мельче минимальной площади касания, поэтому цель
+  // расширяется псевдоэлементом, а не размером самой кнопки.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: var(--tap-min);
+    height: var(--tap-min);
+    transform: translate(-50%, -50%);
+  }
+}
+
+.regular-tags__add {
+  --icon-size: 14px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--sp-4) var(--sp-6);
+}
+
+.chart-card,
+.summary-card,
+.breakdown-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+}
+
+// ------------------------------------------------------------ диаграмма
+
+// По оси идёт время, поэтому столбцы вертикальные. На узком экране ряд из 24
+// месяцев не помещается, и прокрутка живёт внутри карточки: страница по
+// горизонтали не двигается.
+.chart-scroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.chart {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-1);
+  height: 168px;
+  min-width: 100%;
+}
+
+.chart__column {
+  display: flex;
+  flex: 1 0 14px;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.chart__segment {
+  display: block;
+  width: 100%;
+}
+
+.chart__segment--regular {
+  background: var(--c-accent);
+}
+
+// Разовые светлее регулярных и лежат сверху: разделение читается как «сверх
+// обязательного», а не как две независимые величины.
+.chart__segment--one-time {
+  background: color-mix(in srgb, var(--c-accent) 38%, transparent);
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+}
+
+.chart__median {
+  position: absolute;
+  right: 0;
+  bottom: var(--median-height, 0%);
+  left: 0;
+  border-top: 1px dashed var(--c-border-strong);
+}
+
+.axis {
+  display: flex;
+  gap: var(--sp-1);
+  min-width: 100%;
+  margin-top: var(--sp-1);
+}
+
+.axis__item {
+  display: flex;
+  flex: 1 0 14px;
+  flex-direction: column;
+  align-items: center;
+  font-size: var(--fs-xs);
+  color: var(--c-text-3);
+  line-height: var(--lh-tight);
+}
+
+.axis__year {
+  font-size: 0.625rem;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
+}
+
+.legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.legend__mark {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.legend__mark--regular {
+  background: var(--c-accent);
+}
+
+.legend__mark--one-time {
+  background: color-mix(in srgb, var(--c-accent) 38%, transparent);
+}
+
+.legend__count {
+  margin-left: auto;
+  color: var(--c-text-3);
+}
+
+// ------------------------------------------------------------ агрегаты
+
+.summary {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.summary__caption {
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--c-text-3);
+  text-align: left;
+}
+
+.summary th,
+.summary td {
+  padding: var(--sp-2) 0 var(--sp-2) var(--sp-3);
+  text-align: right;
+  border-bottom: 1px solid var(--c-border);
+  white-space: nowrap;
+}
+
+.summary thead th {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--c-text-2);
+}
+
+.summary tbody th {
+  padding-left: 0;
+  font-weight: var(--fw-regular);
+  color: var(--c-text-2);
+  text-align: left;
+}
+
+.summary tbody td {
+  font-weight: var(--fw-semibold);
+}
+
+.summary tbody tr:last-child th,
+.summary tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.summary__month {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-regular);
+  color: var(--c-text-3);
+}
+
+.share {
+  display: flex;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--c-accent) 38%, transparent);
+}
+
+.share__regular {
+  background: var(--c-accent);
+}
+
+// ------------------------------------------------------------ разбивка
+
+.breakdown__title {
+  font-size: var(--fs-title);
+  font-weight: var(--fw-semibold);
+}
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.bar__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+.bar__title {
+  flex: 1;
+  min-width: 0;
+}
+
+// Строка без расписания собрана по тегу, а не по конкретной подписке:
+// курсив отличает её от названий расписаний.
+.bar__title--tagged {
+  color: var(--c-text-2);
+  font-style: italic;
+}
+
+.bar__amount {
+  flex: none;
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.bar__track {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--r-full);
+  background: var(--c-surface-2);
+}
+
+.bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-full);
+  background: var(--c-accent);
+}
+
+.hint {
+  font-size: var(--fs-xs);
+  color: var(--c-text-3);
+  line-height: var(--lh-normal);
+}
+
+// ------------------------------------------------------------ загрузка
+
+.chart-skeleton {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-1);
+  height: 168px;
+  padding: var(--sp-4);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+}
+
+.chart-skeleton__column {
+  flex: 1;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+}

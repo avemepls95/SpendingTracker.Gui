@@ -261,6 +261,65 @@ export interface TagAnalytics {
   readonly tags: readonly TagAnalyticsItem[];
 }
 
+/** Один месяц помесячного отчёта. */
+export interface MonthlyAnalyticsMonth {
+  readonly year: number;
+
+  /** Номер месяца от 1 до 12, как его отдаёт сервер. */
+  readonly month: number;
+
+  readonly totalAmount: number;
+  readonly regularAmount: number;
+  readonly oneTimeAmount: number;
+}
+
+/** Крайний месяц разреза. */
+export interface MonthlyAnalyticsExtremum {
+  readonly year: number;
+  readonly month: number;
+  readonly amount: number;
+}
+
+/**
+ * Агрегаты одного разреза по ряду месяцев.
+ *
+ * Медианы разрезов не складываются в медиану итога: они берутся от разных
+ * месяцев. Складываются только средние.
+ */
+export interface MonthlyAnalyticsSummary {
+  readonly average: number;
+  readonly median: number;
+
+  /** null - ряд пуст. */
+  readonly min: MonthlyAnalyticsExtremum | null;
+  readonly max: MonthlyAnalyticsExtremum | null;
+}
+
+/** Строка разбивки регулярного. */
+export interface MonthlyAnalyticsScheduleItem {
+  /** null - строка собирает регулярные траты без расписания, пойманные тегом. */
+  readonly scheduleId: string | null;
+
+  /**
+   * Описание расписания. null означает два разных случая, и различает их
+   * scheduleId: он пуст у строки без расписания и заполнен, если расписание
+   * удалено, а его траты остались.
+   */
+  readonly description: string | null;
+
+  /** Вклад строки в среднемесячные расходы, а не размер платежа. */
+  readonly averageAmount: number;
+}
+
+export interface MonthlyAnalytics {
+  /** Полные месяцы от старых к свежим. Текущий месяц сервер сюда не кладёт. */
+  readonly months: readonly MonthlyAnalyticsMonth[];
+  readonly total: MonthlyAnalyticsSummary;
+  readonly regular: MonthlyAnalyticsSummary;
+  readonly oneTime: MonthlyAnalyticsSummary;
+  readonly regularBreakdown: readonly MonthlyAnalyticsScheduleItem[];
+}
+
 /** Подписи и признаки типов счетов. */
 export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   DebitCard: 'Дебетовая карта',

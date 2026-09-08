@@ -11,6 +11,7 @@ import {
   CurrencyDto,
   MarkupOperationResultDto,
   MarkupsPageDto,
+  MonthlyAnalyticsDto,
   SpendingDto,
   SpendingsPageDto,
   TagAnalyticsDto,
@@ -25,6 +26,7 @@ import {
   toCurrency,
   toMarkupOperationResult,
   toMarkupsPage,
+  toMonthlyAnalytics,
   toSpending,
   toSpendingsPage,
   toTag,
@@ -40,6 +42,7 @@ import {
   MarkupOperationResult,
   MarkupVerdict,
   MarkupsPage,
+  MonthlyAnalytics,
   Spending,
   SpendingsPageResult,
   Tag,
@@ -475,6 +478,39 @@ export class SpendingApiService {
         params: this.analyticsParams(dateFrom, dateTo, targetCurrencyId, tagIds),
       })
       .pipe(map(toTagAnalytics));
+  }
+
+  /**
+   * Помесячный отчёт.
+   *
+   * Границы задаются месяцами, а не датами: день сервер игнорирует, поэтому
+   * достаточно послать первое число. Он же выкидывает незакрытый месяц и
+   * подрезает начало ряда по первой трате - фронту довольно послать заведомо
+   * раннюю границу, чтобы получить «всё время».
+   */
+  getMonthlyAnalytics(
+    monthFrom: Date,
+    monthTo: Date,
+    targetCurrencyId: string,
+    tagIds: readonly string[] = [],
+    regularTagIds: readonly string[] = [],
+  ): Observable<MonthlyAnalytics> {
+    let params = new HttpParams()
+      .set('monthFrom', formatApiDate(monthFrom))
+      .set('monthTo', formatApiDate(monthTo))
+      .set('targetCurrencyId', targetCurrencyId);
+
+    for (const tagId of tagIds) {
+      params = params.append('tagIds', tagId);
+    }
+
+    for (const tagId of regularTagIds) {
+      params = params.append('regularTagIds', tagId);
+    }
+
+    return this.http
+      .get<MonthlyAnalyticsDto>(this.url('v1/analytics/monthly'), { params })
+      .pipe(map(toMonthlyAnalytics));
   }
 
   /** Теги передаются повторяющимся параметром: так их принимает привязка модели. */

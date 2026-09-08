@@ -41,12 +41,13 @@ import {
   CategorySpendingsData,
   CategorySpendingsSheet,
 } from './category-spendings.sheet';
+import { MonthlyReportComponent } from './monthly-report.component';
 
 type Status = 'loading' | 'ready' | 'error' | 'no-currency';
 export type PeriodPreset = 'month' | 'prevMonth' | 'quarter' | 'year' | 'custom';
 
-/** Разрез отчёта: дерево категорий или плоский список тегов. */
-export type AnalyticsView = 'categories' | 'tags';
+/** Разрез отчёта: дерево категорий, плоский список тегов или ряд месяцев. */
+export type AnalyticsView = 'categories' | 'tags' | 'months';
 
 interface Period {
   readonly from: Date;
@@ -110,6 +111,7 @@ const DATE_INPUT_DEBOUNCE_MS = 400;
     IconComponent,
     MoneyPipe,
     RouterLink,
+    MonthlyReportComponent,
   ],
   templateUrl: './analytics.page.html',
   styleUrl: './analytics.page.scss',
@@ -176,6 +178,12 @@ export class AnalyticsPage implements OnDestroy {
   protected readonly currencyCode = computed(() =>
     this.currencies.codeOf(this.settings.viewCurrencyId()),
   );
+
+  protected readonly filterTagIds = computed(() =>
+    this.selectedTags().map((tag) => tag.id),
+  );
+
+  protected readonly viewCurrencyId = this.settings.viewCurrencyId;
 
   protected readonly total = computed(() =>
     this.view() === 'categories'
@@ -292,14 +300,23 @@ export class AnalyticsPage implements OnDestroy {
       const view = this.view();
       const tagIds = this.selectedTags().map((tag) => tag.id);
 
-      if (currencyId) {
-        this.load(period, currencyId, view, tagIds);
+      if (!currencyId) {
+        if (this.settings.isLoaded()) {
+          this.status.set('no-currency');
+        }
+
         return;
       }
 
-      if (this.settings.isLoaded()) {
-        this.status.set('no-currency');
+      // Помесячный разрез ходит за данными сам: у него свой период и свой
+      // запрос. Странице остаётся только проверка валюты сводки, общая для
+      // всех разрезов.
+      if (view === 'months') {
+        this.status.set('ready');
+        return;
       }
+
+      this.load(period, currencyId, view, tagIds);
     });
   }
 

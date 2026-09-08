@@ -8,6 +8,11 @@ import {
   MarkupDto,
   MarkupOperationResultDto,
   MarkupsPageDto,
+  MonthlyAnalyticsDto,
+  MonthlyAnalyticsExtremumDto,
+  MonthlyAnalyticsMonthDto,
+  MonthlyAnalyticsScheduleItemDto,
+  MonthlyAnalyticsSummaryDto,
   ScheduleSpendingDto,
   SpendingDto,
   SpendingsPageDto,
@@ -34,6 +39,11 @@ import {
   MarkupOperationResult,
   MarkupVerdict,
   MarkupsPage,
+  MonthlyAnalytics,
+  MonthlyAnalyticsExtremum,
+  MonthlyAnalyticsMonth,
+  MonthlyAnalyticsScheduleItem,
+  MonthlyAnalyticsSummary,
   RECURRENCE_KINDS,
   RecurrenceKind,
   SPENDING_CATEGORY_SOURCES,
@@ -275,6 +285,57 @@ function toTagAnalyticsItem(dto: TagAnalyticsItemDto): TagAnalyticsItem {
     tagTitle: dto.tagTitle,
     group: dto.group ?? null,
     amount: dto.amount ?? 0,
+  };
+}
+
+export function toMonthlyAnalytics(dto: MonthlyAnalyticsDto): MonthlyAnalytics {
+  return {
+    months: (dto.months ?? []).map(toMonthlyAnalyticsMonth),
+    total: toMonthlyAnalyticsSummary(dto.total),
+    regular: toMonthlyAnalyticsSummary(dto.regular),
+    oneTime: toMonthlyAnalyticsSummary(dto.oneTime),
+    regularBreakdown: (dto.regularBreakdown ?? []).map(toMonthlyAnalyticsScheduleItem),
+  };
+}
+
+function toMonthlyAnalyticsMonth(dto: MonthlyAnalyticsMonthDto): MonthlyAnalyticsMonth {
+  return {
+    year: dto.year,
+    month: dto.month,
+    totalAmount: dto.totalAmount ?? 0,
+    regularAmount: dto.regularAmount ?? 0,
+    oneTimeAmount: dto.oneTimeAmount ?? 0,
+  };
+}
+
+/**
+ * Пустой разрез - это ряд без месяцев, а не отсутствующие данные, поэтому
+ * средние и медиана в нём нули, а крайние месяцы отсутствуют.
+ */
+function toMonthlyAnalyticsSummary(
+  dto: MonthlyAnalyticsSummaryDto | null | undefined,
+): MonthlyAnalyticsSummary {
+  return {
+    average: dto?.average ?? 0,
+    median: dto?.median ?? 0,
+    min: toMonthlyAnalyticsExtremum(dto?.min),
+    max: toMonthlyAnalyticsExtremum(dto?.max),
+  };
+}
+
+function toMonthlyAnalyticsExtremum(
+  dto: MonthlyAnalyticsExtremumDto | null | undefined,
+): MonthlyAnalyticsExtremum | null {
+  return dto ? { year: dto.year, month: dto.month, amount: dto.amount ?? 0 } : null;
+}
+
+function toMonthlyAnalyticsScheduleItem(
+  dto: MonthlyAnalyticsScheduleItemDto,
+): MonthlyAnalyticsScheduleItem {
+  return {
+    scheduleId: dto.scheduleId ?? null,
+    description: dto.description ?? null,
+    averageAmount: dto.averageAmount ?? 0,
   };
 }
 
