@@ -24,6 +24,8 @@ import {
   TagPickerResult,
   TagPickerSheet,
 } from '../../shared/ui/tag-picker.sheet';
+import { MIN_VISIBLE_AMOUNT } from './analytics.constants';
+import { MonthDetailsData, MonthDetailsSheet } from './month-details.sheet';
 
 type Status = 'loading' | 'ready' | 'error';
 
@@ -33,7 +35,14 @@ export type MonthlyRange = 'year' | 'twoYears' | 'all';
 /** Столбец диаграммы. */
 export interface MonthColumn {
   readonly key: string;
+  readonly year: number;
+  readonly month: number;
+
+  /** Короткая подпись под столбцом. */
   readonly label: string;
+
+  /** Полное название месяца с годом - для шторки и для скринридера. */
+  readonly fullLabel: string;
 
   /** Подпись года под первым месяцем года: иначе ось повторяет год в каждом столбце. */
   readonly yearLabel: string | null;
@@ -80,9 +89,6 @@ export interface BreakdownRow {
 
 type TagFilterItem = Pick<Tag, 'id' | 'title'>;
 
-/** Суммы ниже копейки - шум округления, а не траты. */
-const MIN_VISIBLE_AMOUNT = 0.01;
-
 /** Заведомо ранняя граница для «всего времени»: сервер подрежет её по первой трате. */
 const EARLIEST_MONTH = new Date(2000, 0, 1);
 
@@ -99,6 +105,21 @@ const MONTH_LABELS = [
   'окт',
   'ноя',
   'дек',
+];
+
+const MONTH_FULL_LABELS = [
+  'Январь',
+  'Февраль',
+  'Март',
+  'Апрель',
+  'Май',
+  'Июнь',
+  'Июль',
+  'Август',
+  'Сентябрь',
+  'Октябрь',
+  'Ноябрь',
+  'Декабрь',
 ];
 
 /**
@@ -154,7 +175,10 @@ export class MonthlyReportComponent {
 
       return {
         key: `${item.year}-${item.month}`,
+        year: item.year,
+        month: item.month,
         label: MONTH_LABELS[item.month - 1] ?? String(item.month),
+        fullLabel: `${MONTH_FULL_LABELS[item.month - 1] ?? item.month} ${item.year}`,
         yearLabel: !previous || previous.year !== item.year ? String(item.year) : null,
         totalAmount: item.totalAmount,
         regularAmount: item.regularAmount,
@@ -262,6 +286,32 @@ export class MonthlyReportComponent {
 
   protected selectRange(range: MonthlyRange): void {
     this.range.set(range);
+  }
+
+  protected openMonth(column: MonthColumn): void {
+    const data = this.analytics();
+    if (!data) {
+      return;
+    }
+
+    this.sheets.openSheet<void, MonthDetailsData>(
+      MonthDetailsSheet,
+      {
+        title: column.fullLabel,
+        dateFrom: new Date(column.year, column.month - 1, 1),
+        // Нулевой день следующего месяца - последний день текущего, включая
+        // февраль високосного года.
+        dateTo: new Date(column.year, column.month, 0),
+        totalAmount: column.totalAmount,
+        regularAmount: column.regularAmount,
+        oneTimeAmount: column.oneTimeAmount,
+        medianAmount: data.total.median,
+        targetCurrencyId: this.currencyId(),
+        currencyCode: this.currencyCode(),
+        tagIds: this.tagIds(),
+      },
+      { ariaLabel: `Траты за ${column.fullLabel}` },
+    );
   }
 
   protected addRegularTag(): void {

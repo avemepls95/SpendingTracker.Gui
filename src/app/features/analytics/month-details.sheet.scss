@@ -1,0 +1,112 @@
+.head {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: var(--sp-2);
+}
+
+.head__title {
+  padding-left: 0;
+}
+
+.head__amount {
+  font-size: var(--fs-sm);
+  color: var(--c-text-2);
+}
+
+// Три числа месяца стоят рядом: они отвечают на один вопрос - из чего он
+// сложился и чем отличается от обычного.
+.facts {
+  display: flex;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+
+.fact {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fact__label {
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
+}
+
+.fact__value {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+// Цветом выделено только отклонение: дороже обычного - предупреждающий,
+// дешевле - спокойный. Суммы месяца остаются нейтральными, иначе цвет читался
+// бы как оценка самих трат.
+.fact__value--above {
+  color: var(--c-warning);
+}
+
+.fact__value--below {
+  color: var(--c-success);
+}
+
+.fact__value--muted {
+  font-weight: var(--fw-regular);
+  color: var(--c-text-2);
+}
+
+.row {
+  gap: var(--sp-3);
+  align-items: center;
+}
+
+// Строка категории ведёт к её тратам, строка «без категории» никуда не ведёт.
+// Размеры, выравнивание и подсветка нажатия достаются от глобального
+// .panel__row - здесь только шеврон.
+.row--action {
+  --icon-size: 16px;
+
+  // Приглушён только шеврон: цвет на всей строке утащил бы за собой и сумму.
+  app-icon {
+    color: var(--c-text-3);
+  }
+}
+
+.row__title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+}
+
+.row__title--muted {
+  color: var(--c-text-2);
+  font-style: italic;
+}
+
+.row__share {
+  flex: none;
+  font-size: var(--fs-xs);
+  color: var(--c-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.row__amount {
+  flex: none;
+  font-size: var(--fs-sm);
+  text-align: right;
+}
+
+.row__skeleton-title {
+  flex: 1;
+  height: 12px;
+}
+
+.row__skeleton-amount {
+  width: 56px;
+  height: 12px;
+}

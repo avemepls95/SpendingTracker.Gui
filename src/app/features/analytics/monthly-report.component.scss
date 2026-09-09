@@ -102,12 +102,22 @@
   min-width: 100%;
 }
 
+// Столбец ведёт к разбору месяца. Базис маленький, а рост общий: год
+// растягивается на всю ширину карточки, и только более длинный ряд упирается
+// в базис и уезжает в прокрутку. До --tap-min по ширине это не дотягивает
+// осознанно - столбцы в 44px оставили бы на телефоне шесть месяцев из
+// двенадцати, и ряд перестал бы читаться рядом. По высоте цель во всю
+// диаграмму.
 .chart__column {
   display: flex;
-  flex: 1 0 14px;
+  flex: 1 0 20px;
   flex-direction: column;
   justify-content: flex-end;
   height: 100%;
+
+  &:active .chart__segment {
+    opacity: 0.6;
+  }
 }
 
 .chart__segment {
@@ -141,9 +151,10 @@
   margin-top: var(--sp-1);
 }
 
+// Ширина повторяет столбец: иначе подписи разъезжаются с диаграммой.
 .axis__item {
   display: flex;
-  flex: 1 0 14px;
+  flex: 1 0 20px;
   flex-direction: column;
   align-items: center;
   font-size: var(--fs-xs);

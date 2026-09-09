@@ -37,6 +37,7 @@ import {
   parseApiDate,
   startOfDay,
 } from '../../shared/util/date.util';
+import { MIN_VISIBLE_AMOUNT } from './analytics.constants';
 import {
   CategorySpendingsData,
   CategorySpendingsSheet,
@@ -94,9 +95,6 @@ export interface TagRow {
  * выдавать выдумку за состояние тега.
  */
 type TagFilterItem = Pick<Tag, 'id' | 'title'>;
-
-/** Суммы ниже копейки в отчёте - шум округления, а не траты. */
-const MIN_VISIBLE_AMOUNT = 0.01;
 
 /** Пауза между правкой даты и запросом отчёта. */
 const DATE_INPUT_DEBOUNCE_MS = 400;

@@ -76,15 +76,17 @@
               }
 
               @for (column of months(); track column.key) {
-                <div
+                <button
+                  type="button"
                   class="chart__column"
-                  [attr.title]="
-                    column.label +
+                  [attr.aria-label]="
+                    column.fullLabel +
                     ': ' +
                     (column.totalAmount | money) +
                     ' ' +
                     currencyCode()
                   "
+                  (click)="openMonth(column)"
                 >
                   <span
                     class="chart__segment chart__segment--one-time"
@@ -94,7 +96,7 @@
                     class="chart__segment chart__segment--regular"
                     [style.height.%]="column.regularHeight"
                   ></span>
-                </div>
+                </button>
               }
             </div>
 
