@@ -230,12 +230,7 @@
               <ul class="bars">
                 @for (row of tagRows(); track row.tagId) {
                   <li class="bar">
-                    <button
-                      type="button"
-                      class="bar__button"
-                      [attr.aria-pressed]="row.isSelected"
-                      (click)="toggleTagFilter(row)"
-                    >
+                    <button type="button" class="bar__button" (click)="openTag(row)">
                       <span class="bar__head">
                         <span class="bar__title truncate">
                           {{ row.title }}
@@ -269,7 +264,7 @@
                    строку целиком: сумма строк не обязана сходиться с итогом. -->
               <p class="hint">
                 Трата с несколькими тегами учтена в каждом из них, поэтому сумма
-                строк может превышать итог. Нажмите тег, чтобы сузить отчёт.
+                строк может превышать итог. Нажмите тег, чтобы посмотреть траты с ним.
               </p>
             }
           }

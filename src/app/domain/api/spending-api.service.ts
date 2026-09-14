@@ -78,7 +78,10 @@ export interface MarkupsQuery {
 
 export interface FilteredSpendingsQuery {
   readonly targetCurrencyId: string;
-  readonly categoryId: string;
+  /** null - без отбора по категории. */
+  readonly categoryId: string | null;
+  /** Теги отбора: трата обязана нести их все, считая унаследованные. */
+  readonly tagIds: readonly string[];
   readonly dateFrom: Date;
   readonly dateTo: Date;
 }
@@ -152,11 +155,18 @@ export class SpendingApiService {
   }
 
   getFilteredSpendings(query: FilteredSpendingsQuery): Observable<readonly Spending[]> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('targetCurrencyId', query.targetCurrencyId)
-      .set('categoryId', query.categoryId)
       .set('dateFrom', formatApiDate(query.dateFrom))
       .set('dateTo', formatApiDate(query.dateTo));
+
+    if (query.categoryId) {
+      params = params.set('categoryId', query.categoryId);
+    }
+
+    for (const tagId of query.tagIds) {
+      params = params.append('tagIds', tagId);
+    }
 
     return this.http
       .get<readonly SpendingDto[]>(this.url('v1/spending/filtered-list'), { params })

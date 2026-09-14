@@ -9,10 +9,7 @@ import { IconComponent } from '../../shared/ui/icon.component';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
 import { MIN_VISIBLE_AMOUNT } from './analytics.constants';
-import {
-  CategorySpendingsData,
-  CategorySpendingsSheet,
-} from './category-spendings.sheet';
+import { ReportSpendingsData, ReportSpendingsSheet } from './report-spendings.sheet';
 
 export interface MonthDetailsData {
   /** Название месяца в шапке, например «Март 2026». */
@@ -242,10 +239,11 @@ export class MonthDetailsSheet {
       return;
     }
 
-    this.sheets.openSheet<void, CategorySpendingsData>(
-      CategorySpendingsSheet,
+    this.sheets.openSheet<void, ReportSpendingsData>(
+      ReportSpendingsSheet,
       {
         categoryId: row.categoryId,
+        tagIds: this.data.tagIds,
         title: row.title,
         amount: row.amount,
         dateFrom: this.data.dateFrom,

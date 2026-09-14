@@ -38,11 +38,8 @@ import {
   startOfDay,
 } from '../../shared/util/date.util';
 import { MIN_VISIBLE_AMOUNT } from './analytics.constants';
-import {
-  CategorySpendingsData,
-  CategorySpendingsSheet,
-} from './category-spendings.sheet';
 import { MonthlyReportComponent } from './monthly-report.component';
+import { ReportSpendingsData, ReportSpendingsSheet } from './report-spendings.sheet';
 
 type Status = 'loading' | 'ready' | 'error' | 'no-currency';
 export type PeriodPreset = 'month' | 'prevMonth' | 'quarter' | 'year' | 'custom';
@@ -367,20 +364,30 @@ export class AnalyticsPage implements OnDestroy {
     );
   }
 
-  /** Нажатие на строку тега сужает отчёт до этого тега. */
-  protected toggleTagFilter(row: TagRow): void {
-    if (row.isSelected) {
-      this.selectedTags.update((current) =>
-        current.filter((item) => item.id !== row.tagId),
-      );
+  /**
+   * Траты строки тега.
+   *
+   * Строка считана под фильтром отчёта, поэтому и траты берутся под ним же:
+   * иначе список не сошёлся бы с суммой строки.
+   */
+  protected openTag(row: TagRow): void {
+    const period = this.period();
+    const filterTagIds = this.filterTagIds();
 
-      return;
-    }
-
-    this.selectedTags.update((current) => [
-      ...current,
-      { id: row.tagId, title: row.title },
-    ]);
+    this.sheets.openSheet<void, ReportSpendingsData>(
+      ReportSpendingsSheet,
+      {
+        categoryId: null,
+        tagIds: row.isSelected ? filterTagIds : [...filterTagIds, row.tagId],
+        title: row.title,
+        amount: row.amount,
+        dateFrom: period.from,
+        dateTo: period.to,
+        targetCurrencyId: this.settings.viewCurrencyId(),
+        currencyCode: this.currencyCode(),
+      },
+      { ariaLabel: `Траты с тегом ${row.title}` },
+    );
   }
 
   /**
@@ -403,10 +410,11 @@ export class AnalyticsPage implements OnDestroy {
   protected openCategory(row: BarRow): void {
     const period = this.period();
 
-    this.sheets.openSheet<void, CategorySpendingsData>(
-      CategorySpendingsSheet,
+    this.sheets.openSheet<void, ReportSpendingsData>(
+      ReportSpendingsSheet,
       {
         categoryId: row.categoryId,
+        tagIds: this.filterTagIds(),
         title: row.title,
         amount: row.amount,
         dateFrom: period.from,
