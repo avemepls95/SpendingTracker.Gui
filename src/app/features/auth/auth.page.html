@@ -15,6 +15,16 @@
       </div>
     }
 
+    @case ('expired') {
+      <div class="auth__status">
+        <app-icon class="auth__status-icon" name="alert-circle" />
+        <p class="auth__error">Сессия устарела</p>
+        <p class="text-2 auth__hint">
+          Закройте приложение и откройте его снова из Telegram.
+        </p>
+      </div>
+    }
+
     @case ('failed') {
       <div class="auth__status">
         <app-icon class="auth__status-icon" name="alert-circle" />

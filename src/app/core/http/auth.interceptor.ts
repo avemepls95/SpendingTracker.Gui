@@ -4,6 +4,7 @@ import { catchError, switchMap, throwError } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
 import { TokenStorageService } from '../auth/token-storage.service';
+import { TelegramService } from '../telegram/telegram.service';
 import { ToastService } from '../ui/toast.service';
 import { TokenRefreshService } from './token-refresh.service';
 
@@ -32,9 +33,14 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const refresher = inject(TokenRefreshService);
   const auth = inject(AuthService);
   const toast = inject(ToastService);
+  const telegram = inject(TelegramService);
 
   const endSession = (error: unknown) => {
-    toast.info('Время сессии истекло. Войдите заново');
+    // В Mini App экран входа сам пробует войти заново по initData, а если не выйдет -
+    // объясняет, что делать.
+    if (!telegram.isLaunchedFromTelegram) {
+      toast.info('Время сессии истекло. Войдите заново');
+    }
     auth.signOut();
     return throwError(() => error);
   };

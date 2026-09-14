@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
@@ -12,7 +13,7 @@ import { TelegramService } from '../../core/telegram/telegram.service';
 import { IconComponent } from '../../shared/ui/icon.component';
 import { TelegramLoginWidgetComponent } from './telegram-login-widget.component';
 
-type AuthState = 'idle' | 'pending' | 'failed';
+type AuthState = 'idle' | 'pending' | 'failed' | 'expired';
 
 @Component({
   selector: 'app-auth-page',
@@ -97,7 +98,15 @@ export class AuthPage {
         this.telegram.notify('success');
         void this.router.navigate(['/']);
       },
-      error: () => this.state.set('failed'),
+      // Сервер принимает initData только вскоре после открытия Mini App, а свежий Telegram
+      // выдаёт лишь при повторном открытии: повтор с тем же initData не пройдёт.
+      error: (error: unknown) => {
+        const rejected =
+          request.authType === 'webApp' &&
+          error instanceof HttpErrorResponse &&
+          error.status === 401;
+        this.state.set(rejected ? 'expired' : 'failed');
+      },
     });
   }
 }
