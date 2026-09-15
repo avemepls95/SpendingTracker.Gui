@@ -24,8 +24,8 @@ function toCountryCode(flagEmoji: string): string | null {
 /**
  * Ссылка на изображение флага или null, если код нераспознан.
  *
- * Флаги показываются только в выборе валюты: в списке трат по флагу на строку
- * означало бы отдельный сетевой запрос на каждую запись.
+ * В списке трат флаги не показываются: флаг на строку означал бы отдельный
+ * сетевой запрос на каждую запись.
  */
 export function flagImageUrl(flagEmoji: string): string | null {
   const country = toCountryCode(flagEmoji);

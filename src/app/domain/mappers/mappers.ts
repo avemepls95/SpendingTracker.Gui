@@ -84,6 +84,7 @@ export function toTag(dto: TagDto): Tag {
     // не перенесённый тег человек навесит руками и увидит, а перенесённый зря
     // молча исказит аналитику по тегам.
     spreadsByDescription: dto.spreadsByDescription === true,
+    currencyIds: dto.currencyIds ?? [],
   };
 }
 

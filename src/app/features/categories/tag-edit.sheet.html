@@ -78,6 +78,51 @@
     </div>
 
     <div class="field">
+      <span class="field__label">Валюты</span>
+      <div class="chips">
+        @for (currency of selectedCurrencies(); track currency.id) {
+          <span class="chip chips__chip">
+            @if (flagUrl(currency); as url) {
+              <img
+                class="currency-flag"
+                appHideOnError
+                [src]="url"
+                width="16"
+                height="12"
+                alt=""
+              />
+            }
+            {{ currency.code }}
+            <button
+              type="button"
+              class="chips__remove"
+              [attr.aria-label]="'Убрать валюту ' + currency.code"
+              [disabled]="isSaving()"
+              (click)="removeCurrency(currency.id)"
+            >
+              <app-icon name="close" />
+            </button>
+          </span>
+        }
+
+        <button
+          type="button"
+          class="chip chips__add"
+          aria-label="Добавить валюту"
+          [disabled]="isSaving()"
+          (click)="pickCurrency()"
+        >
+          <app-icon name="plus" />
+          Добавить
+        </button>
+      </div>
+      <p class="hint">
+        Траты в этих валютах получают тег сами - и прошлые, и новые. В карточке траты
+        его не видно, но аналитика и фильтры его учитывают.
+      </p>
+    </div>
+
+    <div class="field">
       <span class="field__label">Перенос</span>
 
       <label class="panel panel--bordered switch-row">

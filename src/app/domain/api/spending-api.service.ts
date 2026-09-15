@@ -240,11 +240,13 @@ export class SpendingApiService {
     title: string,
     group: string | null = null,
     spreadsByDescription = false,
+    currencyIds: readonly string[] = [],
   ): Observable<unknown> {
     return this.http.post(this.url('v1/tag/create'), {
       title,
       group,
       spreadsByDescription,
+      currencyIds,
     });
   }
 
@@ -253,12 +255,16 @@ export class SpendingApiService {
    *
    * Признак переноса объявлен обязательным намеренно: команда пишет его как
    * есть, и запрос без поля выключил бы перенос там, где он был включён.
+   *
+   * Валюты обязательны тоже: редактор отправляет форму целиком, а запрос без
+   * поля оставил бы на сервере прежний набор.
    */
   updateTag(tag: {
     id: string;
     title: string;
     group: string | null;
     spreadsByDescription: boolean;
+    currencyIds: readonly string[];
   }): Observable<unknown> {
     return this.http.post(this.url('v1/tag/update'), tag);
   }

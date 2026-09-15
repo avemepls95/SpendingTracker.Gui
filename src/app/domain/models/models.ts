@@ -21,6 +21,13 @@ export interface Tag {
    * признак задаётся явно и по умолчанию выключен.
    */
   readonly spreadsByDescription: boolean;
+  /**
+   * Валюты, чьи траты несут тег сами, без собственной связи.
+   *
+   * Сервер присылает их только в списке тегов владельца; у тегов из остальных
+   * ответов - траты, категории, расписания, словаря - набор пуст.
+   */
+  readonly currencyIds: readonly string[];
 }
 
 /**
@@ -66,7 +73,7 @@ export interface Spending {
   readonly description: string;
   /** Категория траты. null - трата не разнесена. */
   readonly category: Category | null;
-  /** Собственные теги траты, без унаследованных от категории. */
+  /** Собственные теги траты, без унаследованных от категории и валюты. */
   readonly tags: readonly Tag[];
   /** Расписание, создавшее трату. null - трата заведена вручную. */
   readonly scheduleId: string | null;
@@ -256,7 +263,7 @@ export interface TagAnalyticsItem {
 
 export interface TagAnalytics {
   readonly totalAmount: number;
-  /** Траты без единого тега - ни своего, ни унаследованного от категории. */
+  /** Траты без единого тега - ни своего, ни унаследованного от категории или валюты. */
   readonly untaggedAmount: number;
   readonly tags: readonly TagAnalyticsItem[];
 }

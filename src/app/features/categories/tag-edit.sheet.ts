@@ -5,9 +5,13 @@ import { SheetService } from '../../core/ui/sheet.service';
 import { TelegramService } from '../../core/telegram/telegram.service';
 import { ToastService } from '../../core/ui/toast.service';
 import { SpendingApiService } from '../../domain/api/spending-api.service';
-import { Tag } from '../../domain/models/models';
+import { flagImageUrl } from '../../domain/currency/flag.util';
+import { Currency, Tag } from '../../domain/models/models';
+import { CurrenciesStore } from '../../domain/stores/currencies.store';
 import { confirmAction } from '../../shared/ui/confirm.dialog';
+import { CurrencyPickerData, CurrencyPickerSheet } from '../../shared/ui/currency-picker.sheet';
 import { IconComponent } from '../../shared/ui/icon.component';
+import { HideOnErrorDirective } from '../../shared/util/hide-on-error.directive';
 import { SwipeToCloseDirective } from '../../shared/util/swipe-to-close.directive';
 import { normalizeGroupTitle } from '../../shared/util/tag-group.util';
 import { MarkupGuideData, MarkupGuideSheet } from '../help/markup-guide.sheet';
@@ -21,7 +25,7 @@ export type TagEditResult = { readonly kind: 'changed' };
 @Component({
   selector: 'app-tag-edit',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, SwipeToCloseDirective],
+  imports: [IconComponent, SwipeToCloseDirective, HideOnErrorDirective],
   templateUrl: './tag-edit.sheet.html',
   styleUrl: './tag-edit.sheet.scss',
 })
@@ -32,6 +36,7 @@ export class TagEditSheet {
   private readonly sheets = inject(SheetService);
   private readonly telegram = inject(TelegramService);
   private readonly toast = inject(ToastService);
+  private readonly currencies = inject(CurrenciesStore);
 
   private readonly existing = this.data.mode === 'edit' ? this.data.tag : null;
 
@@ -53,6 +58,20 @@ export class TagEditSheet {
   /** Новый тег заводится без переноса: цена ошибочного переноса выше. */
   protected readonly spreads = signal(this.existing?.spreadsByDescription ?? false);
 
+  protected readonly currencyIds = signal<readonly string[]>(this.existing?.currencyIds ?? []);
+
+  /**
+   * Выбранные валюты в виде для показа.
+   *
+   * Справочник приходит асинхронно: пока его нет, чипы не рисуются, а набор
+   * идентификаторов уже на месте и сохранится без потерь.
+   */
+  protected readonly selectedCurrencies = computed(() =>
+    this.currencyIds()
+      .map((id) => this.currencies.find(id))
+      .filter((currency): currency is Currency => currency !== null),
+  );
+
   protected readonly nameError = computed(() =>
     this.name().trim() === '' ? 'Укажите название' : null,
   );
@@ -63,6 +82,7 @@ export class TagEditSheet {
 
   constructor() {
     this.loadGroups();
+    this.currencies.load();
   }
 
   /**
@@ -85,6 +105,29 @@ export class TagEditSheet {
 
   protected onSpreads(event: Event): void {
     this.spreads.set((event.target as HTMLInputElement).checked);
+  }
+
+  protected flagUrl(currency: Currency): string | null {
+    return flagImageUrl(currency.flagEmojiCode);
+  }
+
+  protected pickCurrency(): void {
+    this.sheets
+      .openSheet<Currency, CurrencyPickerData>(
+        CurrencyPickerSheet,
+        // Лист добавляет по одной валюте, отмечать в нём выбранную нечего.
+        { selectedId: '' },
+        { ariaLabel: 'Выбор валюты' },
+      )
+      .closed.subscribe((currency) => {
+        if (currency && !this.currencyIds().includes(currency.id)) {
+          this.currencyIds.update((ids) => [...ids, currency.id]);
+        }
+      });
+  }
+
+  protected removeCurrency(id: string): void {
+    this.currencyIds.update((ids) => ids.filter((current) => current !== id));
   }
 
   protected openGuide(): void {
@@ -146,10 +189,11 @@ export class TagEditSheet {
     const group = this.pickedGroupTitle();
 
     const spreadsByDescription = this.spreads();
+    const currencyIds = this.currencyIds();
 
     const request = this.existing
-      ? this.api.updateTag({ id: this.existing.id, title, group, spreadsByDescription })
-      : this.api.createTag(title, group, spreadsByDescription);
+      ? this.api.updateTag({ id: this.existing.id, title, group, spreadsByDescription, currencyIds })
+      : this.api.createTag(title, group, spreadsByDescription, currencyIds);
 
     request.subscribe({
       next: () => {

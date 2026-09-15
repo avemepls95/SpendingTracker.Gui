@@ -50,6 +50,8 @@ export function describeErrorCode(code: string, data: unknown): string | null {
       return 'Группа с таким названием уже есть';
     case 'TagGroupNotFound':
       return 'Группа не найдена';
+    case 'CurrencyDoesNotExist':
+      return 'Валюта не найдена';
     // Причину не угадываем: тем же кодом отвечают счёт, категория и настройки,
     // а дескриптор ловит вообще любой KeyNotFoundException сервера.
     case 'KeyNotFound':

@@ -14,6 +14,8 @@ export interface TagDto {
   readonly group?: string | null;
   /** Переносится ли тег на новые траты с таким же описанием. */
   readonly spreadsByDescription?: boolean | null;
+  /** Валюты, чьи траты несут тег. Приходит только в списке тегов. */
+  readonly currencyIds?: readonly string[] | null;
 }
 
 /** Группа тегов владельца: и заполненная, и заведённая пустой. */
@@ -41,7 +43,7 @@ export interface SpendingDto {
   readonly description: string;
   /** Категория траты. Отсутствует у неразнесённых трат. */
   readonly category?: CategoryDto | null;
-  /** Собственные теги траты, без унаследованных от категории. */
+  /** Собственные теги траты, без унаследованных от категории и валюты. */
   readonly tags?: readonly TagDto[] | null;
   /**
    * Расписание, породившее трату. Отсутствует у трат, заведённых вручную,
