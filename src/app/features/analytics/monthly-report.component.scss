@@ -83,8 +83,11 @@
 
 // По оси идёт время, поэтому столбцы вертикальные. На узком экране ряд из 24
 // месяцев не помещается, и прокрутка живёт внутри карточки: страница по
-// горизонтали не двигается.
+// горизонтали не двигается. Шаг колонок общий для столбцов и оси: разойдутся
+// значения - подписи уедут от своих столбцов.
 .chart-scroll {
+  --column-basis: 20px;
+  --column-gap: var(--sp-1);
   overflow-x: auto;
   scrollbar-width: none;
 
@@ -131,7 +134,7 @@
   position: relative;
   display: flex;
   align-items: flex-end;
-  gap: var(--sp-1);
+  gap: var(--column-gap);
   width: max-content;
   height: var(--chart-height);
   min-width: 100%;
@@ -145,7 +148,7 @@
 // диаграмму.
 .chart__column {
   display: flex;
-  flex: 1 0 20px;
+  flex: 1 0 var(--column-basis);
   flex-direction: column;
   justify-content: flex-end;
   height: 100%;
@@ -181,18 +184,22 @@
 
 .axis {
   display: flex;
-  gap: var(--sp-1);
+  gap: var(--column-gap);
   min-width: 100%;
   margin-top: var(--sp-1);
 }
 
 // Ширина повторяет столбец: иначе подписи разъезжаются с диаграммой.
+// min-width: 0 не даёт подписи шире базиса раздвинуть элемент - она свисает
+// за его края поровну. Шрифт мельче --fs-xs: при 12px соседние «июн» и «июл»
+// над столбцами по 20px сливаются в одно слово.
 .axis__item {
   display: flex;
-  flex: 1 0 20px;
+  flex: 1 0 var(--column-basis);
   flex-direction: column;
   align-items: center;
-  font-size: var(--fs-xs);
+  min-width: 0;
+  font-size: 0.6875rem;
   color: var(--c-text-3);
   line-height: var(--lh-tight);
 }
