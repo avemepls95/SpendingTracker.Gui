@@ -93,12 +93,47 @@
   }
 }
 
+// Подпись медианы лежит вне прокрутки, поверх неё: линия уезжает вместе со
+// столбцами, а подпись остаётся у правого края видимой части.
+.chart-frame {
+  position: relative;
+}
+
+.chart-frame__overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: var(--chart-height);
+  pointer-events: none;
+}
+
+.chart-frame__median-label {
+  position: absolute;
+  right: 0;
+  bottom: var(--median-height, 0%);
+  height: var(--median-label-height);
+  font-size: var(--fs-xs);
+  line-height: var(--median-label-height);
+  color: var(--c-text-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.chart-frame__median-label--below {
+  top: calc(100% - var(--median-height, 0%));
+  bottom: auto;
+}
+
+// Ширина по содержимому: столбцы не сжимаются, и длинный ряд должен растянуть
+// сам .chart, иначе линия медианы кончится на первом экране прокрутки.
 .chart {
   position: relative;
   display: flex;
   align-items: flex-end;
   gap: var(--sp-1);
-  height: 168px;
+  width: max-content;
+  height: var(--chart-height);
   min-width: 100%;
 }
 
@@ -335,7 +370,7 @@
   display: flex;
   align-items: flex-end;
   gap: var(--sp-1);
-  height: 168px;
+  height: var(--chart-height);
   padding: var(--sp-4);
   border: 1px solid var(--c-border);
   border-radius: var(--r-lg);

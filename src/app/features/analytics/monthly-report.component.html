@@ -69,47 +69,60 @@
     } @else {
       <div class="content">
         <section class="chart-card">
-          <div class="chart-scroll">
-            <div class="chart" [style.--median-height.%]="medianHeight()">
-              @if (medianHeight() > 0) {
-                <span class="chart__median" aria-hidden="true"></span>
-              }
+          <div class="chart-frame" [style.--median-height.%]="medianHeight()">
+            <div class="chart-scroll">
+              <div class="chart">
+                @if (medianHeight() > 0) {
+                  <span class="chart__median" aria-hidden="true"></span>
+                }
 
-              @for (column of months(); track column.key) {
-                <button
-                  type="button"
-                  class="chart__column"
-                  [attr.aria-label]="
-                    column.fullLabel +
-                    ': ' +
-                    (column.totalAmount | money) +
-                    ' ' +
-                    currencyCode()
-                  "
-                  (click)="openMonth(column)"
+                @for (column of months(); track column.key) {
+                  <button
+                    type="button"
+                    class="chart__column"
+                    [attr.aria-label]="
+                      column.fullLabel +
+                      ': ' +
+                      (column.totalAmount | money) +
+                      ' ' +
+                      currencyCode()
+                    "
+                    (click)="openMonth(column)"
+                  >
+                    <span
+                      class="chart__segment chart__segment--one-time"
+                      [style.height.%]="column.oneTimeHeight"
+                    ></span>
+                    <span
+                      class="chart__segment chart__segment--regular"
+                      [style.height.%]="column.regularHeight"
+                    ></span>
+                  </button>
+                }
+              </div>
+
+              <div class="axis">
+                @for (column of months(); track column.key) {
+                  <div class="axis__item">
+                    <span class="axis__month">{{ column.label }}</span>
+                    @if (column.yearLabel; as year) {
+                      <span class="axis__year">{{ year }}</span>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+
+            @if (medianHeight() > 0) {
+              <div class="chart-frame__overlay" aria-hidden="true">
+                <span
+                  class="chart-frame__median-label"
+                  [class.chart-frame__median-label--below]="isMedianLabelBelow()"
                 >
-                  <span
-                    class="chart__segment chart__segment--one-time"
-                    [style.height.%]="column.oneTimeHeight"
-                  ></span>
-                  <span
-                    class="chart__segment chart__segment--regular"
-                    [style.height.%]="column.regularHeight"
-                  ></span>
-                </button>
-              }
-            </div>
-
-            <div class="axis">
-              @for (column of months(); track column.key) {
-                <div class="axis__item">
-                  <span class="axis__month">{{ column.label }}</span>
-                  @if (column.yearLabel; as year) {
-                    <span class="axis__year">{{ year }}</span>
-                  }
-                </div>
-              }
-            </div>
+                  медиана {{ medianLabelAmount() | money }}
+                </span>
+              </div>
+            }
           </div>
 
           <div class="legend">

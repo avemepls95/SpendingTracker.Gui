@@ -92,6 +92,12 @@ type TagFilterItem = Pick<Tag, 'id' | 'title'>;
 /** Заведомо ранняя граница для «всего времени»: сервер подрежет её по первой трате. */
 const EARLIEST_MONTH = new Date(2000, 0, 1);
 
+/** Высота диаграммы. Отдаётся стилям через --chart-height. */
+const CHART_HEIGHT_PX = 168;
+
+/** Высота подписи медианы. Отдаётся стилям через --median-label-height. */
+const MEDIAN_LABEL_HEIGHT_PX = 16;
+
 const MONTH_LABELS = [
   'янв',
   'фев',
@@ -135,6 +141,10 @@ const MONTH_FULL_LABELS = [
   imports: [EmptyStateComponent, IconComponent, MoneyPipe],
   templateUrl: './monthly-report.component.html',
   styleUrl: './monthly-report.component.scss',
+  host: {
+    '[style.--chart-height.px]': 'chartHeight',
+    '[style.--median-label-height.px]': 'medianLabelHeight',
+  },
 })
 export class MonthlyReportComponent {
   private readonly api = inject(SpendingApiService);
@@ -155,6 +165,9 @@ export class MonthlyReportComponent {
 
   /** Отсекает ответ на устаревший запрос при быстрой смене периода. */
   private generation = 0;
+
+  protected readonly chartHeight = CHART_HEIGHT_PX;
+  protected readonly medianLabelHeight = MEDIAN_LABEL_HEIGHT_PX;
 
   protected readonly ranges: readonly { id: MonthlyRange; label: string }[] = [
     { id: 'year', label: '12 месяцев' },
@@ -200,6 +213,16 @@ export class MonthlyReportComponent {
 
     return heightOf(data.total.median, scale);
   });
+
+  /** Медиана для подписи у линии - без копеек. */
+  protected readonly medianLabelAmount = computed(() =>
+    Math.round(this.analytics()?.total.median ?? 0),
+  );
+
+  /** Подпись уходит под линию, когда над линией до верха диаграммы она не помещается. */
+  protected readonly isMedianLabelBelow = computed(
+    () => (CHART_HEIGHT_PX * (100 - this.medianHeight())) / 100 < MEDIAN_LABEL_HEIGHT_PX,
+  );
 
   protected readonly summaryRows = computed<readonly SummaryRow[]>(() => {
     const data = this.analytics();
