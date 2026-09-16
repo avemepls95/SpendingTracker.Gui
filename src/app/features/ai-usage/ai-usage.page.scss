@@ -133,6 +133,44 @@
   font-weight: var(--fw-medium);
 }
 
+// Отрицательный отступ не даёт кнопке увеличить высоту строки.
+.row__toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  margin: calc(-1 * var(--sp-1)) calc(-1 * var(--sp-2)) 0 0;
+  border-radius: var(--r-md);
+  color: var(--c-text-3, var(--c-text-2));
+  --icon-size: 16px;
+
+  // Видимый размер ниже нормы касания, поэтому цель добирается псевдоэлементом -
+  // тем же приёмом, что у кнопок инструментов на экране категорий.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: var(--tap-min);
+    height: var(--tap-min);
+    transform: translate(-50%, -50%);
+  }
+
+  app-icon {
+    transition: transform 0.15s ease;
+  }
+
+  &:active {
+    background: var(--c-pressed);
+  }
+}
+
+.row__toggle--open app-icon {
+  transform: rotate(180deg);
+}
+
 .day {
   display: flex;
   align-items: center;

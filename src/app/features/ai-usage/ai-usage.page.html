@@ -61,8 +61,7 @@
               <span class="row__main">
                 <span class="row__title">{{ callSiteLabel(row.callSite) }}</span>
                 <span class="row__hint">
-                  {{ row.requestCount }} попыток, {{ row.inputTokens }} входных и
-                  {{ row.outputTokens }} выходных токенов
+                  {{ row.requestCount }} попыток
                   @if (row.unknownCostCount > 0) {
                     · у {{ row.unknownCostCount }} стоимость неизвестна
                   }
@@ -147,12 +146,28 @@
               </span>
               <span class="row__hint">
                 {{ momentLabel(item.requestDate) }} · {{ item.model }} ·
-                {{ item.inputTokens }}/{{ item.outputTokens }} токенов ·
                 {{ outcomeLabel(item.outcome) }}
               </span>
-              <span class="row__hint row__hint--mono">{{ item.userId }}</span>
+              @if (isExpanded(item.id)) {
+                <span class="row__hint">
+                  Пользователь: <span class="row__hint--mono">{{ item.userId }}</span>
+                </span>
+              }
             </span>
             <span class="row__value">{{ item.cost | usd }}</span>
+            <button
+              type="button"
+              class="row__toggle"
+              [class.row__toggle--open]="isExpanded(item.id)"
+              [attr.aria-expanded]="isExpanded(item.id)"
+              [attr.aria-label]="
+                (isExpanded(item.id) ? 'Скрыть детали обращения от ' : 'Показать детали обращения от ') +
+                momentLabel(item.requestDate)
+              "
+              (click)="toggleDetails(item.id)"
+            >
+              <app-icon name="chevron-down" />
+            </button>
           </div>
         } @empty {
           <div class="panel__empty">За период обращений нет</div>
@@ -296,7 +311,6 @@
               @if (check.status !== 'NotConfigured' && check.status !== 'Throttled') {
                 <p class="check__hint">
                   {{ check.vendor }} · {{ check.model }} · глубина: {{ effortLabel(check.effort) }} ·
-                  {{ check.inputTokens }}/{{ check.outputTokens }} токенов ·
                   {{ check.cost | usd }} · {{ check.elapsedMilliseconds }} мс
                 </p>
               }

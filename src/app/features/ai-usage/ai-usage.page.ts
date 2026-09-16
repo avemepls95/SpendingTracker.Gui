@@ -9,6 +9,7 @@ import {
 } from '../../domain/dto/ai-usage.dto';
 import { UsdPipe } from '../../shared/pipes/usd.pipe';
 import { parseAmount } from '../../shared/util/money.util';
+import { IconComponent } from '../../shared/ui/icon.component';
 import { PageHeaderComponent } from '../../shared/ui/page-header.component';
 import { AiUsageStore } from './ai-usage.store';
 
@@ -19,7 +20,7 @@ interface PeriodOption {
 
 /** Подписи исходов обращения: коды сервера человеку ничего не говорят. */
 const OUTCOME_LABELS: Record<string, string> = {
-  Sent: 'Ответ получен',
+  Sent: 'Ответ✅',
   Unparseable: 'Ответ не разобран',
   NoResponse: 'Ответа нет',
   NotSent: 'Не отправлено',
@@ -80,7 +81,7 @@ const GUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 @Component({
   selector: 'app-ai-usage-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PageHeaderComponent, UsdPipe],
+  imports: [IconComponent, PageHeaderComponent, UsdPipe],
   providers: [AiUsageStore],
   templateUrl: './ai-usage.page.html',
   styleUrl: './ai-usage.page.scss',
@@ -104,6 +105,9 @@ export class AiUsagePage implements OnInit {
 
   /** Введённый идентификатор не похож на GUID - отбор не отправляется. */
   protected readonly userFilterInvalid = signal(false);
+
+  /** Обращения с раскрытыми деталями: идентификатор пользователя виден только в них. */
+  private readonly expandedItemIds = signal<ReadonlySet<string>>(new Set());
 
   protected readonly model = signal('');
 
@@ -218,6 +222,21 @@ export class AiUsagePage implements OnInit {
     return kind === 'ConnectionCheck'
       ? `${this.callSiteLabel(callSite)}, проверка связи`
       : `${this.callSiteLabel(callSite)}, ${descriptionsCount} описаний`;
+  }
+
+  protected isExpanded(itemId: string): boolean {
+    return this.expandedItemIds().has(itemId);
+  }
+
+  protected toggleDetails(itemId: string): void {
+    this.expandedItemIds.update((current) => {
+      const next = new Set(current);
+      if (!next.delete(itemId)) {
+        next.add(itemId);
+      }
+
+      return next;
+    });
   }
 
   protected outcomeLabel(outcome: string): string {
