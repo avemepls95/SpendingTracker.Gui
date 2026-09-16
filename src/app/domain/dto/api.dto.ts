@@ -150,6 +150,11 @@ export interface UserSettingsDto {
    * сервиса прямо в базе, отдельного механизма для этого в системе нет.
    */
   readonly aiMarkupMonthlyLimit?: number | null;
+  /**
+   * Лимит обращений к модели снят владельцем сервиса: aiMarkupMonthlyLimit при
+   * этом не действует.
+   */
+  readonly aiUsageUnlimited?: boolean | null;
 }
 
 /**

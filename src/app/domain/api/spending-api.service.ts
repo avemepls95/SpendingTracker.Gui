@@ -443,6 +443,7 @@ export class SpendingApiService {
         viewCurrencyId: dto?.viewCurrencyId ?? '',
         aiMarkupUserConsent: dto?.aiMarkupUserConsent === true,
         aiMarkupMonthlyLimit: dto?.aiMarkupMonthlyLimit ?? 0,
+        aiUsageUnlimited: dto?.aiUsageUnlimited === true,
       })),
     );
   }

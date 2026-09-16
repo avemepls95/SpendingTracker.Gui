@@ -23,6 +23,7 @@ export class UserSettingsStore {
     viewCurrencyId: '',
     aiMarkupUserConsent: false,
     aiMarkupMonthlyLimit: 0,
+    aiUsageUnlimited: false,
   });
 
   private readonly loaded = signal(false);
@@ -47,14 +48,20 @@ export class UserSettingsStore {
    */
   readonly aiMarkupMonthlyLimit = computed(() => this.state().aiMarkupMonthlyLimit);
 
+  /** Лимит снят владельцем сервиса: месячный лимит не действует. */
+  readonly aiUsageUnlimited = computed(() => this.state().aiUsageUnlimited);
+
   /**
-   * Согласие выдано, но лимит нулевой - разметки не будет.
+   * Согласие выдано, но лимит нулевой и не снят - разметки не будет.
    *
    * Условие живёт здесь, а не на экранах: его показывают и строка настроек, и
    * лист согласия, и разойтись они не должны.
    */
   readonly isAiMarkupBlocked = computed(
-    () => this.state().aiMarkupUserConsent && this.state().aiMarkupMonthlyLimit === 0,
+    () =>
+      this.state().aiMarkupUserConsent &&
+      !this.state().aiUsageUnlimited &&
+      this.state().aiMarkupMonthlyLimit === 0,
   );
 
   load(): void {

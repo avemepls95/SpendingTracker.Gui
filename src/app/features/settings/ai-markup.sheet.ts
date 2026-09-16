@@ -25,6 +25,7 @@ export class AiMarkupSheet {
 
   protected readonly consent = this.settings.aiMarkupUserConsent;
   protected readonly monthlyLimit = this.settings.aiMarkupMonthlyLimit;
+  protected readonly isUnlimited = this.settings.aiUsageUnlimited;
   protected readonly isSaving = this.settings.isSaving;
 
   /**

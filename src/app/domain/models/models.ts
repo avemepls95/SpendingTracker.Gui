@@ -237,9 +237,12 @@ export interface UserSettings {
   readonly aiMarkupUserConsent: boolean;
   /**
    * Месячный лимит обращений к модели. Только для чтения: его правит владелец
-   * сервиса. При нулевом лимите включённое согласие ничего не даёт.
+   * сервиса. Если лимит не снят, при нулевом значении включённое согласие
+   * ничего не даёт.
    */
   readonly aiMarkupMonthlyLimit: number;
+  /** Лимит снят владельцем сервиса: aiMarkupMonthlyLimit не действует. */
+  readonly aiUsageUnlimited: boolean;
 }
 
 export interface CategoryAnalyticsItem {
