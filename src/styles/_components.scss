@@ -659,6 +659,17 @@ button.chip {
   color: var(--c-text);
 }
 
+// Тег, который трата получает от своей валюты. Снять его с одной траты нельзя,
+// поэтому крестика нет и отступ справа обычный.
+.chips__chip--currency {
+  padding-right: var(--sp-3);
+  --icon-size: 14px;
+
+  app-icon {
+    color: var(--c-text-2);
+  }
+}
+
 .chips__remove {
   position: relative;
   display: inline-flex;

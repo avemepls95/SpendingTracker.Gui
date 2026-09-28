@@ -163,6 +163,13 @@
           </span>
         }
 
+        @for (tag of currencyTags(); track tag.id) {
+          <span class="chip chips__chip chips__chip--currency" title="По валюте траты">
+            <app-icon name="coin" role="img" aria-label="По валюте траты" />
+            {{ tag.title }}
+          </span>
+        }
+
         <button
           type="button"
           class="chip chips__add"

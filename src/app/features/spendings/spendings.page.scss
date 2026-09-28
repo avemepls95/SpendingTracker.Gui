@@ -113,6 +113,10 @@
   gap: var(--sp-1);
 }
 
+.spending__currency-tag {
+  --icon-size: 12px;
+}
+
 .spending__uncategorized {
   display: inline-flex;
   align-items: center;

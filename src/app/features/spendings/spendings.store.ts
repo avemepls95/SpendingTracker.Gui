@@ -1,7 +1,8 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { SpendingApiService } from '../../domain/api/spending-api.service';
-import { Spending } from '../../domain/models/models';
+import { Spending, Tag } from '../../domain/models/models';
+import { currencyTagsOf } from '../../shared/util/currency-tags.util';
 import { dayKey, formatDayLabel, parseCalendarDate } from '../../shared/util/date.util';
 
 /** Сколько записей запрашивается за раз. */
@@ -66,6 +67,9 @@ export class SpendingsStore {
   private readonly searchSignal = signal('');
   private readonly filterSignal = signal<SpendingsFilter>(EMPTY_SPENDINGS_FILTER);
 
+  /** Все теги владельца: по ним строка траты находит теги от своей валюты. */
+  private readonly tags = signal<readonly Tag[]>([]);
+
   /**
    * Номер поколения запроса.
    *
@@ -121,6 +125,20 @@ export class SpendingsStore {
 
   /** Траты, сгруппированные по дням, в порядке прихода от сервера. */
   readonly groups = computed<readonly DayGroup[]>(() => groupByDay(this.items()));
+
+  loadTags(): void {
+    this.api.getTags().subscribe({
+      next: (tags) => this.tags.set(tags),
+    });
+  }
+
+  currencyTags(spending: Spending): readonly Tag[] {
+    return currencyTagsOf(
+      this.tags(),
+      spending.currencyId,
+      spending.tags.map((tag) => tag.id),
+    );
+  }
 
   reload(): void {
     this.statusSignal.set('loading');

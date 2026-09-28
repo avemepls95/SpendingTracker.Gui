@@ -176,7 +176,8 @@
 
                       <!-- Категория и теги - разные измерения, поэтому и метки
                            разные: акцентная у категории, приглушённые у тегов. -->
-                      @if (spending.category || spending.tags.length > 0) {
+                      @let currencyTags = store.currencyTags(spending);
+                      @if (spending.category || spending.tags.length > 0 || currencyTags.length > 0) {
                         <span class="spending__markup">
                           @if (spending.category; as category) {
                             <!-- Догадка модели обведена акцентной рамкой, прошлое
@@ -192,6 +193,12 @@
                           }
                           @for (tag of spending.tags; track tag.id) {
                             <span class="chip chip--tag">{{ tag.title }}</span>
+                          }
+                          @for (tag of currencyTags; track tag.id) {
+                            <span class="chip chip--tag spending__currency-tag" title="По валюте траты">
+                              <app-icon name="coin" role="img" aria-label="По валюте траты" />
+                              {{ tag.title }}
+                            </span>
                           }
                         </span>
                       }

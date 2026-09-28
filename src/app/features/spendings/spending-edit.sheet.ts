@@ -33,6 +33,7 @@ import {
 import { parseAmount } from '../../shared/util/money.util';
 import { closeOnDismiss } from '../../shared/util/dismiss.util';
 import { categoryPath } from '../../shared/util/category-tree.util';
+import { currencyTagsOf } from '../../shared/util/currency-tags.util';
 import { DraftTag, DraftTags, draftTagKey } from '../../shared/util/tag-draft.util';
 import {
   CategoryPickerData,
@@ -134,7 +135,14 @@ export class SpendingEditSheet {
   /** Все категории владельца: нужны, чтобы показать путь до выбранной. */
   private readonly allCategories = signal<readonly Category[]>([]);
 
+  private readonly allTags = signal<readonly Tag[]>([]);
+
   protected readonly tagKey = draftTagKey;
+
+  /** Следуют за валютой в листе, поэтому меняются ещё до сохранения. */
+  protected readonly currencyTags = computed(() =>
+    currencyTagsOf(this.allTags(), this.currencyId(), this.tags.selectedIds()),
+  );
 
   protected readonly amount = computed(() => parseAmount(this.amountText()));
 
@@ -225,6 +233,10 @@ export class SpendingEditSheet {
 
     this.api.getCategories().subscribe({
       next: (categories) => this.allCategories.set(categories),
+    });
+
+    this.api.getTags().subscribe({
+      next: (tags) => this.allTags.set(tags),
     });
   }
 

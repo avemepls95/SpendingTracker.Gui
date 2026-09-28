@@ -114,6 +114,7 @@ export class SpendingsPage implements OnDestroy {
 
     this.isStarted = true;
     this.store.reload();
+    this.store.loadTags();
   }
 
   ngOnDestroy(): void {
