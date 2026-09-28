@@ -54,7 +54,7 @@ export class MarkupSourceMarkComponent {
   protected readonly label = computed<string | null>(() => {
     switch (this.source()) {
       case 'Model':
-        return 'Категорию предложила модель - проверьте её';
+        return 'Проверьте категорию, которую предложила модель';
       case 'History':
         return 'Категория применена по вашему прошлому решению';
       default:

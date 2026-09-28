@@ -107,7 +107,7 @@ interface CategoryRow {
           <app-empty-state
             icon="alert-circle"
             title="Не удалось загрузить разбивку"
-            hint="Итог за месяц посчитан, а из чего он сложился - неизвестно."
+            hint="Проверьте связь и попробуйте ещё раз."
           >
             <button type="button" class="btn btn--primary" (click)="load()">Повторить</button>
           </app-empty-state>
@@ -115,7 +115,7 @@ interface CategoryRow {
           <app-empty-state
             icon="folder"
             title="Разбивки нет"
-            hint="Итог за месяц посчитан, но ни одна трата не отнесена к категории."
+            hint="Ни одна трата за этот месяц не отнесена к категории."
           />
         } @else {
           <div class="panel panel--bordered">

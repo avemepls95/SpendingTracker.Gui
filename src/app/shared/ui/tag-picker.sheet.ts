@@ -107,7 +107,7 @@ export class TagPickerSheet {
   /** Подсказка пустого списка обещает создание только там, где оно разрешено. */
   protected readonly emptyHint =
     this.data.allowCreate === false
-      ? 'Теги заводятся в разделе разметки.'
+      ? 'Теги заводятся на вкладке «Разметка».'
       : 'Начните вводить название, чтобы создать новый.';
 
   protected readonly query = signal('');

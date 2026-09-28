@@ -26,6 +26,14 @@
   line-height: var(--lh-tight);
 }
 
+.guide__subtitle {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--c-text);
+  line-height: var(--lh-tight);
+}
+
 .guide strong {
   color: var(--c-text);
   font-weight: var(--fw-semibold);

@@ -360,7 +360,7 @@ export const MARKUP_VERDICT_LABELS: Record<MarkupVerdict, string> = {
 export const MARKUP_VERDICT_HINTS: Record<MarkupVerdict, string> = {
   None: 'Категории у описания нет, и оно уйдёт в модель.',
   AssignedByUser: 'Новые траты с этим описанием получат категорию сразу.',
-  AssignedByModel: 'Категорию предложила модель - проверьте её.',
+  AssignedByModel: 'Проверьте категорию, которую предложила модель.',
   RejectedByUser: 'Модель об этом описании больше не спрашивают.',
   ModelFailed: 'Модель не смогла подобрать категорию.',
 };

@@ -119,8 +119,7 @@
         @if (store.onlyWithoutCategories() && store.activeFilterCount() === 1) {
           <app-empty-state
             icon="check-circle"
-            title="Все траты разнесены"
-            hint="Ни одной траты без категории не осталось."
+            title="У всех трат есть категория"
           />
         } @else if (store.isFiltered()) {
           <app-empty-state
@@ -136,7 +135,7 @@
           <app-empty-state
             icon="receipt"
             title="Трат пока нет"
-            hint="Они появятся здесь, как только бот пришлёт первый чек."
+            hint="Траты добавляются через Telegram-бота."
           />
         }
       } @else {

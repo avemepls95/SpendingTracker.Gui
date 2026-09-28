@@ -26,21 +26,21 @@
         <div class="totals">
           <div class="total">
             <span class="total__value">{{ summary.periodCost | usd }}</span>
-            <span class="total__label">за период, {{ summary.periodRequestCount }} попыток</span>
+            <span class="total__label">за период, {{ summary.periodRequestCount }} обращений</span>
           </div>
           <div class="total">
             <span class="total__value">{{ summary.todayCost | usd }}</span>
-            <span class="total__label">сегодня, {{ summary.todayRequestCount }} попыток</span>
+            <span class="total__label">сегодня, {{ summary.todayRequestCount }} обращений</span>
           </div>
         </div>
 
         @if (summary.periodUnknownCostCount > 0 || summary.todayUnknownCostCount > 0) {
           <p class="totals__note">
-            Стоимость неизвестна у {{ summary.periodUnknownCostCount }} попыток периода
+            В суммы не вошли {{ summary.periodUnknownCostCount }} обращений периода с
+            неизвестной стоимостью
             @if (summary.todayUnknownCostCount > 0) {
               (из них {{ summary.todayUnknownCostCount }} сегодня)
             }
-            - в суммы они не вошли.
           </p>
         }
       }
@@ -61,7 +61,7 @@
               <span class="row__main">
                 <span class="row__title">{{ callSiteLabel(row.callSite) }}</span>
                 <span class="row__hint">
-                  {{ row.requestCount }} попыток
+                  {{ row.requestCount }} обращений
                   @if (row.unknownCostCount > 0) {
                     · у {{ row.unknownCostCount }} стоимость неизвестна
                   }
@@ -217,10 +217,10 @@
               }
             </select>
             <span class="field__hint">
-              Параметр принимают не все модели - у Haiku 4.5 его нет; при «не отправлять» он не
-              уходит вовсе. Чем выше глубина, тем большая часть потолка ответа уходит на
-              размышление: на высоких значениях полная пачка обрывается по длине, и обращение
-              оплачивается без единого вердикта.
+              Параметр принимают не все модели (у Haiku 4.5 его нет). При «не отправлять» он в
+              запрос не попадает. Чем выше глубина, тем больше лимита ответа уходит на
+              размышление, и на высоких значениях полная пачка описаний обрывается по длине, а
+              обращение оплачивается без результата.
             </span>
           </label>
 
@@ -296,7 +296,7 @@
 
           @if (hasUnsavedChanges()) {
             <p class="field__hint">
-              Сначала сохраните: проверка идёт по настройкам из базы, а не по набранным здесь.
+              Проверка идёт по сохранённым настройкам, поэтому сначала сохраните изменения.
             </p>
           }
 

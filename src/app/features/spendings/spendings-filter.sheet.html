@@ -18,7 +18,7 @@
           <!-- Счётчик - размер очереди разбора целиком, а не число записей на
                экране, поэтому он одинаков при любом состоянии фильтра. -->
           @if (withoutCategoryCount > 0) {
-            <span class="switch-row__hint">Неразнесённых трат: {{ withoutCategoryCount }}</span>
+            <span class="switch-row__hint">Трат без категории: {{ withoutCategoryCount }}</span>
           }
         </span>
         <input
@@ -57,7 +57,7 @@
           </button>
         </div>
 
-        <p class="hint">Категория показывает и траты всех вложенных в неё.</p>
+        <p class="hint">В фильтр попадают и траты вложенных категорий.</p>
       }
     </div>
 

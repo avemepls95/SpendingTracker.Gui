@@ -36,7 +36,7 @@ export const routes: Routes = [
       },
       {
         path: 'categories',
-        title: 'Категории',
+        title: 'Разметка',
         loadComponent: () =>
           import('./features/categories/categories.page').then((m) => m.CategoriesPage),
       },
