@@ -189,6 +189,32 @@ export class SpendingApiService {
     });
   }
 
+  /**
+   * Заводит трату по образцу существующей и возвращает идентификатор новой.
+   *
+   * Разметка уходит итоговая: копия получает ровно эти категорию и теги, а
+   * словарь и другие траты описания сервер не трогает.
+   */
+  copySpending(spending: {
+    sourceSpendingId: string;
+    amount: number;
+    currencyId: string;
+    date: Date;
+    description: string;
+    categoryId: string | null;
+    tagIds: readonly string[];
+  }): Observable<string> {
+    return this.http.post<string>(this.url('v1/spending/copy'), {
+      sourceSpendingId: spending.sourceSpendingId,
+      amount: spending.amount,
+      currencyId: spending.currencyId,
+      date: formatApiDate(spending.date),
+      description: spending.description,
+      categoryId: spending.categoryId,
+      tagIds: spending.tagIds,
+    });
+  }
+
   deleteSpending(id: string): Observable<unknown> {
     return this.http.post(this.url('v1/spending/delete'), { id });
   }

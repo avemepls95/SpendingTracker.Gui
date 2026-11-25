@@ -31,8 +31,10 @@ import {
 import { SpendingSchedulesList } from '../spending-schedules/spending-schedules.list';
 import { SpendingSchedulesStore } from '../spending-schedules/spending-schedules.store';
 import {
+  SpendingCopyResult,
   SpendingEditResult,
   SpendingEditSheet,
+  SpendingSheetData,
 } from './spending-edit.sheet';
 import {
   SpendingsFilterData,
@@ -160,10 +162,9 @@ export class SpendingsPage implements OnDestroy {
   }
 
   /**
-   * Ручной запуск расписания создал трату.
+   * Перечитывает список после появления новой траты.
    *
-   * Список трат живёт на этой же странице и переключение сегмента переживает,
-   * поэтому сам он о новой записи не узнает. Прежнее место в списке после
+   * Сам список о новой записи не узнает. Прежнее место в списке после
    * перезагрузки бессмысленно: догруженные страницы сбрасываются.
    */
   protected onSpendingCreated(): void {
@@ -288,9 +289,11 @@ export class SpendingsPage implements OnDestroy {
 
   protected openSpending(spending: Spending): void {
     this.sheets
-      .openSheet<SpendingEditResult, Spending>(SpendingEditSheet, spending, {
-        ariaLabel: 'Редактирование траты',
-      })
+      .openSheet<SpendingEditResult, SpendingSheetData>(
+        SpendingEditSheet,
+        { spending, mode: 'edit' },
+        { ariaLabel: 'Редактирование траты' },
+      )
       .closed.subscribe((result) => {
         if (!result) {
           return;
@@ -298,6 +301,18 @@ export class SpendingsPage implements OnDestroy {
 
         if (result.kind === 'deleted') {
           this.store.removeLocally(result.id);
+          return;
+        }
+
+        if (result.kind === 'copy') {
+          // Карточка успела что-то применить на сервере (отказ от разметки или
+          // часть оборвавшегося сохранения), и какие строки это задело, неизвестно.
+          if (result.listChanged) {
+            this.spendingsOffset = 0;
+            this.store.reload();
+          }
+
+          this.openCopy(result.source);
           return;
         }
 
@@ -311,6 +326,21 @@ export class SpendingsPage implements OnDestroy {
         }
 
         this.store.replaceLocally(result.spending);
+      });
+  }
+
+  /** Открывает форму новой траты с полями и разметкой образца. */
+  private openCopy(source: Spending): void {
+    this.sheets
+      .openSheet<SpendingCopyResult, SpendingSheetData>(
+        SpendingEditSheet,
+        { spending: source, mode: 'copy' },
+        { ariaLabel: 'Новая трата' },
+      )
+      .closed.subscribe((result) => {
+        if (result) {
+          this.onSpendingCreated();
+        }
       });
   }
 

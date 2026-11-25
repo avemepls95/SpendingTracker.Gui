@@ -2,16 +2,27 @@
   <div class="sheet__grabber" aria-hidden="true"></div>
 
   <div class="sheet__header">
-    <h2 class="sheet__title">Трата</h2>
-    <button
-      type="button"
-      class="icon-btn icon-btn--danger"
-      aria-label="Удалить трату"
-      [disabled]="isSaving()"
-      (click)="remove()"
-    >
-      <app-icon name="trash" />
-    </button>
+    <h2 class="sheet__title">{{ isCopy ? 'Новая трата' : 'Трата' }}</h2>
+    @if (!isCopy) {
+      <button
+        type="button"
+        class="icon-btn"
+        aria-label="Дублировать трату"
+        [disabled]="isBusy()"
+        (click)="duplicate()"
+      >
+        <app-icon name="copy" />
+      </button>
+      <button
+        type="button"
+        class="icon-btn icon-btn--danger"
+        aria-label="Удалить трату"
+        [disabled]="isSaving()"
+        (click)="remove()"
+      >
+        <app-icon name="trash" />
+      </button>
+    }
     <button
       type="button"
       class="icon-btn"

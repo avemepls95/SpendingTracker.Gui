@@ -1,7 +1,7 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Observable, concat, tap } from 'rxjs';
+import { Observable, concat, of, switchMap, tap, throwError } from 'rxjs';
 
 import { SheetService } from '../../core/ui/sheet.service';
 import { TelegramService } from '../../core/telegram/telegram.service';
@@ -62,7 +62,27 @@ export type SpendingEditResult =
        */
       readonly affectedOthers: boolean;
     }
-  | { readonly kind: 'deleted'; readonly id: string };
+  | { readonly kind: 'deleted'; readonly id: string }
+  | {
+      readonly kind: 'copy';
+      /** Образец для новой траты в том виде, в каком его знает сервер. */
+      readonly source: Spending;
+      /** Лист успел применить изменения на сервере, и список устарел. */
+      readonly listChanged: boolean;
+    };
+
+export type SpendingCopyResult = { readonly kind: 'created' };
+
+/**
+ * Режим листа.
+ *
+ * edit - правка траты. copy - новая трата по образцу: поля и разметка
+ * заполнены из образца, и сохранение заводит трату ровно с тем, что в листе.
+ */
+export interface SpendingSheetData {
+  readonly spending: Spending;
+  readonly mode: 'edit' | 'copy';
+}
 
 /**
  * Выбор категории в листе.
@@ -81,6 +101,8 @@ type CategoryChoice =
  * Всё, что человек меняет в листе, копится в его состоянии и уходит на сервер
  * пачкой запросов по кнопке «Сохранить». Закрытие листа не применяет ничего,
  * кроме уже подтверждённого отдельно отказа от разметки.
+ *
+ * В режиме копии «Сохранить» заводит новую трату по образцу одним запросом.
  */
 @Component({
   selector: 'app-spending-edit',
@@ -95,8 +117,11 @@ type CategoryChoice =
   styleUrl: './spending-edit.sheet.scss',
 })
 export class SpendingEditSheet {
-  private readonly original = inject<Spending>(DIALOG_DATA);
-  private readonly dialogRef = inject<DialogRef<SpendingEditResult>>(DialogRef);
+  private readonly data = inject<SpendingSheetData>(DIALOG_DATA);
+  private readonly original = this.data.spending;
+  protected readonly isCopy = this.data.mode === 'copy';
+  private readonly dialogRef =
+    inject<DialogRef<SpendingEditResult | SpendingCopyResult>>(DialogRef);
   private readonly api = inject(SpendingApiService);
   private readonly sheets = inject(SheetService);
   private readonly telegram = inject(TelegramService);
@@ -106,7 +131,9 @@ export class SpendingEditSheet {
   protected readonly description = signal(this.original.description);
   protected readonly amountText = signal(formatAmountForInput(this.original.amount));
   protected readonly currencyId = signal(this.original.currencyId);
-  protected readonly dateText = signal(toFieldValue(this.original.date));
+  protected readonly dateText = signal(
+    this.isCopy ? formatApiDate(new Date()) : toFieldValue(this.original.date),
+  );
 
   protected readonly choice = signal<CategoryChoice>(toChoice(this.original.category));
   protected readonly tags = new DraftTags(this.original.tags);
@@ -116,11 +143,12 @@ export class SpendingEditSheet {
    *
    * С ней сравнивается выбор в листе: на сервер уходит только разница. Меняется
    * от отказа и от сохранения - в том числе от пачки, оборвавшейся посередине.
+   * Источник копии назначит сервер при создании, поэтому в листе его нет.
    */
   private readonly savedChoice = signal<CategoryChoice>(toChoice(this.original.category));
   private readonly savedTags = signal<readonly Tag[]>(this.original.tags);
   private readonly savedSource = signal<SpendingCategorySource | null>(
-    this.original.categorySource,
+    this.isCopy ? null : this.original.categorySource,
   );
 
   protected readonly isSaving = signal(false);
@@ -421,6 +449,11 @@ export class SpendingEditSheet {
 
     this.isSaving.set(true);
 
+    if (this.isCopy) {
+      this.saveCopy(amount, date);
+      return;
+    }
+
     const updated: Spending = {
       ...this.original,
       description: this.description().trim(),
@@ -609,6 +642,23 @@ export class SpendingEditSheet {
     this.closeWithResult();
   }
 
+  /**
+   * Закрывает карточку и просит страницу открыть копию траты.
+   *
+   * Несохранённые правки пропадают, как при «Отмене».
+   */
+  protected duplicate(): void {
+    if (this.isBusy()) {
+      return;
+    }
+
+    this.dialogRef.close({
+      kind: 'copy',
+      source: this.serverSpending(),
+      listChanged: this.hasAppliedChanges,
+    });
+  }
+
   private closeWithResult(): void {
     if (!this.hasAppliedChanges) {
       this.dialogRef.close();
@@ -618,13 +668,87 @@ export class SpendingEditSheet {
     this.dialogRef.close({
       kind: 'updated',
       affectedOthers: this.affectedOthers(),
-      spending: {
-        ...this.original,
-        category: savedCategory(this.savedChoice()),
-        tags: this.savedTags(),
-        categorySource: this.savedSource(),
-      },
+      spending: this.serverSpending(),
     });
+  }
+
+  /** Трата с разметкой, которую уже применили запросы листа. */
+  private serverSpending(): Spending {
+    return {
+      ...this.original,
+      category: savedCategory(this.savedChoice()),
+      tags: this.savedTags(),
+      categorySource: this.savedSource(),
+    };
+  }
+
+  /**
+   * Заводит копию.
+   *
+   * Копия принимает категорию и теги идентификаторами, поэтому заведённые в
+   * листе категория и теги создаются раньше неё.
+   */
+  private saveCopy(amount: number, date: Date): void {
+    this.resolveCategoryId()
+      .pipe(
+        switchMap((categoryId) =>
+          this.tags.resolveIds(this.api).pipe(
+            switchMap((tagIds) =>
+              this.api.copySpending({
+                sourceSpendingId: this.original.id,
+                amount,
+                currencyId: this.currencyId(),
+                date,
+                description: this.description().trim(),
+                categoryId,
+                tagIds,
+              }),
+            ),
+          ),
+        ),
+      )
+      .subscribe({
+        next: () => {
+          this.telegram.notify('success');
+          this.toast.success('Трата создана');
+          this.dialogRef.close({ kind: 'created' });
+        },
+        error: (error: unknown) => this.failSave(error),
+      });
+  }
+
+  /**
+   * Идентификатор выбранной категории, с заведением новой на сервере.
+   *
+   * Идентификатор заведённой категории знает только сервер, поэтому список
+   * перечитывается. Выбор сразу становится существующей категорией: повтор
+   * после сбоя на следующем шаге не заведёт её второй раз.
+   */
+  private resolveCategoryId(): Observable<string | null> {
+    const choice = this.choice();
+
+    if (choice.kind !== 'new') {
+      return of(choice.kind === 'existing' ? choice.category.id : null);
+    }
+
+    return this.api.createCategory(choice.title).pipe(
+      switchMap(() => this.api.getCategories()),
+      switchMap((categories) => {
+        const title = choice.title.toLowerCase();
+        const created = categories.find((category) => category.title.toLowerCase() === title);
+
+        if (!created) {
+          return throwError(
+            () => new Error(`Категория «${choice.title}» не найдена после создания`),
+          );
+        }
+
+        this.allCategories.set(categories);
+        this.choice.set({ kind: 'existing', category: created });
+
+        return of(created.id);
+      }),
+    );
   }
 }
 
